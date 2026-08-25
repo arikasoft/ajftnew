@@ -1,6 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  Suspense,
+  useEffect,
+  useState,
+} from "react";
+
 import { useSearchParams } from "next/navigation";
 
 type Application = {
@@ -20,7 +25,7 @@ type Application = {
   certificatePaymentStatus?: string;
 };
 
-export default function CertificateSuccessPage() {
+function CertificateSuccessContent() {
   const searchParams = useSearchParams();
 
   const applicationId =
@@ -118,14 +123,11 @@ export default function CertificateSuccessPage() {
 
   const certificateReady =
     application?.certificatePaymentStatus ===
-      "PAID";
+    "PAID";
 
   return (
     <main className="min-h-screen bg-[#f4f6f8]">
       <div className="mx-auto max-w-4xl px-4 py-10">
-
-        {/* GOVERNMENT STYLE HEADER */}
-
         <div className="border border-gray-300 bg-white">
 
           <div className="border-b-4 border-[#b45309] bg-[#111827] px-6 py-5 text-white">
@@ -141,8 +143,6 @@ export default function CertificateSuccessPage() {
               Certificate Issuance & Verification
             </p>
           </div>
-
-          {/* SUCCESS */}
 
           <div className="px-6 py-10 text-center">
 
@@ -166,8 +166,6 @@ export default function CertificateSuccessPage() {
               available for download.
             </p>
 
-            {/* APPLICATION ID */}
-
             <div className="mx-auto mt-7 max-w-md border border-gray-300 bg-gray-50 p-5">
               <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
                 Application ID
@@ -177,8 +175,6 @@ export default function CertificateSuccessPage() {
                 {application?.applicationId}
               </p>
             </div>
-
-            {/* STUDENT DETAILS */}
 
             <div className="mx-auto mt-7 max-w-2xl border border-gray-200 bg-white text-left">
 
@@ -192,30 +188,22 @@ export default function CertificateSuccessPage() {
 
                 <Detail
                   label="Student Name"
-                  value={
-                    application?.student?.name
-                  }
+                  value={application?.student?.name}
                 />
 
                 <Detail
                   label="Email"
-                  value={
-                    application?.student?.email
-                  }
+                  value={application?.student?.email}
                 />
 
                 <Detail
                   label="Internship Programme"
-                  value={
-                    application?.internship?.area
-                  }
+                  value={application?.internship?.area}
                 />
 
                 <Detail
                   label="Duration"
-                  value={
-                    application?.internship?.duration
-                  }
+                  value={application?.internship?.duration}
                 />
 
                 <Detail
@@ -234,8 +222,6 @@ export default function CertificateSuccessPage() {
 
               </div>
             </div>
-
-            {/* ACTION */}
 
             {certificateReady ? (
               <div className="mt-8">
@@ -264,8 +250,6 @@ export default function CertificateSuccessPage() {
               </div>
             )}
 
-            {/* PRINT */}
-
             <button
               onClick={() => window.print()}
               className="mt-5 block mx-auto text-sm font-semibold text-gray-600 underline hover:text-gray-900"
@@ -274,8 +258,6 @@ export default function CertificateSuccessPage() {
             </button>
 
           </div>
-
-          {/* FOOTER */}
 
           <div className="border-t bg-gray-50 px-6 py-5 text-center">
             <p className="text-xs font-bold text-gray-700">
@@ -291,6 +273,24 @@ export default function CertificateSuccessPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function CertificateSuccessPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-[#f4f6f8] flex items-center justify-center">
+          <div className="rounded-xl bg-white px-8 py-6 shadow">
+            <p className="text-sm font-semibold text-gray-600">
+              Verifying certificate payment...
+            </p>
+          </div>
+        </main>
+      }
+    >
+      <CertificateSuccessContent />
+    </Suspense>
   );
 }
 

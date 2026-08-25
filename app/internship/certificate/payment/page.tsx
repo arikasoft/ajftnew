@@ -1,17 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-
-declare global {
-  interface Window {
-    Razorpay: any;
-  }
-}
 
 const CERTIFICATE_FEE = 2250;
 
-export default function CertificatePaymentPage() {
+function CertificatePaymentContent() {
   const searchParams = useSearchParams();
 
   const applicationId =
@@ -192,8 +186,25 @@ export default function CertificatePaymentPage() {
         },
       };
 
+      const RazorpayConstructor =
+        (
+          window as unknown as {
+            Razorpay?: new (
+              options: object
+            ) => {
+              open: () => void;
+            };
+          }
+        ).Razorpay;
+
+      if (!RazorpayConstructor) {
+        throw new Error(
+          "Razorpay checkout is not available."
+        );
+      }
+
       const razorpay =
-        new window.Razorpay(options);
+        new RazorpayConstructor(options);
 
       razorpay.open();
     } catch (err) {
@@ -426,6 +437,24 @@ export default function CertificatePaymentPage() {
   );
 }
 
+export default function CertificatePaymentPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-[#f5f6f8] flex items-center justify-center">
+          <div className="rounded-xl border bg-white px-8 py-6 shadow-sm">
+            <p className="text-sm font-semibold text-gray-600">
+              Loading certificate payment...
+            </p>
+          </div>
+        </main>
+      }
+    >
+      <CertificatePaymentContent />
+    </Suspense>
+  );
+}
+
 function Detail({
   label,
   value,
@@ -444,4 +473,4 @@ function Detail({
       </p>
     </div>
   );
-}
+  }

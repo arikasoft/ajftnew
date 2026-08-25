@@ -324,7 +324,7 @@ export default function InternshipAdminDetail({
     getCompletionInfo(
       application?.internship.startDate,
       application?.internship.endDate,
-      application?.duration
+      application?.internship.duration
     );
 
   const canComplete =

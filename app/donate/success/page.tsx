@@ -8,6 +8,7 @@ import {
 } from "react";
 
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
 import {
   CalendarDays,
@@ -151,7 +152,7 @@ function formatDate(value?: string) {
 // PAGE
 // ============================================================
 
-export default function DonationSuccessPage() {
+function DonationSuccessContent() {
   const searchParams =
     useSearchParams();
 
@@ -523,9 +524,19 @@ export default function DonationSuccessPage() {
   // ==========================================================
 
   async function downloadReceipt() {
+    const currentDonation = donation;
+
+    if (!currentDonation) {
+      setError(
+        "Donation details are not available."
+      );
+
+      return;
+    }
+
     const id =
       clean(
-        donation?._id
+        currentDonation._id
       );
 
     if (!id) {
@@ -614,7 +625,7 @@ export default function DonationSuccessPage() {
 
       link.download =
         `${
-          donation.receiptNo ||
+          currentDonation.receiptNo ||
           "AJFT-Donation"
         }.pdf`;
 
@@ -655,9 +666,19 @@ export default function DonationSuccessPage() {
   // ==========================================================
 
   function viewReceipt() {
+    const currentDonation = donation;
+
+    if (!currentDonation) {
+      setError(
+        "Donation details are not available."
+      );
+
+      return;
+    }
+
     const id =
       clean(
-        donation?._id
+        currentDonation._id
       );
 
     if (!id) {
@@ -1401,6 +1422,33 @@ export default function DonationSuccessPage() {
       </section>
 
     </main>
+  );
+}
+
+export default function DonationSuccessPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center bg-[#F3F6F4] px-4">
+          <div className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-7 text-center shadow-xl">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#E8F4EF]">
+              <Loader2
+                size={28}
+                className="animate-spin text-[#08744F]"
+              />
+            </div>
+            <h1 className="mt-4 text-base font-bold text-[#073B4C]">
+              Loading donation details...
+            </h1>
+            <p className="mt-2 text-[9px] leading-5 text-gray-500">
+              Please wait...
+            </p>
+          </div>
+        </main>
+      }
+    >
+      <DonationSuccessContent />
+    </Suspense>
   );
 }
 

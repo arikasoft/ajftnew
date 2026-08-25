@@ -14,7 +14,12 @@ import {
   FileText,
   Send,
 } from "lucide-react";
-import { FormEvent, useState } from "react";
+import {
+  FormEvent,
+  useState,
+} from "react";
+
+import type { ReactNode } from "react";
 
 export default function NRIDonationPage() {
   const [submitted, setSubmitted] = useState(false);

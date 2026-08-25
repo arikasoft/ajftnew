@@ -45,7 +45,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "visitorId and sessionId are required",
+          message:
+            "visitorId and sessionId are required",
         },
         {
           status: 400,
@@ -60,47 +61,82 @@ export async function POST(request: NextRequest) {
     if (type === "pageview") {
       const now = new Date();
 
-      let session = await VisitorSession.findOne({
-        sessionId,
-      });
+      let session =
+        await VisitorSession.findOne({
+          sessionId,
+        });
 
       /* ------------------------------------------
          NEW SESSION
       ------------------------------------------ */
 
       if (!session) {
-        session = await VisitorSession.create({
-          visitorId,
-          sessionId,
+        session =
+          await VisitorSession.create({
+            visitorId,
+            sessionId,
 
-          landingPage: path || "/",
-          exitPage: path || "/",
+            landingPage:
+              path || "/",
 
-          referrer: referrer || null,
+            exitPage:
+              path || "/",
 
-          source: source || "direct",
-          medium: medium || "none",
+            // Do not send null to a schema
+            // that expects string | undefined.
+            referrer:
+              typeof referrer === "string" &&
+              referrer.trim()
+                ? referrer.trim()
+                : undefined,
 
-          deviceType: deviceType || "unknown",
-          browser: browser || "unknown",
-          operatingSystem:
-            operatingSystem || "unknown",
+            source:
+              typeof source === "string" &&
+              source.trim()
+                ? source.trim()
+                : "direct",
 
-          screenWidth:
-            typeof screenWidth === "number"
-              ? screenWidth
-              : null,
+            medium:
+              typeof medium === "string" &&
+              medium.trim()
+                ? medium.trim()
+                : "none",
 
-          screenHeight:
-            typeof screenHeight === "number"
-              ? screenHeight
-              : null,
+            deviceType:
+              typeof deviceType === "string" &&
+              deviceType.trim()
+                ? deviceType.trim()
+                : "unknown",
 
-          pageCount: 1,
+            browser:
+              typeof browser === "string" &&
+              browser.trim()
+                ? browser.trim()
+                : "unknown",
 
-          startedAt: now,
-          lastSeenAt: now,
-        });
+            operatingSystem:
+              typeof operatingSystem ===
+                "string" &&
+              operatingSystem.trim()
+                ? operatingSystem.trim()
+                : "unknown",
+
+            screenWidth:
+              typeof screenWidth === "number"
+                ? screenWidth
+                : undefined,
+
+            screenHeight:
+              typeof screenHeight === "number"
+                ? screenHeight
+                : undefined,
+
+            pageCount: 1,
+
+            startedAt: now,
+
+            lastSeenAt: now,
+          });
       }
 
       /* ------------------------------------------
@@ -127,15 +163,23 @@ export async function POST(request: NextRequest) {
         visitorId,
         sessionId,
 
-        path: path || "/",
+        path:
+          typeof path === "string" &&
+          path.trim()
+            ? path.trim()
+            : "/",
 
         title:
-          typeof title === "string"
-            ? title
-            : null,
+          typeof title === "string" &&
+          title.trim()
+            ? title.trim()
+            : undefined,
 
         referrer:
-          referrer || null,
+          typeof referrer === "string" &&
+          referrer.trim()
+            ? referrer.trim()
+            : undefined,
 
         viewedAt: now,
       });
@@ -155,7 +199,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           {
             success: false,
-            message: "eventName is required",
+            message:
+              "eventName is required",
           },
           {
             status: 400,
@@ -163,23 +208,33 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const event = await VisitorEvent.create({
-        visitorId,
-        sessionId,
+      const event =
+        await VisitorEvent.create({
+          visitorId,
+          sessionId,
 
-        eventName,
+          eventName,
 
-        eventCategory:
-          eventCategory || "general",
+          eventCategory:
+            typeof eventCategory === "string" &&
+            eventCategory.trim()
+              ? eventCategory.trim()
+              : "general",
 
-        page:
-          path || null,
+          page:
+            typeof path === "string" &&
+            path.trim()
+              ? path.trim()
+              : undefined,
 
-        eventData:
-          eventData || {},
+          eventData:
+            eventData &&
+            typeof eventData === "object"
+              ? eventData
+              : {},
 
-        createdAt: new Date(),
-      });
+          createdAt: new Date(),
+        });
 
       await VisitorSession.findOneAndUpdate(
         {
@@ -222,7 +277,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        message: "Analytics server error",
+        message:
+          "Analytics server error",
       },
       {
         status: 500,

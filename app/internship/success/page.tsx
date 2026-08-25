@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
 import {
   CheckCircle2,
@@ -12,26 +13,19 @@ import {
   ArrowRight,
 } from "lucide-react";
 
-export default function InternshipSuccessPage() {
-  const searchParams =
-    useSearchParams();
+function InternshipSuccessContent() {
+  const searchParams = useSearchParams();
 
   const applicationId =
-    searchParams.get(
-      "applicationId"
-    );
+    searchParams.get("applicationId");
 
   const emailSent =
-    searchParams.get(
-      "emailSent"
-    ) === "1";
+    searchParams.get("emailSent") === "1";
 
   if (!applicationId) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#F7F5FF] px-6">
-
         <div className="max-w-lg rounded-[2rem] bg-white p-8 text-center shadow-xl">
-
           <h1 className="text-xl font-black text-red-500">
             Application ID Missing
           </h1>
@@ -47,9 +41,7 @@ export default function InternshipSuccessPage() {
             Apply Again
             <ArrowRight size={14} />
           </Link>
-
         </div>
-
       </main>
     );
   }
@@ -66,12 +58,10 @@ export default function InternshipSuccessPage() {
         <div className="relative mx-auto max-w-4xl px-6 py-20 text-center">
 
           <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-xl">
-
             <CheckCircle2
               size={42}
               className="text-[#14B8A6]"
             />
-
           </div>
 
           <p className="mt-8 text-[9px] font-black uppercase tracking-[0.3em] text-[#5EEAD4]">
@@ -99,9 +89,7 @@ export default function InternshipSuccessPage() {
         <div className="rounded-[2rem] border border-[#DDD6FE] bg-white p-7 text-center shadow-lg sm:p-10">
 
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-[#EDE9FE] text-[#7C3AED]">
-
             <ShieldCheck size={24} />
-
           </div>
 
           <p className="mt-5 text-[9px] font-black uppercase tracking-[0.25em] text-slate-400">
@@ -109,11 +97,9 @@ export default function InternshipSuccessPage() {
           </p>
 
           <div className="mt-3 rounded-2xl bg-[#21164F] px-5 py-5">
-
             <p className="font-mono text-xl font-black tracking-wider text-[#FBBF24] sm:text-2xl">
               {applicationId}
             </p>
-
           </div>
 
           <p className="mt-4 text-[10px] leading-5 text-slate-500">
@@ -164,18 +150,15 @@ export default function InternshipSuccessPage() {
             <div>
 
               <h2 className="text-sm font-black text-[#172033]">
-
                 {emailSent
                   ? "Application PDF Sent"
                   : "Application Saved"}
               </h2>
 
               <p className="mt-2 text-[10px] leading-5 text-slate-500">
-
                 {emailSent
                   ? "Your application PDF and Application ID have been sent to your registered email address."
                   : "Your application has been saved successfully, but the confirmation email could not be sent. Please contact AJFT if you do not receive it."}
-
               </p>
 
             </div>
@@ -256,6 +239,45 @@ export default function InternshipSuccessPage() {
     </main>
   );
 }
+
+/* =====================================================
+   SUSPENSE WRAPPER
+===================================================== */
+
+export default function InternshipSuccessPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center bg-[#F7F5FF] px-6">
+          <div className="rounded-[2rem] bg-white px-8 py-7 text-center shadow-xl">
+
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#EDE9FE]">
+              <ShieldCheck
+                size={24}
+                className="text-[#7C3AED]"
+              />
+            </div>
+
+            <p className="mt-4 text-sm font-black text-[#172033]">
+              Loading application details...
+            </p>
+
+            <p className="mt-1 text-[10px] text-slate-500">
+              Please wait.
+            </p>
+
+          </div>
+        </main>
+      }
+    >
+      <InternshipSuccessContent />
+    </Suspense>
+  );
+}
+
+/* =====================================================
+   STEP
+===================================================== */
 
 function Step({
   number,
