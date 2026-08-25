@@ -43,6 +43,7 @@ type MenuItem = {
   description: string;
   href: string;
   icon: React.ReactNode;
+  color?: string;
 };
 
 type NavigationMenu = {
@@ -259,12 +260,19 @@ const navigation: NavigationMenu[] = [
         href: "/careers",
         icon: <Briefcase size={16} />,
       },
+
+      /* =====================================================
+         DONATE — ONLY THIS ITEM HAS SPECIAL COLOR
+      ====================================================== */
+
       {
         title: "Donate",
         description:
           "Support our charitable activities.",
         href: "/donate",
         icon: <Heart size={16} />,
+        color:
+          "bg-gradient-to-r from-[#E85D04] via-[#F48C06] to-[#FFB703] text-white shadow-lg shadow-orange-500/20",
       },
     ],
   },
@@ -422,6 +430,7 @@ export default function Header() {
         setActiveMenu(null);
         setMobileOpen(false);
         setSearchOpen(false);
+        setMobileMenu(null);
       }
     };
 
@@ -450,27 +459,23 @@ export default function Header() {
   return (
     <>
       {/* =====================================================
-          HEADER
+          TOP BAR
       ====================================================== */}
 
       <header className="sticky top-0 z-[9999] w-full">
-
-        {/* ===================================================
-            SOCIAL BAR
-        ==================================================== */}
 
         <div
           className={`
             hidden
             overflow-hidden
-            bg-[#102A43]
+            bg-[#073B4C]
             transition-all
-            duration-300
+            duration-500
             lg:block
             ${
               scrolled
                 ? "h-0 opacity-0"
-                : "h-[30px] opacity-100"
+                : "h-[32px] opacity-100"
             }
           `}
         >
@@ -482,12 +487,50 @@ export default function Header() {
               h-full
               max-w-[1440px]
               items-center
-              justify-end
+              justify-between
               px-6
             "
           >
 
-            <div className="flex items-center gap-1.5">
+            {/* LEFT */}
+
+            <div className="flex items-center gap-2">
+
+              <ShieldCheck
+                size={11}
+                className="text-[#F2C94C]"
+              />
+
+              <span
+                className="
+                  text-[9px]
+                  font-bold
+                  uppercase
+                  tracking-[0.15em]
+                  text-white/85
+                "
+              >
+                Registered Public Charitable Trust Act 1882
+              </span>
+
+            </div>
+
+            {/* RIGHT */}
+
+            <div className="flex items-center gap-2">
+
+              <span
+                className="
+                  mr-1
+                  text-[8px]
+                  font-semibold
+                  uppercase
+                  tracking-[0.18em]
+                  text-white/40
+                "
+              >
+                Follow Us
+              </span>
 
               {socialLinks.map(
                 (social) => (
@@ -504,11 +547,16 @@ export default function Header() {
                       items-center
                       justify-center
                       rounded-full
-                      bg-white/10
+                      border
+                      border-white/10
+                      bg-white/5
                       text-white/70
-                      transition
-                      hover:bg-white
-                      hover:text-[#102A43]
+                      transition-all
+                      duration-300
+                      hover:-translate-y-0.5
+                      hover:border-[#D3A640]
+                      hover:bg-[#D3A640]
+                      hover:text-white
                     "
                   >
                     {social.icon}
@@ -523,20 +571,20 @@ export default function Header() {
         </div>
 
         {/* ===================================================
-            MAIN NAVIGATION
+            MAIN NAV
         ==================================================== */}
 
         <div
           className={`
             border-b
             transition-all
-            duration-300
+            duration-500
             ${
               scrolled
                 ? `
                   border-[#D7E0E5]
                   bg-white/95
-                  shadow-[0_5px_25px_rgba(16,42,67,0.10)]
+                  shadow-[0_8px_30px_rgba(16,42,67,0.10)]
                   backdrop-blur-xl
                 `
                 : `
@@ -558,11 +606,11 @@ export default function Header() {
               sm:px-5
               md:px-7
               transition-all
-              duration-300
+              duration-500
               ${
                 scrolled
-                  ? "h-[55px]"
-                  : "h-[66px]"
+                  ? "h-[56px]"
+                  : "h-[70px]"
               }
             `}
           >
@@ -573,10 +621,12 @@ export default function Header() {
 
             <Link
               href="/"
-              onClick={() =>
-                setActiveMenu(null)
-              }
+              onClick={() => {
+                setActiveMenu(null);
+                setMobileMenu(null);
+              }}
               className="
+                group
                 flex
                 shrink-0
                 items-center
@@ -591,8 +641,11 @@ export default function Header() {
                   overflow-hidden
                   rounded-full
                   bg-white
+                  ring-1
+                  ring-[#E2E9ED]
                   transition-all
-                  duration-300
+                  duration-500
+                  group-hover:ring-[#C59A3A]
                   ${
                     scrolled
                       ? "h-9 w-9"
@@ -607,7 +660,12 @@ export default function Header() {
                   fill
                   priority
                   sizes="48px"
-                  className="object-contain"
+                  className="
+                    object-contain
+                    transition-transform
+                    duration-500
+                    group-hover:scale-105
+                  "
                 />
 
               </div>
@@ -620,6 +678,8 @@ export default function Header() {
                     font-bold
                     leading-none
                     text-[#102A43]
+                    transition-all
+                    duration-300
                     ${
                       scrolled
                         ? "text-[15px]"
@@ -659,6 +719,7 @@ export default function Header() {
               <Link
                 href="/"
                 className="
+                  group
                   flex
                   items-center
                   gap-1
@@ -668,19 +729,25 @@ export default function Header() {
                   text-[11px]
                   font-semibold
                   text-[#526575]
-                  transition
+                  transition-all
+                  duration-300
                   hover:bg-[#EEF6F8]
                   hover:text-[#176B87]
                 "
               >
 
-                <Home size={12} />
+                <Home
+                  size={12}
+                  className="transition-transform group-hover:-translate-y-0.5"
+                />
 
                 Home
 
               </Link>
 
-              {/* DROPDOWN MENUS */}
+              {/* =================================================
+                  DROPDOWNS
+              ================================================== */}
 
               {navigation.map(
                 (menu) => (
@@ -688,9 +755,7 @@ export default function Header() {
                     key={menu.label}
                     className="relative"
                     onMouseEnter={() =>
-                      setActiveMenu(
-                        menu.label
-                      )
+                      setActiveMenu(menu.label)
                     }
                     onMouseLeave={() =>
                       setActiveMenu(null)
@@ -701,8 +766,7 @@ export default function Header() {
                       type="button"
                       aria-haspopup="true"
                       aria-expanded={
-                        activeMenu ===
-                        menu.label
+                        activeMenu === menu.label
                       }
                       className={`
                         flex
@@ -713,10 +777,10 @@ export default function Header() {
                         py-2
                         text-[11px]
                         font-semibold
-                        transition
+                        transition-all
+                        duration-300
                         ${
-                          activeMenu ===
-                          menu.label
+                          activeMenu === menu.label
                             ? "bg-[#EEF6F8] text-[#176B87]"
                             : "text-[#526575] hover:bg-[#EEF6F8] hover:text-[#176B87]"
                         }
@@ -729,9 +793,9 @@ export default function Header() {
                         size={11}
                         className={`
                           transition-transform
+                          duration-300
                           ${
-                            activeMenu ===
-                            menu.label
+                            activeMenu === menu.label
                               ? "rotate-180"
                               : ""
                           }
@@ -740,34 +804,89 @@ export default function Header() {
 
                     </button>
 
-                    {/* =================================================
-                        MEGA DROPDOWN
-                    ================================================== */}
+                    {/* MEGA MENU */}
 
-                    {activeMenu ===
-                      menu.label && (
+                    {activeMenu === menu.label && (
                       <div
                         className="
                           absolute
                           left-1/2
                           top-full
-                          w-[760px]
+                          w-[790px]
                           -translate-x-1/2
-                          pt-2
+                          pt-3
                         "
                       >
 
                         <div
                           className="
                             overflow-hidden
-                            rounded-2xl
+                            rounded-[1.35rem]
                             border
                             border-[#DCE4EA]
                             bg-white
                             p-3
-                            shadow-[0_25px_70px_rgba(16,42,67,0.18)]
+                            shadow-[0_30px_80px_rgba(16,42,67,0.20)]
                           "
                         >
+
+                          {/* TOP LINE */}
+
+                          <div
+                            className="
+                              mb-3
+                              flex
+                              items-center
+                              justify-between
+                              border-b
+                              border-[#EEF2F4]
+                              px-2
+                              pb-3
+                            "
+                          >
+
+                            <div>
+
+                              <p
+                                className="
+                                  text-[8px]
+                                  font-black
+                                  uppercase
+                                  tracking-[0.22em]
+                                  text-[#176B87]
+                                "
+                              >
+                                Anand Jivan Foundation Trust
+                              </p>
+
+                              <p
+                                className="
+                                  mt-1
+                                  text-[10px]
+                                  font-bold
+                                  text-[#526575]
+                                "
+                              >
+                                {menu.label}
+                              </p>
+
+                            </div>
+
+                            <span
+                              className="
+                                rounded-full
+                                bg-[#F5F8F7]
+                                px-3
+                                py-1
+                                text-[8px]
+                                font-bold
+                                text-[#8997A2]
+                              "
+                            >
+                              Explore
+                            </span>
+
+                          </div>
 
                           <div
                             className="
@@ -778,99 +897,122 @@ export default function Header() {
                           >
 
                             {menu.items.map(
-                              (item) => (
-                                <Link
-                                  key={
-                                    item.href
-                                  }
-                                  href={
-                                    item.href
-                                  }
-                                  className="
-                                    group
-                                    rounded-xl
-                                    p-3
-                                    transition
-                                    hover:bg-[#F3F8FA]
-                                  "
-                                >
+                              (item) => {
 
-                                  <div className="flex gap-3">
+                                const isDonate =
+                                  item.title === "Donate";
 
-                                    <div
-                                      className="
-                                        flex
-                                        h-9
-                                        w-9
-                                        shrink-0
-                                        items-center
-                                        justify-center
-                                        rounded-lg
-                                        bg-[#EEF6F8]
-                                        text-[#176B87]
-                                        transition
-                                        group-hover:bg-[#176B87]
-                                        group-hover:text-white
-                                      "
-                                    >
-                                      {item.icon}
-                                    </div>
+                                return (
+                                  <Link
+                                    key={item.href}
+                                    href={item.href}
+                                    className={`
+                                      group
+                                      rounded-xl
+                                      p-3
+                                      transition-all
+                                      duration-300
+                                      ${
+                                        isDonate
+                                          ? "bg-gradient-to-r from-[#E85D04] via-[#F48C06] to-[#FFB703] shadow-md shadow-orange-500/15 hover:-translate-y-0.5"
+                                          : "hover:bg-[#F3F8FA] hover:-translate-y-0.5"
+                                      }
+                                    `}
+                                  >
 
-                                    <div className="min-w-0 flex-1">
+                                    <div className="flex gap-3">
+
+                                      {/* ICON */}
 
                                       <div
-                                        className="
+                                        className={`
                                           flex
+                                          h-9
+                                          w-9
+                                          shrink-0
                                           items-center
-                                          justify-between
-                                          gap-2
-                                        "
+                                          justify-center
+                                          rounded-lg
+                                          transition-all
+                                          duration-300
+                                          ${
+                                            isDonate
+                                              ? "bg-white/20 text-white"
+                                              : "bg-[#EEF6F8] text-[#176B87] group-hover:bg-[#176B87] group-hover:text-white"
+                                          }
+                                        `}
                                       >
+                                        {item.icon}
+                                      </div>
 
-                                        <h3
+                                      {/* TEXT */}
+
+                                      <div className="min-w-0 flex-1">
+
+                                        <div
                                           className="
-                                            text-[12px]
-                                            font-bold
-                                            text-[#243B53]
-                                            group-hover:text-[#176B87]
+                                            flex
+                                            items-center
+                                            justify-between
+                                            gap-2
                                           "
                                         >
-                                          {item.title}
-                                        </h3>
 
-                                        <ArrowUpRight
-                                          size={13}
-                                          className="
-                                            shrink-0
-                                            text-[#C4CDD3]
-                                            group-hover:text-[#C59A3A]
-                                          "
-                                        />
+                                          <h3
+                                            className={`
+                                              text-[12px]
+                                              font-bold
+                                              ${
+                                                isDonate
+                                                  ? "text-white"
+                                                  : "text-[#243B53] group-hover:text-[#176B87]"
+                                              }
+                                            `}
+                                          >
+                                            {item.title}
+                                          </h3>
+
+                                          <ArrowUpRight
+                                            size={13}
+                                            className={`
+                                              shrink-0
+                                              ${
+                                                isDonate
+                                                  ? "text-white/75"
+                                                  : "text-[#C4CDD3] group-hover:text-[#C59A3A]"
+                                              }
+                                            `}
+                                          />
+
+                                        </div>
+
+                                        <p
+                                          className={`
+                                            mt-1
+                                            text-[9px]
+                                            leading-4
+                                            ${
+                                              isDonate
+                                                ? "text-white/75"
+                                                : "text-[#7A8A98]"
+                                            }
+                                          `}
+                                        >
+                                          {item.description}
+                                        </p>
 
                                       </div>
 
-                                      <p
-                                        className="
-                                          mt-1
-                                          text-[9px]
-                                          leading-4
-                                          text-[#7A8A98]
-                                        "
-                                      >
-                                        {item.description}
-                                      </p>
-
                                     </div>
 
-                                  </div>
-
-                                </Link>
-                              )
+                                  </Link>
+                                );
+                              }
                             )}
 
                           </div>
 
-                          {/* DROPDOWN CTA */}
+                          {/* CTA */}
 
                           <div
                             className="
@@ -882,19 +1024,32 @@ export default function Header() {
                               rounded-xl
                               bg-gradient-to-r
                               from-[#102A43]
+                              via-[#145B70]
                               to-[#176B87]
                               px-5
-                              py-3
+                              py-3.5
                             "
                           >
 
                             <div>
 
-                              <p className="text-[11px] font-bold text-white">
+                              <p
+                                className="
+                                  text-[11px]
+                                  font-black
+                                  text-white
+                                "
+                              >
                                 Let's Make Better Life
                               </p>
 
-                              <p className="mt-0.5 text-[8px] text-white/55">
+                              <p
+                                className="
+                                  mt-0.5
+                                  text-[8px]
+                                  text-white/55
+                                "
+                              >
                                 Support meaningful community initiatives.
                               </p>
 
@@ -908,14 +1063,18 @@ export default function Header() {
                                 items-center
                                 gap-1.5
                                 rounded-full
-                                bg-[#D3A640]
+                                bg-gradient-to-r
+                                from-[#E85D04]
+                                to-[#FFB703]
                                 px-4
                                 py-2
                                 text-[9px]
-                                font-bold
+                                font-black
                                 text-white
-                                transition
-                                hover:bg-[#B98E2E]
+                                shadow-lg
+                                transition-all
+                                hover:-translate-y-0.5
+                                hover:shadow-xl
                               "
                             >
 
@@ -948,6 +1107,7 @@ export default function Header() {
               <Link
                 href="/contact"
                 className="
+                  group
                   flex
                   items-center
                   gap-1
@@ -957,13 +1117,17 @@ export default function Header() {
                   text-[11px]
                   font-semibold
                   text-[#526575]
-                  transition
+                  transition-all
+                  duration-300
                   hover:bg-[#EEF6F8]
                   hover:text-[#176B87]
                 "
               >
 
-                <Mail size={12} />
+                <Mail
+                  size={12}
+                  className="group-hover:-translate-y-0.5"
+                />
 
                 Contact
 
@@ -981,9 +1145,7 @@ export default function Header() {
 
               <button
                 type="button"
-                onClick={() =>
-                  setSearchOpen(true)
-                }
+                onClick={() => setSearchOpen(true)}
                 aria-label="Search website"
                 className="
                   hidden
@@ -993,15 +1155,13 @@ export default function Header() {
                   justify-center
                   rounded-full
                   text-[#607585]
-                  transition
+                  transition-all
                   hover:bg-[#EEF6F8]
                   hover:text-[#176B87]
                   lg:flex
                 "
               >
-
                 <Search size={16} />
-
               </button>
 
               {/* VERIFY */}
@@ -1020,8 +1180,9 @@ export default function Header() {
                   text-[9px]
                   font-bold
                   text-[#526575]
-                  transition
+                  transition-all
                   hover:border-[#176B87]
+                  hover:bg-[#EEF6F8]
                   hover:text-[#176B87]
                   lg:flex
                 "
@@ -1033,7 +1194,7 @@ export default function Header() {
 
               </Link>
 
-              {/* DONATE */}
+              {/* ONLY DONATE BUTTON HAS SPECIAL COLOR */}
 
               <Link
                 href="/donate"
@@ -1042,17 +1203,22 @@ export default function Header() {
                   items-center
                   gap-1.5
                   rounded-full
-                  bg-[#176B87]
-                  px-3.5
+                  bg-gradient-to-r
+                  from-[#E85D04]
+                  via-[#F48C06]
+                  to-[#FFB703]
+                  px-4
                   py-2
                   text-[9px]
-                  font-bold
+                  font-black
                   text-white
-                  shadow-sm
-                  transition
+                  shadow-md
+                  shadow-orange-500/20
+                  transition-all
+                  duration-300
                   hover:-translate-y-0.5
-                  hover:bg-[#12566D]
-                  hover:shadow-md
+                  hover:shadow-lg
+                  hover:shadow-orange-500/30
                   lg:flex
                 "
               >
@@ -1064,15 +1230,15 @@ export default function Header() {
 
                 Donate
 
+                <ArrowUpRight size={11} />
+
               </Link>
 
-              {/* MOBILE MENU */}
+              {/* MOBILE */}
 
               <button
                 type="button"
-                onClick={() =>
-                  setMobileOpen(true)
-                }
+                onClick={() => setMobileOpen(true)}
                 aria-label="Open menu"
                 className="
                   flex
@@ -1083,12 +1249,13 @@ export default function Header() {
                   rounded-full
                   bg-[#102A43]
                   text-white
+                  shadow-md
+                  transition
+                  hover:bg-[#176B87]
                   xl:hidden
                 "
               >
-
                 <Menu size={18} />
-
               </button>
 
             </div>
@@ -1124,23 +1291,17 @@ export default function Header() {
             "
           >
 
-            <div
-              className="
-                flex
-                items-center
-                justify-between
-              "
-            >
+            <div className="flex items-center justify-between">
 
               <div>
 
                 <p
                   className="
                     text-[8px]
-                    font-bold
+                    font-black
                     uppercase
                     tracking-[0.25em]
-                    text-[#D9B65A]
+                    text-[#F2C94C]
                   "
                 >
                   Anand Jivan Foundation Trust
@@ -1154,9 +1315,7 @@ export default function Header() {
 
               <button
                 type="button"
-                onClick={() =>
-                  setSearchOpen(false)
-                }
+                onClick={() => setSearchOpen(false)}
                 aria-label="Close search"
                 className="
                   flex
@@ -1167,11 +1326,11 @@ export default function Header() {
                   rounded-full
                   bg-white/10
                   text-white
+                  transition
+                  hover:bg-white/20
                 "
               >
-
                 <X size={18} />
-
               </button>
 
             </div>
@@ -1217,9 +1376,9 @@ export default function Header() {
                   className="
                     mb-3
                     text-[8px]
-                    font-bold
+                    font-black
                     uppercase
-                    tracking-wider
+                    tracking-[0.2em]
                     text-white/30
                   "
                 >
@@ -1240,32 +1399,33 @@ export default function Header() {
                     ["Reports", "/reports"],
                     ["Gallery", "/gallery"],
                     ["Certificates", "/certificates"],
+                    ["Policies", "/policies"],
+                    ["Donate", "/donate"],
                     ["Contact", "/contact"],
-                  ].map(
-                    ([label, href]) => (
-                      <Link
-                        key={href}
-                        href={href}
-                        onClick={() =>
-                          setSearchOpen(false)
+                  ].map(([label, href]) => (
+
+                    <Link
+                      key={href}
+                      href={href}
+                      onClick={() => setSearchOpen(false)}
+                      className={`
+                        rounded-full
+                        px-4
+                        py-2
+                        text-[9px]
+                        font-bold
+                        transition-all
+                        ${
+                          label === "Donate"
+                            ? "bg-gradient-to-r from-[#E85D04] to-[#FFB703] text-white"
+                            : "bg-white/10 text-white/70 hover:bg-white/20 hover:text-white"
                         }
-                        className="
-                          rounded-full
-                          bg-white/10
-                          px-4
-                          py-2
-                          text-[9px]
-                          font-semibold
-                          text-white/70
-                          transition
-                          hover:bg-white/20
-                          hover:text-white
-                        "
-                      >
-                        {label}
-                      </Link>
-                    )
-                  )}
+                      `}
+                    >
+                      {label}
+                    </Link>
+
+                  ))}
 
                 </div>
 
@@ -1330,19 +1490,16 @@ export default function Header() {
                 justify-between
                 border-b
                 border-[#E1E8EC]
-                bg-white
+                bg-white/95
                 px-4
+                backdrop-blur-xl
               "
             >
 
               <Link
                 href="/"
                 onClick={closeMobile}
-                className="
-                  flex
-                  items-center
-                  gap-2
-                "
+                className="flex items-center gap-2"
               >
 
                 <div className="relative h-9 w-9">
@@ -1401,11 +1558,11 @@ export default function Header() {
                   rounded-full
                   bg-[#F1F5F7]
                   text-[#526575]
+                  transition
+                  hover:bg-[#E5EDF1]
                 "
               >
-
                 <X size={16} />
-
               </button>
 
             </div>
@@ -1441,167 +1598,182 @@ export default function Header() {
 
               {/* NAVIGATION */}
 
-              {navigation.map(
-                (menu) => (
-                  <div
-                    key={menu.label}
+              {navigation.map((menu) => (
+
+                <div
+                  key={menu.label}
+                  className="border-b border-[#E7ECEF]"
+                >
+
+                  <button
+                    type="button"
+                    aria-expanded={
+                      mobileMenu === menu.label
+                    }
+                    onClick={() =>
+                      setMobileMenu(
+                        mobileMenu === menu.label
+                          ? null
+                          : menu.label
+                      )
+                    }
                     className="
-                      border-b
-                      border-[#E7ECEF]
+                      flex
+                      w-full
+                      items-center
+                      justify-between
+                      px-3.5
+                      py-3.5
+                      text-left
+                      text-xs
+                      font-bold
+                      text-[#243B53]
                     "
                   >
 
-                    <button
-                      type="button"
-                      aria-expanded={
-                        mobileMenu ===
-                        menu.label
-                      }
-                      onClick={() =>
-                        setMobileMenu(
-                          mobileMenu ===
-                            menu.label
-                            ? null
-                            : menu.label
-                        )
-                      }
+                    {menu.label}
+
+                    <ChevronDown
+                      size={15}
+                      className={`
+                        transition-transform
+                        ${
+                          mobileMenu === menu.label
+                            ? "rotate-180 text-[#176B87]"
+                            : ""
+                        }
+                      `}
+                    />
+
+                  </button>
+
+                  {mobileMenu === menu.label && (
+
+                    <div
                       className="
-                        flex
-                        w-full
-                        items-center
-                        justify-between
-                        px-3.5
-                        py-3.5
-                        text-left
-                        text-xs
-                        font-bold
-                        text-[#243B53]
+                        mb-2
+                        ml-2
+                        border-l-2
+                        border-[#C59A3A]/40
+                        pl-2
                       "
                     >
 
-                      {menu.label}
+                      {menu.items.map((item) => {
 
-                      <ChevronDown
-                        size={15}
-                        className={`
-                          transition-transform
-                          ${
-                            mobileMenu ===
-                            menu.label
-                              ? "rotate-180 text-[#176B87]"
-                              : ""
-                          }
-                        `}
-                      />
+                        const isDonate =
+                          item.title === "Donate";
 
-                    </button>
-
-                    {mobileMenu ===
-                      menu.label && (
-                      <div
-                        className="
-                          mb-2
-                          ml-2
-                          border-l-2
-                          border-[#C59A3A]/40
-                          pl-2
-                        "
-                      >
-
-                        {menu.items.map(
-                          (item) => (
-                            <Link
-                              key={
-                                item.href
+                        return (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            onClick={closeMobile}
+                            className={`
+                              group
+                              flex
+                              gap-2.5
+                              rounded-lg
+                              px-3
+                              py-2.5
+                              transition-all
+                              ${
+                                isDonate
+                                  ? "bg-gradient-to-r from-[#E85D04] to-[#FFB703] text-white shadow-sm"
+                                  : "hover:bg-[#F4F8FA]"
                               }
-                              href={
-                                item.href
-                              }
-                              onClick={
-                                closeMobile
-                              }
-                              className="
+                            `}
+                          >
+
+                            {/* ICON */}
+
+                            <div
+                              className={`
                                 flex
-                                gap-2.5
+                                h-7
+                                w-7
+                                shrink-0
+                                items-center
+                                justify-center
                                 rounded-lg
-                                px-3
-                                py-2.5
-                                transition
-                                hover:bg-[#F4F8FA]
+                                ${
+                                  isDonate
+                                    ? "bg-white/20 text-white"
+                                    : "bg-[#EEF6F8] text-[#176B87]"
+                                }
+                              `}
+                            >
+                              {item.icon}
+                            </div>
+
+                            {/* TEXT */}
+
+                            <div
+                              className="
+                                min-w-0
+                                flex-1
                               "
                             >
 
                               <div
                                 className="
                                   flex
-                                  h-7
-                                  w-7
-                                  shrink-0
                                   items-center
-                                  justify-center
-                                  rounded-lg
-                                  bg-[#EEF6F8]
-                                  text-[#176B87]
+                                  justify-between
                                 "
                               >
-                                {item.icon}
-                              </div>
-
-                              <div
-                                className="
-                                  min-w-0
-                                  flex-1
-                                "
-                              >
-
-                                <div
-                                  className="
-                                    flex
-                                    items-center
-                                    justify-between
-                                  "
-                                >
-
-                                  <p
-                                    className="
-                                      text-[11px]
-                                      font-bold
-                                      text-[#243B53]
-                                    "
-                                  >
-                                    {item.title}
-                                  </p>
-
-                                  <ArrowUpRight
-                                    size={11}
-                                    className="text-[#C59A3A]"
-                                  />
-
-                                </div>
 
                                 <p
-                                  className="
-                                    mt-0.5
-                                    text-[8px]
-                                    leading-4
-                                    text-[#7A8A98]
-                                  "
+                                  className={`
+                                    text-[11px]
+                                    font-bold
+                                    ${
+                                      isDonate
+                                        ? "text-white"
+                                        : "text-[#243B53]"
+                                    }
+                                  `}
                                 >
-                                  {item.description}
+                                  {item.title}
                                 </p>
+
+                                <ArrowUpRight
+                                  size={11}
+                                  className={
+                                    isDonate
+                                      ? "text-white/70"
+                                      : "text-[#C59A3A]"
+                                  }
+                                />
 
                               </div>
 
-                            </Link>
-                          )
-                        )}
+                              <p
+                                className={`
+                                  mt-0.5
+                                  text-[8px]
+                                  leading-4
+                                  ${
+                                    isDonate
+                                      ? "text-white/75"
+                                      : "text-[#7A8A98]"
+                                  }
+                                `}
+                              >
+                                {item.description}
+                              </p>
 
-                      </div>
-                    )}
+                            </div>
 
-                  </div>
-                )
-              )}
+                          </Link>
+                        );
+                      })}
+
+                    </div>
+                  )}
+
+                </div>
+              ))}
 
               {/* CONTACT */}
 
@@ -1644,6 +1816,9 @@ export default function Header() {
                   text-[10px]
                   font-bold
                   text-[#176B87]
+                  transition
+                  hover:border-[#176B87]
+                  hover:bg-[#EEF6F8]
                 "
               >
 
@@ -1653,7 +1828,7 @@ export default function Header() {
 
               </Link>
 
-              {/* DONATE */}
+              {/* MOBILE DONATE */}
 
               <Link
                 href="/donate"
@@ -1665,13 +1840,19 @@ export default function Header() {
                   justify-center
                   gap-2
                   rounded-xl
-                  bg-[#176B87]
+                  bg-gradient-to-r
+                  from-[#E85D04]
+                  via-[#F48C06]
+                  to-[#FFB703]
                   px-4
                   py-3
                   text-xs
-                  font-bold
+                  font-black
                   text-white
                   shadow-lg
+                  shadow-orange-500/20
+                  transition-all
+                  hover:-translate-y-0.5
                 "
               >
 
@@ -1682,11 +1863,11 @@ export default function Header() {
 
                 Donate Now
 
+                <ArrowUpRight size={13} />
+
               </Link>
 
-              {/* =================================================
-                  CONTACT INFORMATION
-              ================================================== */}
+              {/* CONTACT INFORMATION */}
 
               <div
                 className="
@@ -1700,7 +1881,7 @@ export default function Header() {
                 <p
                   className="
                     text-[8px]
-                    font-bold
+                    font-black
                     uppercase
                     tracking-[0.2em]
                     text-[#176B87]
@@ -1710,8 +1891,6 @@ export default function Header() {
                 </p>
 
                 <div className="mt-3 space-y-3">
-
-                  {/* EMAIL */}
 
                   <a
                     href="mailto:info@ajftrust.org"
@@ -1733,8 +1912,6 @@ export default function Header() {
 
                   </a>
 
-                  {/* PHONE */}
-
                   <a
                     href="tel:+919155751363"
                     className="
@@ -1754,8 +1931,6 @@ export default function Header() {
                     +91 9155751363
 
                   </a>
-
-                  {/* ADDRESS */}
 
                   <div
                     className="
@@ -1793,16 +1968,14 @@ export default function Header() {
 
               </div>
 
-              {/* =================================================
-                  SOCIAL
-              ================================================== */}
+              {/* SOCIAL */}
 
               <div className="mt-5">
 
                 <p
                   className="
                     text-[8px]
-                    font-bold
+                    font-black
                     uppercase
                     tracking-[0.2em]
                     text-[#176B87]
@@ -1813,33 +1986,33 @@ export default function Header() {
 
                 <div className="mt-3 flex gap-2">
 
-                  {socialLinks.map(
-                    (social) => (
-                      <a
-                        key={social.name}
-                        href={social.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label={
-                          social.name
-                        }
-                        className="
-                          flex
-                          h-9
-                          w-9
-                          items-center
-                          justify-center
-                          rounded-full
-                          bg-[#102A43]
-                          text-white
-                          transition
-                          hover:bg-[#C59A3A]
-                        "
-                      >
-                        {social.icon}
-                      </a>
-                    )
-                  )}
+                  {socialLinks.map((social) => (
+
+                    <a
+                      key={social.name}
+                      href={social.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={social.name}
+                      className="
+                        flex
+                        h-9
+                        w-9
+                        items-center
+                        justify-center
+                        rounded-full
+                        bg-[#102A43]
+                        text-white
+                        transition-all
+                        duration-300
+                        hover:-translate-y-0.5
+                        hover:bg-[#C59A3A]
+                      "
+                    >
+                      {social.icon}
+                    </a>
+
+                  ))}
 
                 </div>
 
@@ -1858,7 +2031,7 @@ export default function Header() {
                 >
                   Anand Jivan Foundation Trust
                   <br />
-                  Let's Make Better Life
+                  Empowering Lives • Building Better Communities
                 </p>
 
               </div>
