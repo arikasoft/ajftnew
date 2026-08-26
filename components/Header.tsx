@@ -14,6 +14,7 @@ import {
   HandHeart,
   Heart,
   Home,
+  LogIn,
   Mail,
   MapPin,
   Menu,
@@ -472,10 +473,9 @@ export default function Header() {
             transition-all
             duration-500
             lg:block
-            ${
-              scrolled
-                ? "h-0 opacity-0"
-                : "h-[32px] opacity-100"
+            ${scrolled
+              ? "h-0 opacity-0"
+              : "h-[32px] opacity-100"
             }
           `}
         >
@@ -563,7 +563,32 @@ export default function Header() {
                   </a>
                 )
               )}
-
+              <Link
+                href="/admin/login"
+                aria-label="Admin Login"
+                title="Admin Login"
+                className="
+    ml-1
+    flex
+    h-5
+    w-5
+    items-center
+    justify-center
+    rounded-full
+    border
+    border-white/10
+    bg-white/5
+    text-white/70
+    transition-all
+    duration-300
+    hover:-translate-y-0.5
+    hover:border-[#D3A640]
+    hover:bg-[#D3A640]
+    hover:text-white
+  "
+              >
+                <LogIn size={10} />
+              </Link>
             </div>
 
           </div>
@@ -579,15 +604,14 @@ export default function Header() {
             border-b
             transition-all
             duration-500
-            ${
-              scrolled
-                ? `
+            ${scrolled
+              ? `
                   border-[#D7E0E5]
                   bg-white/95
                   shadow-[0_8px_30px_rgba(16,42,67,0.10)]
                   backdrop-blur-xl
                 `
-                : `
+              : `
                   border-[#E5EBEF]
                   bg-white
                 `
@@ -607,10 +631,9 @@ export default function Header() {
               md:px-7
               transition-all
               duration-500
-              ${
-                scrolled
-                  ? "h-[56px]"
-                  : "h-[70px]"
+              ${scrolled
+                ? "h-[56px]"
+                : "h-[70px]"
               }
             `}
           >
@@ -646,10 +669,9 @@ export default function Header() {
                   transition-all
                   duration-500
                   group-hover:ring-[#C59A3A]
-                  ${
-                    scrolled
-                      ? "h-9 w-9"
-                      : "h-12 w-12"
+                  ${scrolled
+                    ? "h-9 w-9"
+                    : "h-12 w-12"
                   }
                 `}
               >
@@ -680,10 +702,9 @@ export default function Header() {
                     text-[#102A43]
                     transition-all
                     duration-300
-                    ${
-                      scrolled
-                        ? "text-[15px]"
-                        : "text-[18px] lg:text-[20px]"
+                    ${scrolled
+                      ? "text-[15px]"
+                      : "text-[18px] lg:text-[20px]"
                     }
                   `}
                 >
@@ -779,10 +800,9 @@ export default function Header() {
                         font-semibold
                         transition-all
                         duration-300
-                        ${
-                          activeMenu === menu.label
-                            ? "bg-[#EEF6F8] text-[#176B87]"
-                            : "text-[#526575] hover:bg-[#EEF6F8] hover:text-[#176B87]"
+                        ${activeMenu === menu.label
+                          ? "bg-[#EEF6F8] text-[#176B87]"
+                          : "text-[#526575] hover:bg-[#EEF6F8] hover:text-[#176B87]"
                         }
                       `}
                     >
@@ -794,10 +814,9 @@ export default function Header() {
                         className={`
                           transition-transform
                           duration-300
-                          ${
-                            activeMenu === menu.label
-                              ? "rotate-180"
-                              : ""
+                          ${activeMenu === menu.label
+                            ? "rotate-180"
+                            : ""
                           }
                         `}
                       />
@@ -912,10 +931,9 @@ export default function Header() {
                                       p-3
                                       transition-all
                                       duration-300
-                                      ${
-                                        isDonate
-                                          ? "bg-gradient-to-r from-[#E85D04] via-[#F48C06] to-[#FFB703] shadow-md shadow-orange-500/15 hover:-translate-y-0.5"
-                                          : "hover:bg-[#F3F8FA] hover:-translate-y-0.5"
+                                      ${isDonate
+                                        ? "bg-gradient-to-r from-[#E85D04] via-[#F48C06] to-[#FFB703] shadow-md shadow-orange-500/15 hover:-translate-y-0.5"
+                                        : "hover:bg-[#F3F8FA] hover:-translate-y-0.5"
                                       }
                                     `}
                                   >
@@ -935,10 +953,9 @@ export default function Header() {
                                           rounded-lg
                                           transition-all
                                           duration-300
-                                          ${
-                                            isDonate
-                                              ? "bg-white/20 text-white"
-                                              : "bg-[#EEF6F8] text-[#176B87] group-hover:bg-[#176B87] group-hover:text-white"
+                                          ${isDonate
+                                            ? "bg-white/20 text-white"
+                                            : "bg-[#EEF6F8] text-[#176B87] group-hover:bg-[#176B87] group-hover:text-white"
                                           }
                                         `}
                                       >
@@ -962,10 +979,9 @@ export default function Header() {
                                             className={`
                                               text-[12px]
                                               font-bold
-                                              ${
-                                                isDonate
-                                                  ? "text-white"
-                                                  : "text-[#243B53] group-hover:text-[#176B87]"
+                                              ${isDonate
+                                                ? "text-white"
+                                                : "text-[#243B53] group-hover:text-[#176B87]"
                                               }
                                             `}
                                           >
@@ -976,10 +992,9 @@ export default function Header() {
                                             size={13}
                                             className={`
                                               shrink-0
-                                              ${
-                                                isDonate
-                                                  ? "text-white/75"
-                                                  : "text-[#C4CDD3] group-hover:text-[#C59A3A]"
+                                              ${isDonate
+                                                ? "text-white/75"
+                                                : "text-[#C4CDD3] group-hover:text-[#C59A3A]"
                                               }
                                             `}
                                           />
@@ -991,10 +1006,9 @@ export default function Header() {
                                             mt-1
                                             text-[9px]
                                             leading-4
-                                            ${
-                                              isDonate
-                                                ? "text-white/75"
-                                                : "text-[#7A8A98]"
+                                            ${isDonate
+                                              ? "text-white/75"
+                                              : "text-[#7A8A98]"
                                             }
                                           `}
                                         >
@@ -1415,10 +1429,9 @@ export default function Header() {
                         text-[9px]
                         font-bold
                         transition-all
-                        ${
-                          label === "Donate"
-                            ? "bg-gradient-to-r from-[#E85D04] to-[#FFB703] text-white"
-                            : "bg-white/10 text-white/70 hover:bg-white/20 hover:text-white"
+                        ${label === "Donate"
+                          ? "bg-gradient-to-r from-[#E85D04] to-[#FFB703] text-white"
+                          : "bg-white/10 text-white/70 hover:bg-white/20 hover:text-white"
                         }
                       `}
                     >
@@ -1637,10 +1650,9 @@ export default function Header() {
                       size={15}
                       className={`
                         transition-transform
-                        ${
-                          mobileMenu === menu.label
-                            ? "rotate-180 text-[#176B87]"
-                            : ""
+                        ${mobileMenu === menu.label
+                          ? "rotate-180 text-[#176B87]"
+                          : ""
                         }
                       `}
                     />
@@ -1677,10 +1689,9 @@ export default function Header() {
                               px-3
                               py-2.5
                               transition-all
-                              ${
-                                isDonate
-                                  ? "bg-gradient-to-r from-[#E85D04] to-[#FFB703] text-white shadow-sm"
-                                  : "hover:bg-[#F4F8FA]"
+                              ${isDonate
+                                ? "bg-gradient-to-r from-[#E85D04] to-[#FFB703] text-white shadow-sm"
+                                : "hover:bg-[#F4F8FA]"
                               }
                             `}
                           >
@@ -1696,10 +1707,9 @@ export default function Header() {
                                 items-center
                                 justify-center
                                 rounded-lg
-                                ${
-                                  isDonate
-                                    ? "bg-white/20 text-white"
-                                    : "bg-[#EEF6F8] text-[#176B87]"
+                                ${isDonate
+                                  ? "bg-white/20 text-white"
+                                  : "bg-[#EEF6F8] text-[#176B87]"
                                 }
                               `}
                             >
@@ -1727,10 +1737,9 @@ export default function Header() {
                                   className={`
                                     text-[11px]
                                     font-bold
-                                    ${
-                                      isDonate
-                                        ? "text-white"
-                                        : "text-[#243B53]"
+                                    ${isDonate
+                                      ? "text-white"
+                                      : "text-[#243B53]"
                                     }
                                   `}
                                 >
@@ -1753,10 +1762,9 @@ export default function Header() {
                                   mt-0.5
                                   text-[8px]
                                   leading-4
-                                  ${
-                                    isDonate
-                                      ? "text-white/75"
-                                      : "text-[#7A8A98]"
+                                  ${isDonate
+                                    ? "text-white/75"
+                                    : "text-[#7A8A98]"
                                   }
                                 `}
                               >

@@ -1,29 +1,7 @@
 import mongoose from "mongoose";
 
-/* =====================================================
-   MONGODB CONFIGURATION
-===================================================== */
-
-const mongodbUri = process.env.MONGODB_URI;
-
-if (
-  typeof mongodbUri !== "string" ||
-  mongodbUri.trim() === ""
-) {
-  throw new Error(
-    "MONGODB_URI is missing in .env.local"
-  );
-}
-
-/*
- * After the validation above, create a guaranteed string.
- * This avoids TypeScript's string | undefined issue.
- */
-const MONGODB_URI: string = mongodbUri;
-
-/* =====================================================
-   MONGOOSE CACHE
-===================================================== */
+const MONGODB_URI =
+  process.env.MONGODB_URI;
 
 type MongooseCache = {
   conn: typeof mongoose | null;
@@ -39,11 +17,32 @@ declare global {
     | undefined;
 }
 
-/* =====================================================
-   GLOBAL CACHE
-===================================================== */
+/* =========================================================
+   ENVIRONMENT VALIDATION
+========================================================= */
 
-const cached: MongooseCache =
+function getMongoURI(): string {
+  const uri =
+    process.env.MONGODB_URI;
+
+  if (
+    !uri ||
+    typeof uri !== "string" ||
+    !uri.trim()
+  ) {
+    throw new Error(
+      "MONGODB_URI is missing in .env.local"
+    );
+  }
+
+  return uri.trim();
+}
+
+/* =========================================================
+   GLOBAL MONGOOSE CACHE
+========================================================= */
+
+const cached =
   global.mongooseCache ?? {
     conn: null,
     promise: null,
@@ -53,36 +52,27 @@ if (!global.mongooseCache) {
   global.mongooseCache = cached;
 }
 
-/* =====================================================
+/* =========================================================
    CONNECT DATABASE
-===================================================== */
+========================================================= */
 
 async function connectDB() {
-  /* -----------------------------------------------
-     Already connected
-  ------------------------------------------------ */
-
   if (cached.conn) {
     return cached.conn;
   }
 
-  /* -----------------------------------------------
-     Connection already in progress
-  ------------------------------------------------ */
-
   if (!cached.promise) {
+    const uri =
+      getMongoURI();
+
     cached.promise =
       mongoose.connect(
-        MONGODB_URI,
+        uri,
         {
           bufferCommands: false,
         }
       );
   }
-
-  /* -----------------------------------------------
-     Wait for connection
-  ------------------------------------------------ */
 
   try {
     cached.conn =
@@ -95,12 +85,8 @@ async function connectDB() {
 
     return cached.conn;
   } catch (error) {
-    /*
-     * Reset failed promise so the next request
-     * can try connecting again.
-     */
-
     cached.promise = null;
+    cached.conn = null;
 
     console.error(
       "MongoDB connection error:",

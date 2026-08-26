@@ -9,6 +9,12 @@ export const metadata: Metadata = {
   title: "Anand Jivan Foundation Trust",
   description:
     "Anand Jivan Foundation Trust — Empowering Lives. Building a Better Tomorrow.",
+
+  icons: {
+    icon: "/icon.png",
+    shortcut: "/icon.png",
+    apple: "/icon.png",
+  },
 };
 
 export default function RootLayout({
