@@ -25,7 +25,7 @@ const auditReports = [
     description:
       "Audit-related financial reporting document for the financial year 2024–25.",
     status: "Document Pending",
-    file: "/reports/financials/audit/2024-25.pdf",
+    file: "/reports/financials/audit/2024–25.pdf",
   },
   {
     year: "2023–24",
