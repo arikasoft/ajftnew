@@ -1,909 +1,970 @@
 "use client";
 
+import Link from "next/link";
+
 import {
   ArrowRight,
-  Bell,
   CalendarDays,
-  ChevronRight,
   Clock3,
-  FileText,
+  Newspaper,
   Search,
   ShieldCheck,
-  Sparkles,
+  Loader2,
+  AlertCircle,
   Tag,
+  Bell,
 } from "lucide-react";
 
-import { useMemo, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
-type NewsItem = {
-  id: string;
-  slug: string;
+type News = {
+  _id: string;
   title: string;
-  excerpt: string;
-  category: string;
-  date: string;
-  readTime: string;
-  image: string;
+  slug: string;
+  excerpt?: string;
+  content?: string;
+  category?: string;
+  image?: string;
+  status?: string;
   featured?: boolean;
   important?: boolean;
+  author?: string;
+  publishedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
-const newsItems: NewsItem[] = [
-  {
-    id: "1",
-    slug: "ajft-school-adoption-program",
-    title:
-      "AJFT School Adoption & Education Support Programme",
-    excerpt:
-      "Anand Jivan Foundation Trust continues its commitment towards education, school infrastructure and student welfare initiatives.",
-    category: "Education",
-    date: "12 May 2026",
-    readTime: "4 min read",
-    image:
-      "/images/news/school-adoption.jpg",
-    featured: true,
-  },
+function formatDate(value?: string) {
+  if (!value) {
+    return "AJFT Update";
+  }
 
-  {
-    id: "2",
-    slug: "community-development-initiative",
-    title:
-      "Community Development & Social Welfare Initiative",
-    excerpt:
-      "Community-focused activities aimed at improving access to basic facilities and supporting vulnerable communities.",
-    category: "Community",
-    date: "05 May 2026",
-    readTime: "3 min read",
-    image:
-      "/images/news/community.jpg",
-  },
+  try {
+    return new Intl.DateTimeFormat(
+      "en-IN",
+      {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      }
+    ).format(
+      new Date(value)
+    );
+  } catch {
+    return "AJFT Update";
+  }
+}
 
-  {
-    id: "3",
-    slug: "health-awareness-program",
-    title:
-      "Health Awareness & Public Welfare Activities",
-    excerpt:
-      "AJFT promotes awareness and community participation through health and welfare programmes.",
-    category: "Health",
-    date: "28 April 2026",
-    readTime: "3 min read",
-    image:
-      "/images/news/health.jpg",
-  },
+function getReadingTime(
+  content?: string
+) {
+  if (!content) {
+    return "1 min read";
+  }
 
-  {
-    id: "4",
-    slug: "donation-support-program",
-    title:
-      "Donation Support for Charitable Activities",
-    excerpt:
-      "Donor contributions help support the Trust's charitable, educational and social welfare programmes.",
-    category: "Donation",
-    date: "18 April 2026",
-    readTime: "2 min read",
-    image:
-      "/images/news/donation.jpg",
-  },
+  const wordCount =
+    content
+      .replace(
+        /<[^>]*>/g,
+        " "
+      )
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .length;
 
-  {
-    id: "5",
-    slug: "ngo-development-update",
-    title:
-      "Organisational Development & NGO Activities",
-    excerpt:
-      "Updates regarding organisational development, partnerships and ongoing charitable activities.",
-    category: "Organisation",
-    date: "08 April 2026",
-    readTime: "4 min read",
-    image:
-      "/images/news/organisation.jpg",
-  },
+  const minutes =
+    Math.max(
+      1,
+      Math.ceil(
+        wordCount / 200
+      )
+    );
 
-  {
-    id: "6",
-    slug: "important-notice",
-    title:
-      "Important Notice for Donors & Supporters",
-    excerpt:
-      "Important information and updates for donors, beneficiaries, volunteers and supporters of AJFT.",
-    category: "Notice",
-    date: "01 April 2026",
-    readTime: "2 min read",
-    image:
-      "/images/news/notice.jpg",
-    important: true,
-  },
-];
-
-const categories = [
-  "All",
-  "Education",
-  "Community",
-  "Health",
-  "Donation",
-  "Organisation",
-  "Notice",
-];
+  return `${minutes} min read`;
+}
 
 export default function NewsPage() {
+
+  const [news, setNews] =
+    useState<News[]>([]);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState("");
+
   const [search, setSearch] =
     useState("");
 
   const [category, setCategory] =
     useState("All");
 
-  const filteredNews =
-    useMemo(() => {
-      const query =
-        search
-          .toLowerCase()
-          .trim();
+  /* =======================================================
+     LOAD NEWS
+  ======================================================= */
 
-      return newsItems.filter(
-        (item) => {
-          const matchesCategory =
-            category === "All" ||
-            item.category ===
-              category;
+  async function loadNews() {
 
-          const matchesSearch =
-            !query ||
-            item.title
-              .toLowerCase()
-              .includes(query) ||
-            item.excerpt
-              .toLowerCase()
-              .includes(query) ||
-            item.category
-              .toLowerCase()
-              .includes(query);
+    try {
 
-          return (
-            matchesCategory &&
-            matchesSearch
-          );
-        }
+      setLoading(true);
+
+      setError("");
+
+      const response =
+        await fetch(
+          "/api/news?status=published",
+          {
+            method: "GET",
+
+            headers: {
+              Accept:
+                "application/json",
+            },
+
+            cache: "no-store",
+          }
+        );
+
+      const result =
+        await response.json();
+
+      if (
+        !response.ok ||
+        !result?.success
+      ) {
+        throw new Error(
+          result?.message ||
+            "Unable to load news."
+        );
+      }
+
+      const publishedNews =
+        Array.isArray(
+          result.data
+        )
+          ? result.data
+          : [];
+
+      setNews(
+        publishedNews
       );
-    }, [search, category]);
 
-  const featured =
-    newsItems.find(
-      (item) =>
-        item.featured
-    ) || newsItems[0];
+    } catch (err) {
 
-  const latest =
-    newsItems.filter(
-      (item) =>
-        item.id !==
-        featured.id
+      console.error(
+        "PUBLIC NEWS LOAD ERROR:",
+        err
+      );
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to load news."
+      );
+
+      setNews([]);
+
+    } finally {
+
+      setLoading(false);
+
+    }
+  }
+
+  useEffect(
+    () => {
+
+      loadNews();
+
+    },
+    []
+  );
+
+  /* =======================================================
+     CATEGORIES
+  ======================================================= */
+
+  const categories =
+    useMemo(
+      () => {
+
+        return [
+          "All",
+
+          ...Array.from(
+            new Set(
+              news
+                .map(
+                  (item) =>
+                    item.category ||
+                    "General"
+                )
+                .filter(Boolean)
+            )
+          ),
+        ];
+
+      },
+      [news]
     );
 
+  /* =======================================================
+     FILTER NEWS
+  ======================================================= */
+
+  const filteredNews =
+    useMemo(
+      () => {
+
+        const query =
+          search
+            .trim()
+            .toLowerCase();
+
+        return news.filter(
+          (item) => {
+
+            const itemCategory =
+              item.category ||
+              "General";
+
+            const matchesCategory =
+              category === "All" ||
+              itemCategory ===
+                category;
+
+            const matchesSearch =
+              !query ||
+
+              item.title
+                .toLowerCase()
+                .includes(query) ||
+
+              (
+                item.excerpt ||
+                ""
+              )
+                .toLowerCase()
+                .includes(query) ||
+
+              (
+                item.content ||
+                ""
+              )
+                .toLowerCase()
+                .includes(query) ||
+
+              itemCategory
+                .toLowerCase()
+                .includes(query);
+
+            return (
+              matchesCategory &&
+              matchesSearch
+            );
+
+          }
+        );
+
+      },
+      [
+        news,
+        search,
+        category,
+      ]
+    );
+
+  /* =======================================================
+     FEATURED NEWS
+  ======================================================= */
+
+  const featuredNews =
+    news.find(
+      (item) =>
+        item.featured
+    ) ||
+    news[0];
+
+  const showFeatured =
+    category === "All" &&
+    !search.trim() &&
+    !!featuredNews;
+
+  const remainingNews =
+    filteredNews.filter(
+      (item) =>
+        !showFeatured ||
+        item._id !==
+          featuredNews?._id
+    );
+
+  /* =======================================================
+     PAGE
+  ======================================================= */
+
   return (
-    <main className="min-h-screen bg-[#F4F7F6] text-[#073B4C]">
 
-      {/* =====================================================
-          TOP LINE
-      ====================================================== */}
+    <main className="min-h-screen bg-[#f5f8f7]">
 
-      <div className="h-1 bg-[#B68B2C]" />
+      {/* ===================================================
+          TOP ACCENT
+      ==================================================== */}
 
-      {/* =====================================================
-          HEADER
-      ====================================================== */}
+      <div className="h-1 bg-[#b68b2c]" />
 
-      <header className="border-b border-white/10 bg-[#073B4C]">
+      {/* ===================================================
+          HERO
+      ==================================================== */}
 
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
+      <section className="relative overflow-hidden bg-[#073b4c]">
 
-          <div className="flex items-center gap-3">
+        <div className="absolute -right-40 -top-40 h-[500px] w-[500px] rounded-full bg-[#b68b2c]/10 blur-3xl" />
 
-            <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-white p-1.5 shadow-md sm:h-11 sm:w-11">
+        <div className="absolute -left-40 bottom-0 h-[300px] w-[300px] rounded-full bg-emerald-500/10 blur-3xl" />
 
-              <img
-                src="/images/ajft-logo.png"
-                alt="Anand Jivan Foundation Trust"
-                className="h-full w-full object-contain"
-              />
+        <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
 
-            </div>
+          <div className="max-w-3xl">
 
-            <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#d8b65e]">
 
-              <p className="text-[10px] font-black tracking-wide text-white sm:text-sm">
-                ANAND JIVAN FOUNDATION TRUST
-              </p>
+              <Newspaper size={14} />
 
-              <p className="mt-0.5 text-[7px] text-white/55 sm:text-[8px]">
-                News &amp; Updates
-              </p>
+              Official Updates
 
             </div>
 
-          </div>
+            <h1 className="mt-6 text-4xl font-black tracking-tight text-white sm:text-5xl">
 
-          <div className="hidden items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-[7px] font-bold text-white/70 sm:flex">
+              News & Updates
 
-            <ShieldCheck
-              size={12}
-            />
+            </h1>
 
-            TRUST UPDATES
+            <p className="mt-5 max-w-2xl text-base leading-8 text-white/65">
+
+              Latest news, programmes,
+              announcements and official
+              updates from Anand Jivan
+              Foundation Trust.
+
+            </p>
+
+            <div className="mt-7 flex flex-wrap items-center gap-4 text-xs text-white/55">
+
+              <div className="flex items-center gap-2">
+
+                <ShieldCheck size={15} />
+
+                Official AJFT Information
+
+              </div>
+
+              <div className="h-1 w-1 rounded-full bg-[#b68b2c]" />
+
+              <div>
+
+                {loading
+                  ? "Loading Updates..."
+                  : `${news.length} Published Update${
+                      news.length === 1
+                        ? ""
+                        : "s"
+                    }`}
+
+              </div>
+
+            </div>
 
           </div>
 
         </div>
 
-      </header>
+      </section>
 
-      {/* =====================================================
-          HERO
-      ====================================================== */}
+      {/* ===================================================
+          SEARCH + CATEGORY
+      ==================================================== */}
 
-      <section className="relative overflow-hidden bg-[#073B4C]">
+      {!loading &&
+        news.length > 0 && (
 
-        <div className="absolute -right-24 -top-28 h-80 w-80 rounded-full bg-[#B68B2C]/10 blur-3xl" />
+        <section className="border-b border-slate-200 bg-white">
 
-        <div className="absolute -bottom-28 -left-24 h-80 w-80 rounded-full bg-white/5 blur-3xl" />
+          <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
 
-        <div className="relative mx-auto max-w-7xl px-4 py-11 sm:px-6 sm:py-14 lg:px-8">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
 
-          <div className="max-w-3xl">
+              <div className="flex gap-2 overflow-x-auto pb-1">
 
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#B68B2C]/40 bg-[#B68B2C]/10 px-3 py-1.5 text-[7px] font-black uppercase tracking-[0.2em] text-[#E7C76A] sm:text-[8px]">
+                {categories.map(
+                  (item) => {
 
-              <Sparkles
-                size={12}
-              />
+                    const active =
+                      category ===
+                      item;
 
-              Latest Updates
+                    return (
+
+                      <button
+                        key={item}
+                        type="button"
+                        onClick={() =>
+                          setCategory(
+                            item
+                          )
+                        }
+                        className={`shrink-0 rounded-full px-4 py-2 text-xs font-bold transition ${
+                          active
+                            ? "bg-[#073b4c] text-white shadow-sm"
+                            : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                        }`}
+                      >
+
+                        {item}
+
+                      </button>
+
+                    );
+
+                  }
+                )}
+
+              </div>
+
+              <div className="relative w-full lg:max-w-sm">
+
+                <Search
+                  size={17}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                />
+
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(event) =>
+                    setSearch(
+                      event.target.value
+                    )
+                  }
+                  placeholder="Search news..."
+                  className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm text-slate-700 outline-none transition focus:border-[#08744f] focus:bg-white focus:ring-4 focus:ring-[#08744f]/10"
+                />
+
+              </div>
 
             </div>
 
-            <h1 className="mt-4 text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-5xl">
+          </div>
 
-              News &amp;
+        </section>
 
-              <span className="text-[#D6B454]">
-                {" "}Updates
-              </span>
+      )}
 
-            </h1>
+      {/* ===================================================
+          CONTENT
+      ==================================================== */}
 
-            <p className="mt-4 max-w-2xl text-[10px] leading-6 text-white/65 sm:text-xs">
+      <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
 
-              Stay informed about Anand Jivan
-              Foundation Trust's programmes,
-              initiatives, announcements and
-              community activities.
+        {/* LOADING */}
+
+        {loading && (
+
+          <div className="flex min-h-[360px] flex-col items-center justify-center text-center">
+
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 text-[#08744f]">
+
+              <Loader2
+                size={28}
+                className="animate-spin"
+              />
+
+            </div>
+
+            <h2 className="mt-5 text-xl font-black text-[#073b4c]">
+
+              Loading News
+
+            </h2>
+
+            <p className="mt-2 text-sm text-slate-500">
+
+              Please wait while official
+              updates are loaded.
 
             </p>
 
           </div>
 
-          {/* HERO STATS */}
+        )}
 
-          <div className="mt-8 grid max-w-3xl grid-cols-2 gap-3 sm:grid-cols-4">
+        {/* ERROR */}
 
-            <HeroStat
-              icon={
-                <FileText
-                  size={15}
-                />
-              }
-              value={
-                String(
-                  newsItems.length
-                )
-              }
-              label="Updates"
-            />
+        {!loading &&
+          error && (
 
-            <HeroStat
-              icon={
+          <div className="mx-auto max-w-xl rounded-2xl border border-red-200 bg-white p-8 text-center shadow-sm">
+
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-red-500">
+
+              <AlertCircle
+                size={26}
+              />
+
+            </div>
+
+            <h2 className="mt-5 text-lg font-black text-[#073b4c]">
+
+              Unable to Load News
+
+            </h2>
+
+            <p className="mt-2 text-sm text-red-600">
+
+              {error}
+
+            </p>
+
+            <button
+              type="button"
+              onClick={loadNews}
+              className="mt-6 rounded-xl bg-[#073b4c] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#0a5066]"
+            >
+
+              Try Again
+
+            </button>
+
+          </div>
+
+        )}
+
+        {/* EMPTY */}
+
+        {!loading &&
+          !error &&
+          news.length === 0 && (
+
+          <div className="flex min-h-[360px] flex-col items-center justify-center rounded-3xl border border-slate-200 bg-white px-6 text-center shadow-sm">
+
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 text-[#08744f]">
+
+              <Newspaper
+                size={30}
+              />
+
+            </div>
+
+            <h2 className="mt-6 text-2xl font-black text-[#073b4c]">
+
+              No News Available
+
+            </h2>
+
+            <p className="mt-3 max-w-md text-sm leading-6 text-slate-500">
+
+              Official news and updates
+              published by Anand Jivan
+              Foundation Trust will appear
+              here.
+
+            </p>
+
+          </div>
+
+        )}
+
+        {/* =================================================
+            FEATURED NEWS
+        ================================================== */}
+
+        {!loading &&
+          !error &&
+          showFeatured &&
+          featuredNews && (
+
+          <div>
+
+            <div className="mb-5 flex items-center gap-3">
+
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#fff5e5] text-[#b68b2c]">
+
                 <Bell
-                  size={15}
+                  size={19}
                 />
-              }
-              value="Latest"
-              label="News"
-            />
 
-            <HeroStat
-              icon={
-                <CalendarDays
-                  size={15}
-                />
-              }
-              value="2026"
-              label="Updates"
-            />
+              </div>
 
-            <HeroStat
-              icon={
-                <ShieldCheck
-                  size={15}
-                />
-              }
-              value="AJFT"
-              label="Source"
-            />
+              <div>
 
-          </div>
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b68b2c]">
 
-        </div>
+                  Featured
 
-      </section>
+                </p>
 
-      {/* =====================================================
-          SEARCH + FILTER
-      ====================================================== */}
+                <h2 className="mt-1 text-2xl font-black text-[#073b4c]">
 
-      <section className="px-4 py-6 sm:px-6 lg:px-8">
+                  Featured Update
 
-        <div className="mx-auto max-w-7xl rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
+                </h2>
 
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-
-            <div>
-
-              <p className="text-[7px] font-black uppercase tracking-[0.2em] text-[#B68B2C]">
-                Information Centre
-              </p>
-
-              <h2 className="mt-1 text-lg font-black text-[#073B4C]">
-                Latest News
-              </h2>
+              </div>
 
             </div>
 
-            {/* SEARCH */}
+            <article className="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:shadow-xl">
 
-            <div className="relative w-full lg:max-w-sm">
+              <div className="grid lg:grid-cols-2">
 
-              <Search
-                size={15}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-              />
+                {/* IMAGE */}
 
-              <input
-                value={search}
-                onChange={(e) =>
-                  setSearch(
-                    e.target.value
-                  )
-                }
-                placeholder="Search news..."
-                className="h-11 w-full rounded-xl border border-gray-200 bg-[#FAFCFB] pl-10 pr-4 text-[9px] font-semibold outline-none transition focus:border-[#B68B2C]"
-              />
+                <div className="relative min-h-[300px] overflow-hidden bg-slate-100 lg:min-h-[430px]">
 
-            </div>
+                  {featuredNews.image ? (
 
-          </div>
+                    <img
+                      src={
+                        featuredNews.image
+                      }
+                      alt={
+                        featuredNews.title
+                      }
+                      className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                      onError={(event) => {
+                        event.currentTarget.style.display =
+                          "none";
+                      }}
+                    />
 
-          {/* CATEGORY */}
+                  ) : (
 
-          <div className="mt-5 flex gap-2 overflow-x-auto pb-1">
+                    <div className="flex h-full min-h-[300px] items-center justify-center bg-[#eaf3ef] text-[#08744f]">
 
-            {categories.map(
-              (item) => {
-                const active =
-                  category ===
-                  item;
+                      <Newspaper
+                        size={55}
+                      />
 
-                return (
-                  <button
-                    key={item}
-                    type="button"
-                    onClick={() =>
-                      setCategory(
-                        item
-                      )
-                    }
-                    className="shrink-0 rounded-full px-4 py-2 text-[7px] font-black transition"
-                    style={{
-                      backgroundColor:
-                        active
-                          ? "#073B4C"
-                          : "#F3F6F5",
+                    </div>
 
-                      color:
-                        active
-                          ? "#FFFFFF"
-                          : "#58706B",
-                    }}
-                  >
-                    {item}
-                  </button>
-                );
-              }
-            )}
+                  )}
 
-          </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#073b4c]/60 via-transparent to-transparent" />
 
-        </div>
+                  <div className="absolute left-5 top-5 flex flex-wrap gap-2">
 
-      </section>
+                    <span className="rounded-full bg-[#b68b2c] px-4 py-2 text-[10px] font-black uppercase tracking-wider text-white">
 
-      {/* =====================================================
-          FEATURED NEWS
-      ====================================================== */}
+                      Featured
 
-      {category === "All" &&
-        !search && (
-          <section className="px-4 pb-6 sm:px-6 lg:px-8">
+                    </span>
 
-            <div className="mx-auto max-w-7xl">
+                    {featuredNews.important && (
 
-              <div className="mb-4 flex items-center justify-between">
+                      <span className="rounded-full bg-red-500 px-4 py-2 text-[10px] font-black uppercase tracking-wider text-white">
 
-                <div>
+                        Important
 
-                  <p className="text-[7px] font-black uppercase tracking-[0.2em] text-[#B68B2C]">
-                    Featured
+                      </span>
+
+                    )}
+
+                  </div>
+
+                </div>
+
+                {/* CONTENT */}
+
+                <div className="flex flex-col justify-center p-7 sm:p-10">
+
+                  <div className="flex flex-wrap items-center gap-2">
+
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-[#08744f]">
+
+                      <Tag size={11} />
+
+                      {featuredNews.category ||
+                        "General"}
+
+                    </span>
+
+                  </div>
+
+                  <h3 className="mt-5 text-2xl font-black leading-tight text-[#073b4c] sm:text-3xl">
+
+                    {featuredNews.title}
+
+                  </h3>
+
+                  <p className="mt-5 text-sm leading-7 text-slate-500">
+
+                    {featuredNews.excerpt ||
+                      "Read the latest official update from Anand Jivan Foundation Trust."}
+
                   </p>
 
-                  <h2 className="mt-1 text-lg font-black text-[#073B4C]">
-                    Featured Update
-                  </h2>
+                  <div className="mt-6 flex flex-wrap items-center gap-5 text-xs font-semibold text-slate-400">
+
+                    <span className="flex items-center gap-2">
+
+                      <CalendarDays
+                        size={15}
+                      />
+
+                      {formatDate(
+                        featuredNews.publishedAt ||
+                          featuredNews.createdAt
+                      )}
+
+                    </span>
+
+                    <span className="flex items-center gap-2">
+
+                      <Clock3
+                        size={15}
+                      />
+
+                      {getReadingTime(
+                        featuredNews.content
+                      )}
+
+                    </span>
+
+                  </div>
+
+                  <Link
+                    href={`/news/${featuredNews.slug}`}
+                    className="mt-8 inline-flex h-12 w-fit items-center gap-2 rounded-xl bg-[#073b4c] px-6 text-sm font-black text-white transition hover:bg-[#0a5066]"
+                  >
+
+                    Read Full Update
+
+                    <ArrowRight
+                      size={17}
+                    />
+
+                  </Link>
 
                 </div>
 
               </div>
 
-              <FeaturedNews
-                item={featured}
-              />
-
-            </div>
-
-          </section>
-        )}
-
-      {/* =====================================================
-          NEWS GRID
-      ====================================================== */}
-
-      <section className="px-4 pb-12 sm:px-6 lg:px-8">
-
-        <div className="mx-auto max-w-7xl">
-
-          <div className="mb-5 flex items-end justify-between">
-
-            <div>
-
-              <p className="text-[7px] font-black uppercase tracking-[0.2em] text-[#B68B2C]">
-                {category ===
-                "All"
-                  ? "Recent"
-                  : category}
-              </p>
-
-              <h2 className="mt-1 text-lg font-black text-[#073B4C]">
-                News &amp; Announcements
-              </h2>
-
-            </div>
-
-            <span className="text-[7px] font-bold text-gray-400">
-              {filteredNews.length}{" "}
-              updates
-            </span>
+            </article>
 
           </div>
 
-          {filteredNews.length ===
-          0 ? (
-            <EmptyNews />
-          ) : (
-            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        )}
 
-              {filteredNews.map(
+        {/* =================================================
+            NEWS LIST
+        ================================================== */}
+
+        {!loading &&
+          !error &&
+          remainingNews.length > 0 && (
+
+          <div className={showFeatured ? "mt-12" : ""}>
+
+            {showFeatured && (
+
+              <div className="mb-6">
+
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b68b2c]">
+
+                  Latest Updates
+
+                </p>
+
+                <h2 className="mt-2 text-2xl font-black text-[#073b4c]">
+
+                  More News
+
+                </h2>
+
+              </div>
+
+            )}
+
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+
+              {remainingNews.map(
                 (item) => (
-                  <NewsCard
-                    key={
-                      item.id
-                    }
-                    item={
-                      item
-                    }
-                  />
+
+                  <article
+                    key={item._id}
+                    className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+                  >
+
+                    <div className="relative h-52 overflow-hidden bg-slate-100">
+
+                      {item.image ? (
+
+                        <img
+                          src={item.image}
+                          alt={item.title}
+                          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                          onError={(event) => {
+                            event.currentTarget.style.display =
+                              "none";
+                          }}
+                        />
+
+                      ) : (
+
+                        <div className="flex h-full items-center justify-center bg-[#eaf3ef] text-[#08744f]">
+
+                          <Newspaper
+                            size={42}
+                          />
+
+                        </div>
+
+                      )}
+
+                      <div className="absolute left-4 top-4 flex gap-2">
+
+                        <span className="rounded-full bg-white/95 px-3 py-1.5 text-[10px] font-black text-[#08744f] shadow-sm">
+
+                          {item.category ||
+                            "General"}
+
+                        </span>
+
+                        {item.important && (
+
+                          <span className="rounded-full bg-red-500 px-3 py-1.5 text-[10px] font-black text-white shadow-sm">
+
+                            Important
+
+                          </span>
+
+                        )}
+
+                      </div>
+
+                    </div>
+
+                    <div className="p-6">
+
+                      <h3 className="text-lg font-black leading-6 text-[#073b4c]">
+
+                        {item.title}
+
+                      </h3>
+
+                      <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-500">
+
+                        {item.excerpt ||
+                          "Read the official update from Anand Jivan Foundation Trust."}
+
+                      </p>
+
+                      <div className="mt-5 flex items-center justify-between gap-3 text-xs font-semibold text-slate-400">
+
+                        <span className="flex items-center gap-1.5">
+
+                          <CalendarDays
+                            size={14}
+                          />
+
+                          {formatDate(
+                            item.publishedAt ||
+                              item.createdAt
+                          )}
+
+                        </span>
+
+                        <span>
+
+                          {getReadingTime(
+                            item.content
+                          )}
+
+                        </span>
+
+                      </div>
+
+                      <Link
+                        href={`/news/${item.slug}`}
+                        className="mt-6 inline-flex items-center gap-2 text-sm font-black text-[#08744f] transition hover:text-[#073b4c]"
+                      >
+
+                        Read More
+
+                        <ArrowRight
+                          size={15}
+                        />
+
+                      </Link>
+
+                    </div>
+
+                  </article>
+
                 )
               )}
 
             </div>
-          )}
-
-        </div>
-
-      </section>
-
-      {/* =====================================================
-          SUBSCRIBE / NOTICE
-      ====================================================== */}
-
-      <section className="px-4 pb-12 sm:px-6 lg:px-8">
-
-        <div className="mx-auto max-w-7xl">
-
-          <div className="overflow-hidden rounded-2xl bg-[#073B4C]">
-
-            <div className="flex flex-col gap-5 p-6 sm:p-8 md:flex-row md:items-center md:justify-between">
-
-              <div className="flex items-start gap-3">
-
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#B68B2C] text-white">
-
-                  <Bell
-                    size={18}
-                  />
-
-                </div>
-
-                <div>
-
-                  <h3 className="text-sm font-black text-white">
-                    Stay Connected
-                  </h3>
-
-                  <p className="mt-1 max-w-xl text-[8px] leading-5 text-white/55">
-                    Follow AJFT for important
-                    programme announcements,
-                    charitable activities and
-                    community updates.
-                  </p>
-
-                </div>
-
-              </div>
-
-              <a
-                href="/contact"
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-white px-5 text-[8px] font-black text-[#073B4C] transition hover:bg-[#F7F2DF]"
-              >
-
-                Contact Trust
-
-                <ArrowRight
-                  size={13}
-                />
-
-              </a>
-
-            </div>
 
           </div>
 
-        </div>
+        )}
 
-      </section>
+        {/* =================================================
+            FILTER EMPTY
+        ================================================== */}
 
-      {/* =====================================================
-          FOOTER
-      ====================================================== */}
+        {!loading &&
+          !error &&
+          news.length > 0 &&
+          filteredNews.length === 0 && (
 
-      <footer className="border-t border-[#DCE5E2] bg-white">
+          <div className="flex min-h-[300px] flex-col items-center justify-center rounded-3xl border border-slate-200 bg-white px-6 text-center">
 
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 py-7 text-center sm:flex-row sm:px-6 sm:text-left lg:px-8">
-
-          <div className="flex items-center gap-3">
-
-            <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-gray-200 bg-white p-1">
-
-              <img
-                src="/images/ajft-logo.png"
-                alt="AJFT"
-                className="h-full w-full object-contain"
-              />
-
-            </div>
-
-            <div>
-
-              <p className="text-[8px] font-black text-[#073B4C]">
-                Anand Jivan Foundation Trust
-              </p>
-
-              <p className="text-[7px] text-gray-400">
-                Darbhanga, Bihar
-              </p>
-
-            </div>
-
-          </div>
-
-          <div className="flex items-center gap-1.5 text-[7px] text-gray-400">
-
-            <ShieldCheck
-              size={11}
+            <Search
+              size={35}
+              className="text-slate-300"
             />
 
-            Official News &amp; Updates
+            <h2 className="mt-5 text-xl font-black text-[#073b4c]">
+
+              No Matching News Found
+
+            </h2>
+
+            <p className="mt-2 text-sm text-slate-500">
+
+              Try another keyword or category.
+
+            </p>
+
+            <button
+              type="button"
+              onClick={() => {
+                setSearch("");
+                setCategory("All");
+              }}
+              className="mt-5 rounded-xl bg-[#073b4c] px-5 py-3 text-sm font-bold text-white"
+            >
+
+              Clear Filters
+
+            </button>
 
           </div>
 
-        </div>
+        )}
 
-      </footer>
+      </section>
 
     </main>
-  );
-}
 
-// ============================================================
-// HERO STAT
-// ============================================================
-
-function HeroStat({
-  icon,
-  value,
-  label,
-}: {
-  icon: React.ReactNode;
-  value: string;
-  label: string;
-}) {
-  return (
-    <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-
-      <div className="flex items-center gap-2 text-[#D6B454]">
-
-        {icon}
-
-        <span className="text-sm font-black text-white">
-          {value}
-        </span>
-
-      </div>
-
-      <p className="mt-1 text-[6px] uppercase tracking-widest text-white/40">
-        {label}
-      </p>
-
-    </div>
-  );
-}
-
-// ============================================================
-// FEATURED
-// ============================================================
-
-function FeaturedNews({
-  item,
-}: {
-  item: NewsItem;
-}) {
-  return (
-    <article className="group overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:shadow-xl">
-
-      <div className="grid md:grid-cols-2">
-
-        {/* IMAGE */}
-
-        <div className="relative min-h-[240px] overflow-hidden bg-[#DDE7E4] md:min-h-[330px]">
-
-          <img
-            src={item.image}
-            alt={item.title}
-            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-            onError={(e) => {
-              e.currentTarget.style.display =
-                "none";
-            }}
-          />
-
-          <div className="absolute inset-0 bg-gradient-to-t from-[#073B4C]/70 via-transparent to-transparent" />
-
-          <div className="absolute left-4 top-4 rounded-full bg-[#B68B2C] px-3 py-1.5 text-[6px] font-black uppercase tracking-widest text-white">
-
-            Featured
-
-          </div>
-
-        </div>
-
-        {/* CONTENT */}
-
-        <div className="flex flex-col justify-center p-6 sm:p-8">
-
-          <div className="flex flex-wrap items-center gap-2">
-
-            <span className="rounded-full bg-[#EFF7F3] px-2.5 py-1 text-[6px] font-black uppercase tracking-wider text-[#08744F]">
-              {item.category}
-            </span>
-
-            {item.important && (
-              <span className="rounded-full bg-[#FFF5E5] px-2.5 py-1 text-[6px] font-black uppercase tracking-wider text-[#9A6919]">
-                Important
-              </span>
-            )}
-
-          </div>
-
-          <h3 className="mt-4 text-xl font-black leading-7 text-[#073B4C] sm:text-2xl">
-
-            {item.title}
-
-          </h3>
-
-          <p className="mt-3 text-[9px] leading-6 text-gray-500">
-
-            {item.excerpt}
-
-          </p>
-
-          <div className="mt-5 flex flex-wrap items-center gap-4 text-[7px] font-semibold text-gray-400">
-
-            <span className="flex items-center gap-1.5">
-
-              <CalendarDays
-                size={12}
-              />
-
-              {item.date}
-
-            </span>
-
-            <span className="flex items-center gap-1.5">
-
-              <Clock3
-                size={12}
-              />
-
-              {item.readTime}
-
-            </span>
-
-          </div>
-
-          <a
-            href={`/news/${item.slug}`}
-            className="mt-6 inline-flex h-10 w-fit items-center gap-2 rounded-xl bg-[#073B4C] px-5 text-[8px] font-black text-white transition hover:bg-[#0A5066]"
-          >
-
-            Read Full Update
-
-            <ArrowRight
-              size={13}
-            />
-
-          </a>
-
-        </div>
-
-      </div>
-
-    </article>
-  );
-}
-
-// ============================================================
-// NEWS CARD
-// ============================================================
-
-function NewsCard({
-  item,
-}: {
-  item: NewsItem;
-}) {
-  return (
-    <article className="group overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
-
-      {/* IMAGE */}
-
-      <div className="relative h-48 overflow-hidden bg-[#DDE7E4]">
-
-        <img
-          src={item.image}
-          alt={item.title}
-          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-          onError={(e) => {
-            e.currentTarget.style.display =
-              "none";
-          }}
-        />
-
-        <div className="absolute inset-0 bg-gradient-to-t from-[#073B4C]/65 via-transparent to-transparent" />
-
-        <div className="absolute left-4 top-4 flex gap-2">
-
-          <span className="rounded-full bg-white/95 px-2.5 py-1.5 text-[6px] font-black uppercase tracking-wider text-[#073B4C]">
-
-            {item.category}
-
-          </span>
-
-          {item.important && (
-            <span className="rounded-full bg-[#B68B2C] px-2.5 py-1.5 text-[6px] font-black uppercase tracking-wider text-white">
-              Important
-            </span>
-          )}
-
-        </div>
-
-      </div>
-
-      {/* CONTENT */}
-
-      <div className="p-5">
-
-        <div className="flex items-center gap-3 text-[7px] font-semibold text-gray-400">
-
-          <span className="flex items-center gap-1">
-
-            <CalendarDays
-              size={11}
-            />
-
-            {item.date}
-
-          </span>
-
-          <span className="flex items-center gap-1">
-
-            <Clock3
-              size={11}
-            />
-
-            {item.readTime}
-
-          </span>
-
-        </div>
-
-        <h3 className="mt-3 line-clamp-2 text-sm font-black leading-5 text-[#073B4C]">
-
-          {item.title}
-
-        </h3>
-
-        <p className="mt-2 line-clamp-3 text-[8px] leading-5 text-gray-500">
-
-          {item.excerpt}
-
-        </p>
-
-        <a
-          href={`/news/${item.slug}`}
-          className="mt-5 inline-flex items-center gap-1.5 text-[8px] font-black text-[#08744F] transition hover:text-[#B68B2C]"
-        >
-
-          Read More
-
-          <ChevronRight
-            size={13}
-          />
-
-        </a>
-
-      </div>
-
-    </article>
-  );
-}
-
-// ============================================================
-// EMPTY
-// ============================================================
-
-function EmptyNews() {
-  return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-12 text-center">
-
-      <Search
-        size={30}
-        className="mx-auto text-gray-300"
-      />
-
-      <h3 className="mt-4 text-sm font-black text-[#073B4C]">
-        No News Found
-      </h3>
-
-      <p className="mt-1 text-[8px] text-gray-400">
-        Try another keyword or category.
-      </p>
-
-    </div>
   );
 }

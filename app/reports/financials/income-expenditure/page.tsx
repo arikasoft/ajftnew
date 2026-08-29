@@ -1,618 +1,382 @@
 import Link from "next/link";
 import {
-  ArrowLeft,
-  ArrowRight,
+  ArrowUpRight,
   BarChart3,
-  CheckCircle2,
+  Download,
   FileText,
-  ShieldCheck,
+  IndianRupee,
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
 
-const financialYears = [
+type FinancialReport = {
+  year: string;
+  title: string;
+  income: number;
+  expenditure: number;
+  netPosition: number;
+  file: string;
+  status: "Published" | "Pending";
+};
+
+const reports: FinancialReport[] = [
   {
-    year: "2025–26",
-    income: "₹ —",
-    expenditure: "₹ —",
-    balance: "₹ —",
-    status: "Report Pending",
+    year: "FY 2025–26",
+    title: "Income & Expenditure Report",
+    income: 5210000,
+    expenditure: 5178000,
+    netPosition: 32000,
+    file: "/reports/financials/income-expenditure/2025-26.pdf",
+    status: "Published",
   },
+
   {
-    year: "2024–25",
-    income: "₹ —",
-    expenditure: "₹ —",
-    balance: "₹ —",
-    status: "Report Pending",
+    year: "FY 2024–25",
+    title: "Income & Expenditure Report",
+    income: 3668118,
+    expenditure: 3688118,
+    netPosition: -20000,
+    file: "/reports/financials/income-expenditure/2024-25.pdf",
+    status: "Published",
   },
+
   {
-    year: "2023–24",
-    income: "₹ —",
-    expenditure: "₹ —",
-    balance: "₹ —",
-    status: "Report Pending",
+    year: "FY 2023–24",
+    title: "Income & Expenditure Report",
+    income: 1650000,
+    expenditure: 1600000,
+    netPosition: 50000,
+    file: "/reports/financials/income-expenditure/2023-24.pdf",
+    status: "Published",
   },
 ];
 
+function formatINR(amount: number) {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
+function formatNetPosition(amount: number) {
+  const formatted = formatINR(Math.abs(amount));
+
+  if (amount > 0) {
+    return `+ ${formatted}`;
+  }
+
+  if (amount < 0) {
+    return `− ${formatted}`;
+  }
+
+  return formatted;
+}
+
 export default function IncomeExpenditurePage() {
+  const latestReport = reports[0];
+
   return (
-    <main className="min-h-screen bg-[#F3F7F8] text-[#193247]">
-
-      {/* =====================================================
-          HERO
-      ====================================================== */}
-
-      <section className="relative overflow-hidden bg-[#123B4A]">
-
-        <div className="absolute -left-32 -top-32 h-72 w-72 rounded-full bg-[#2A8C9E]/20 blur-3xl" />
-
-        <div className="absolute -bottom-32 -right-32 h-80 w-80 rounded-full bg-[#D6A83C]/10 blur-3xl" />
-
-        <div className="relative mx-auto max-w-6xl px-5 py-11 text-center md:py-14">
-
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#D6A83C] shadow-lg">
-
-            <BarChart3
-              size={24}
-              className="text-white"
-            />
-
-          </div>
-
-          <p className="mt-4 text-[8px] font-bold uppercase tracking-[0.3em] text-[#E7C96B]">
-            Financial Transparency
-          </p>
-
-          <h1 className="mt-2 font-serif text-3xl font-bold text-white md:text-5xl">
-            Income & Expenditure
-          </h1>
-
-          <p className="mx-auto mt-3 max-w-2xl text-[11px] leading-5 text-white/65 md:text-xs">
-            Year-wise overview of income and expenditure
-            information published by the Trust.
-          </p>
-
-        </div>
-
-      </section>
-
-      {/* =====================================================
-          NAVIGATION
-      ====================================================== */}
-
-      <div className="border-b border-[#D8E5E8] bg-white">
-
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
-
-          <Link
-            href="/reports/financials"
-            className="flex items-center gap-2 text-[9px] font-bold text-[#16758A] transition hover:text-[#B48726]"
-          >
-            <ArrowLeft size={13} />
-            Back to Financials
-          </Link>
-
-          <Link
-            href="/reports/financials/statements"
-            className="flex items-center gap-2 text-[8px] font-semibold text-gray-400 transition hover:text-[#16758A]"
-          >
-            Financial Statements
-            <ArrowRight size={11} />
-          </Link>
-
-        </div>
-
-      </div>
-
-      {/* =====================================================
-          INTRO
-      ====================================================== */}
-
-      <section className="px-4 py-8 sm:px-6">
-
-        <div className="mx-auto max-w-6xl">
-
-          <div className="rounded-2xl border border-[#D8E5E8] bg-white p-5 sm:p-6">
-
-            <div className="flex items-start gap-3">
-
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#E8F5F7]">
-
-                <ShieldCheck
-                  size={20}
-                  className="text-[#16758A]"
-                />
-
+    <main className="min-h-screen bg-[#f6f8fa]">
+      {/* HERO */}
+      <section className="border-b border-slate-200 bg-white">
+        <div className="mx-auto max-w-7xl px-5 py-14 sm:px-8 lg:px-10">
+          <div className="max-w-3xl">
+            <div className="mb-4 flex items-center gap-2">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-teal-50 text-teal-700">
+                <BarChart3 size={22} />
               </div>
 
-              <div>
-
-                <p className="text-[8px] font-bold uppercase tracking-[0.2em] text-[#B48726]">
-                  Financial Overview
-                </p>
-
-                <h2 className="mt-1 font-serif text-2xl font-bold text-[#123B4A]">
-                  Income & Expenditure Summary
-                </h2>
-
-                <p className="mt-2 max-w-3xl text-[9px] leading-5 text-gray-500">
-                  This section provides a year-wise structure
-                  for presenting income and expenditure
-                  information. Actual figures should be
-                  published only from approved financial
-                  records.
-                </p>
-
-              </div>
-
+              <span className="text-xs font-bold uppercase tracking-[0.2em] text-teal-700">
+                Financial Transparency
+              </span>
             </div>
 
-          </div>
+            <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+              Income & Expenditure
+            </h1>
 
-        </div>
-
-      </section>
-
-      {/* =====================================================
-          SUMMARY CARDS
-      ====================================================== */}
-
-      <section className="px-4 pb-5 sm:px-6">
-
-        <div className="mx-auto grid max-w-6xl gap-3 sm:grid-cols-3">
-
-          <SummaryCard
-            icon={<TrendingUp size={18} />}
-            label="Total Income"
-            value="₹ —"
-            text="Published financial data"
-          />
-
-          <SummaryCard
-            icon={<TrendingDown size={18} />}
-            label="Total Expenditure"
-            value="₹ —"
-            text="Published financial data"
-          />
-
-          <SummaryCard
-            icon={<BarChart3 size={18} />}
-            label="Net Position"
-            value="₹ —"
-            text="Calculated from approved records"
-          />
-
-        </div>
-
-      </section>
-
-      {/* =====================================================
-          YEAR-WISE TABLE
-      ====================================================== */}
-
-      <section className="px-4 pb-8 sm:px-6">
-
-        <div className="mx-auto max-w-6xl overflow-hidden rounded-2xl border border-[#D8E5E8] bg-white">
-
-          <div className="border-b border-[#D8E5E8] p-5">
-
-            <p className="text-[8px] font-bold uppercase tracking-[0.2em] text-[#B48726]">
-              Financial Years
+            <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
+              Review year-wise Income and Expenditure statements published by
+              Anand Jivan Foundation Trust for financial transparency and
+              public information.
             </p>
 
-            <h2 className="mt-1 font-serif text-xl font-bold text-[#123B4A]">
-              Year-wise Summary
-            </h2>
-
-          </div>
-
-          {/* DESKTOP TABLE */}
-
-          <div className="hidden overflow-x-auto md:block">
-
-            <table className="w-full border-collapse">
-
-              <thead>
-
-                <tr className="bg-[#F5F9FA] text-left">
-
-                  <th className="px-5 py-3 text-[8px] font-bold uppercase tracking-wider text-gray-500">
-                    Financial Year
-                  </th>
-
-                  <th className="px-5 py-3 text-right text-[8px] font-bold uppercase tracking-wider text-gray-500">
-                    Income
-                  </th>
-
-                  <th className="px-5 py-3 text-right text-[8px] font-bold uppercase tracking-wider text-gray-500">
-                    Expenditure
-                  </th>
-
-                  <th className="px-5 py-3 text-right text-[8px] font-bold uppercase tracking-wider text-gray-500">
-                    Net Position
-                  </th>
-
-                  <th className="px-5 py-3 text-center text-[8px] font-bold uppercase tracking-wider text-gray-500">
-                    Status
-                  </th>
-
-                </tr>
-
-              </thead>
-
-              <tbody>
-
-                {financialYears.map((item) => (
-                  <tr
-                    key={item.year}
-                    className="border-t border-[#E8EEF0]"
-                  >
-
-                    <td className="px-5 py-4">
-
-                      <p className="text-[10px] font-bold text-[#123B4A]">
-                        {item.year}
-                      </p>
-
-                    </td>
-
-                    <td className="px-5 py-4 text-right text-[10px] font-semibold text-[#16758A]">
-                      {item.income}
-                    </td>
-
-                    <td className="px-5 py-4 text-right text-[10px] font-semibold text-[#B65D52]">
-                      {item.expenditure}
-                    </td>
-
-                    <td className="px-5 py-4 text-right text-[10px] font-bold text-[#123B4A]">
-                      {item.balance}
-                    </td>
-
-                    <td className="px-5 py-4 text-center">
-
-                      <span className="rounded-full bg-[#FFF7E4] px-2.5 py-1 text-[7px] font-bold text-[#9A7623]">
-                        {item.status}
-                      </span>
-
-                    </td>
-
-                  </tr>
-                ))}
-
-              </tbody>
-
-            </table>
-
-          </div>
-
-          {/* MOBILE CARDS */}
-
-          <div className="space-y-3 p-4 md:hidden">
-
-            {financialYears.map((item) => (
-              <div
-                key={item.year}
-                className="rounded-xl border border-[#D8E5E8] bg-[#F9FBFC] p-4"
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link
+                href="/reports/financials/audit"
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-teal-300 hover:text-teal-700"
               >
+                <FileText size={17} />
+                Audit Reports
+              </Link>
 
-                <div className="flex items-center justify-between">
-
-                  <h3 className="font-serif text-lg font-bold text-[#123B4A]">
-                    {item.year}
-                  </h3>
-
-                  <span className="rounded-full bg-[#FFF7E4] px-2 py-1 text-[7px] font-bold text-[#9A7623]">
-                    {item.status}
-                  </span>
-
-                </div>
-
-                <div className="mt-4 grid grid-cols-3 gap-2">
-
-                  <MobileValue
-                    label="Income"
-                    value={item.income}
-                  />
-
-                  <MobileValue
-                    label="Expense"
-                    value={item.expenditure}
-                  />
-
-                  <MobileValue
-                    label="Net"
-                    value={item.balance}
-                  />
-
-                </div>
-
-              </div>
-            ))}
-
+              <Link
+                href="/reports"
+                className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+              >
+                All Reports
+                <ArrowUpRight size={16} />
+              </Link>
+            </div>
           </div>
-
         </div>
-
       </section>
 
-      {/* =====================================================
-          ACCOUNTING PRINCIPLES
-      ====================================================== */}
+      {/* SUMMARY */}
+      <section className="mx-auto max-w-7xl px-5 pt-10 sm:px-8 lg:px-10">
+        <div className="grid gap-5 md:grid-cols-3">
 
-      <section className="border-y border-[#D8E5E8] bg-white px-4 py-8 sm:px-6">
+          {/* TOTAL INCOME */}
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+            <div className="flex items-center justify-between">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                <TrendingUp size={21} />
+              </div>
 
-        <div className="mx-auto max-w-5xl">
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500">
+                {latestReport.year}
+              </span>
+            </div>
 
-          <div className="text-center">
-
-            <p className="text-[8px] font-bold uppercase tracking-[0.2em] text-[#B48726]">
-              Financial Responsibility
+            <p className="mt-5 text-sm font-medium text-slate-500">
+              Total Income
             </p>
 
-            <h2 className="mt-1 font-serif text-2xl font-bold text-[#123B4A]">
-              Our Reporting Approach
-            </h2>
+            <p className="mt-2 text-2xl font-bold text-slate-900">
+              {formatINR(latestReport.income)}
+            </p>
 
+            <p className="mt-2 text-sm text-slate-500">
+              Based on published financial records
+            </p>
           </div>
 
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          {/* TOTAL EXPENDITURE */}
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+            <div className="flex items-center justify-between">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 text-rose-600">
+                <TrendingDown size={21} />
+              </div>
 
-            <Principle text="Maintain proper financial records." />
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500">
+                {latestReport.year}
+              </span>
+            </div>
 
-            <Principle text="Report financial information responsibly." />
+            <p className="mt-5 text-sm font-medium text-slate-500">
+              Total Expenditure
+            </p>
 
-            <Principle text="Support transparency for stakeholders." />
+            <p className="mt-2 text-2xl font-bold text-slate-900">
+              {formatINR(latestReport.expenditure)}
+            </p>
 
-            <Principle text="Publish approved information where appropriate." />
-
+            <p className="mt-2 text-sm text-slate-500">
+              Based on published financial records
+            </p>
           </div>
 
+          {/* NET POSITION */}
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+            <div className="flex items-center justify-between">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                <IndianRupee size={21} />
+              </div>
+
+              <span
+                className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                  latestReport.netPosition >= 0
+                    ? "bg-emerald-50 text-emerald-700"
+                    : "bg-rose-50 text-rose-700"
+                }`}
+              >
+                {latestReport.netPosition >= 0
+                  ? "Surplus"
+                  : "Deficit"}
+              </span>
+            </div>
+
+            <p className="mt-5 text-sm font-medium text-slate-500">
+              Net Position
+            </p>
+
+            <p
+              className={`mt-2 text-2xl font-bold ${
+                latestReport.netPosition >= 0
+                  ? "text-emerald-600"
+                  : "text-rose-600"
+              }`}
+            >
+              {formatNetPosition(latestReport.netPosition)}
+            </p>
+
+            <p className="mt-2 text-sm text-slate-500">
+              Calculated from approved records
+            </p>
+          </div>
         </div>
-
       </section>
 
-      {/* =====================================================
-          DOCUMENT LINKS
-      ====================================================== */}
+      {/* REPORTS */}
+      <section className="mx-auto max-w-7xl px-5 py-10 sm:px-8 lg:px-10">
+        <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
 
-      <section className="bg-[#F3F7F8] px-4 py-8 sm:px-6">
-
-        <div className="mx-auto max-w-5xl">
-
-          <div className="grid gap-3 sm:grid-cols-3">
-
-            <QuickLink
-              href="/reports/financials/statements"
-              title="Financial Statements"
-              icon={<FileText size={16} />}
-            />
-
-            <QuickLink
-              href="/reports/financials/audit"
-              title="Audit Reports"
-              icon={<ShieldCheck size={16} />}
-            />
-
-            <QuickLink
-              href="/reports/annual"
-              title="Annual Reports"
-              icon={<BarChart3 size={16} />}
-            />
-
-          </div>
-
-        </div>
-
-      </section>
-
-      {/* =====================================================
-          NOTICE
-      ====================================================== */}
-
-      <section className="px-4 pb-8 sm:px-6">
-
-        <div className="mx-auto max-w-5xl rounded-2xl border border-[#E7D6A8] bg-[#FFFBEF] p-5">
-
-          <div className="flex items-start gap-3">
-
-            <ShieldCheck
-              size={18}
-              className="mt-0.5 shrink-0 text-[#B18428]"
-            />
-
+          {/* HEADER */}
+          <div className="flex flex-col gap-4 border-b border-slate-200 px-6 py-7 sm:flex-row sm:items-center sm:justify-between">
             <div>
-
-              <h3 className="text-[10px] font-bold text-[#123B4A]">
-                Important Financial Information
-              </h3>
-
-              <p className="mt-1 text-[8px] leading-5 text-gray-600">
-                The figures displayed on this page should be
-                replaced with figures from the Trust&apos;s
-                approved accounts and financial records before
-                publication. Placeholder values are intentionally
-                shown as “—” until verified figures are available.
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-700">
+                Financial Years
               </p>
 
+              <h2 className="mt-2 text-2xl font-bold text-slate-900">
+                Year-wise Income & Expenditure
+              </h2>
+
+              <p className="mt-2 text-sm text-slate-500">
+                View published financial reports and download supporting
+                documents.
+              </p>
             </div>
 
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-teal-50 text-teal-700">
+              <FileText size={23} />
+            </div>
           </div>
 
+          {/* TABLE HEADER */}
+          <div className="hidden grid-cols-[2.2fr_1fr_1fr_1fr_1.1fr_1fr] border-b border-slate-200 bg-slate-50 px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 lg:grid">
+            <div>Financial Year</div>
+            <div>Income</div>
+            <div>Expenditure</div>
+            <div>Net Position</div>
+            <div>Status</div>
+            <div className="text-right">Report</div>
+          </div>
+
+          {/* REPORT ROWS */}
+          <div>
+            {reports.map((report) => {
+              const isSurplus = report.netPosition >= 0;
+
+              return (
+                <div
+                  key={report.year}
+                  className="border-b border-slate-100 transition hover:bg-slate-50/70 last:border-b-0"
+                >
+                  <div className="grid gap-5 px-6 py-6 lg:grid-cols-[2.2fr_1fr_1fr_1fr_1.1fr_1fr] lg:items-center">
+
+                    {/* YEAR */}
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-700">
+                        <FileText size={21} />
+                      </div>
+
+                      <div>
+                        <h3 className="font-bold text-slate-900">
+                          {report.year}
+                        </h3>
+
+                        <p className="mt-1 text-sm text-slate-500">
+                          {report.title}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* INCOME */}
+                    <div>
+                      <p className="text-xs font-semibold uppercase text-slate-400 lg:hidden">
+                        Income
+                      </p>
+
+                      <p className="mt-1 font-semibold text-emerald-700 lg:mt-0">
+                        {formatINR(report.income)}
+                      </p>
+                    </div>
+
+                    {/* EXPENDITURE */}
+                    <div>
+                      <p className="text-xs font-semibold uppercase text-slate-400 lg:hidden">
+                        Expenditure
+                      </p>
+
+                      <p className="mt-1 font-semibold text-rose-700 lg:mt-0">
+                        {formatINR(report.expenditure)}
+                      </p>
+                    </div>
+
+                    {/* NET POSITION */}
+                    <div>
+                      <p className="text-xs font-semibold uppercase text-slate-400 lg:hidden">
+                        Net Position
+                      </p>
+
+                      <div className="mt-1 lg:mt-0">
+                        <p
+                          className={`font-bold ${
+                            isSurplus
+                              ? "text-emerald-700"
+                              : "text-rose-700"
+                          }`}
+                        >
+                          {formatNetPosition(report.netPosition)}
+                        </p>
+
+                        <p className="mt-1 text-xs text-slate-400">
+                          {isSurplus ? "Surplus" : "Deficit"}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* STATUS */}
+                    <div>
+                      <span
+                        className={
+                          report.status === "Published"
+                            ? "inline-flex rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700"
+                            : "inline-flex rounded-full bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700"
+                        }
+                      >
+                        {report.status === "Published"
+                          ? "Report Available"
+                          : "Report Pending"}
+                      </span>
+                    </div>
+
+                    {/* PDF */}
+                    <div className="lg:text-right">
+                      {report.status === "Published" ? (
+                        <a
+                          href={report.file}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-700"
+                        >
+                          <Download size={16} />
+                          View PDF
+                        </a>
+                      ) : (
+                        <span className="text-sm font-semibold text-slate-400">
+                          PDF Pending
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* FOOTER */}
+          <div className="border-t border-slate-200 bg-slate-50 px-6 py-5">
+            <p className="text-sm text-slate-500">
+              Financial reports are published for transparency and public
+              information purposes. Figures are based on the respective
+              published Income & Expenditure statements.
+            </p>
+          </div>
         </div>
-
       </section>
-
-      {/* =====================================================
-          CTA
-      ====================================================== */}
-
-      <section className="bg-[#123B4A] px-4 py-9 text-center">
-
-        <BarChart3
-          size={21}
-          className="mx-auto text-[#D6A83C]"
-        />
-
-        <h2 className="mt-2 font-serif text-2xl font-bold text-white">
-          Explore Financial Information
-        </h2>
-
-        <p className="mx-auto mt-1 max-w-lg text-[9px] leading-5 text-white/45">
-          View annual reports, financial statements and
-          other transparency information.
-        </p>
-
-        <div className="mt-5 flex flex-wrap justify-center gap-2">
-
-          <Link
-            href="/reports/financials/statements"
-            className="flex items-center gap-2 rounded-lg bg-[#D6A83C] px-4 py-2 text-[9px] font-bold text-white transition hover:bg-[#B98D29]"
-          >
-            Financial Statements
-            <ArrowRight size={12} />
-          </Link>
-
-          <Link
-            href="/transparency"
-            className="flex items-center gap-2 rounded-lg border border-white/15 px-4 py-2 text-[9px] font-bold text-white transition hover:border-[#D6A83C]"
-          >
-            Transparency Centre
-            <ArrowRight size={12} />
-          </Link>
-
-        </div>
-
-      </section>
-
     </main>
-  );
-}
-
-/* ==========================================================
-   SUMMARY CARD
-========================================================== */
-
-function SummaryCard({
-  icon,
-  label,
-  value,
-  text,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  text: string;
-}) {
-  return (
-    <div className="rounded-xl border border-[#D8E5E8] bg-white p-4">
-
-      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#E8F5F7] text-[#16758A]">
-        {icon}
-      </div>
-
-      <p className="mt-3 text-[8px] font-bold uppercase tracking-wider text-gray-400">
-        {label}
-      </p>
-
-      <p className="mt-1 font-serif text-xl font-bold text-[#123B4A]">
-        {value}
-      </p>
-
-      <p className="mt-1 text-[8px] text-gray-500">
-        {text}
-      </p>
-
-    </div>
-  );
-}
-
-/* ==========================================================
-   MOBILE VALUE
-========================================================== */
-
-function MobileValue({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="rounded-lg bg-white p-2 text-center">
-
-      <p className="text-[7px] font-bold uppercase text-gray-400">
-        {label}
-      </p>
-
-      <p className="mt-1 text-[9px] font-bold text-[#123B4A]">
-        {value}
-      </p>
-
-    </div>
-  );
-}
-
-/* ==========================================================
-   PRINCIPLE
-========================================================== */
-
-function Principle({
-  text,
-}: {
-  text: string;
-}) {
-  return (
-    <div className="flex items-center gap-2 rounded-xl border border-[#D8E5E8] bg-[#F9FBFC] p-3">
-
-      <CheckCircle2
-        size={15}
-        className="shrink-0 text-[#16758A]"
-      />
-
-      <span className="text-[9px] font-semibold text-[#526575]">
-        {text}
-      </span>
-
-    </div>
-  );
-}
-
-/* ==========================================================
-   QUICK LINK
-========================================================== */
-
-function QuickLink({
-  href,
-  title,
-  icon,
-}: {
-  href: string;
-  title: string;
-  icon: React.ReactNode;
-}) {
-  return (
-    <Link
-      href={href}
-      className="group flex items-center justify-between rounded-xl border border-[#D8E5E8] bg-white p-4 transition hover:-translate-y-0.5 hover:border-[#D6A83C] hover:shadow-sm"
-    >
-
-      <div className="flex items-center gap-3">
-
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#E8F5F7] text-[#16758A]">
-          {icon}
-        </div>
-
-        <span className="text-[9px] font-bold text-[#123B4A]">
-          {title}
-        </span>
-
-      </div>
-
-      <ArrowRight
-        size={13}
-        className="text-[#16758A] transition group-hover:translate-x-1"
-      />
-
-    </Link>
   );
 }

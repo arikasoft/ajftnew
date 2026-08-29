@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import {
+  Accessibility,
   ArrowUpRight,
   Briefcase,
   ChevronDown,
@@ -261,11 +262,6 @@ const navigation: NavigationMenu[] = [
         href: "/careers",
         icon: <Briefcase size={16} />,
       },
-
-      /* =====================================================
-         DONATE — ONLY THIS ITEM HAS SPECIAL COLOR
-      ====================================================== */
-
       {
         title: "Donate",
         description:
@@ -473,13 +469,13 @@ export default function Header() {
             transition-all
             duration-500
             lg:block
-            ${scrolled
-              ? "h-0 opacity-0"
-              : "h-[32px] opacity-100"
+            ${
+              scrolled
+                ? "h-0 opacity-0"
+                : "h-[32px] opacity-100"
             }
           `}
         >
-
           <div
             className="
               mx-auto
@@ -491,9 +487,6 @@ export default function Header() {
               px-6
             "
           >
-
-            {/* LEFT */}
-
             <div className="flex items-center gap-2">
 
               <ShieldCheck
@@ -514,8 +507,6 @@ export default function Header() {
               </span>
 
             </div>
-
-            {/* RIGHT */}
 
             <div className="flex items-center gap-2">
 
@@ -563,36 +554,36 @@ export default function Header() {
                   </a>
                 )
               )}
+
               <Link
                 href="/admin/login"
                 aria-label="Admin Login"
                 title="Admin Login"
                 className="
-    ml-1
-    flex
-    h-5
-    w-5
-    items-center
-    justify-center
-    rounded-full
-    border
-    border-white/10
-    bg-white/5
-    text-white/70
-    transition-all
-    duration-300
-    hover:-translate-y-0.5
-    hover:border-[#D3A640]
-    hover:bg-[#D3A640]
-    hover:text-white
-  "
+                  ml-1
+                  flex
+                  h-5
+                  w-5
+                  items-center
+                  justify-center
+                  rounded-full
+                  border
+                  border-white/10
+                  bg-white/5
+                  text-white/70
+                  transition-all
+                  duration-300
+                  hover:-translate-y-0.5
+                  hover:border-[#D3A640]
+                  hover:bg-[#D3A640]
+                  hover:text-white
+                "
               >
                 <LogIn size={10} />
               </Link>
+
             </div>
-
           </div>
-
         </div>
 
         {/* ===================================================
@@ -604,21 +595,21 @@ export default function Header() {
             border-b
             transition-all
             duration-500
-            ${scrolled
-              ? `
+            ${
+              scrolled
+                ? `
                   border-[#D7E0E5]
                   bg-white/95
                   shadow-[0_8px_30px_rgba(16,42,67,0.10)]
                   backdrop-blur-xl
                 `
-              : `
+                : `
                   border-[#E5EBEF]
                   bg-white
                 `
             }
           `}
         >
-
           <div
             className={`
               mx-auto
@@ -631,9 +622,10 @@ export default function Header() {
               md:px-7
               transition-all
               duration-500
-              ${scrolled
-                ? "h-[56px]"
-                : "h-[70px]"
+              ${
+                scrolled
+                  ? "h-[56px]"
+                  : "h-[70px]"
               }
             `}
           >
@@ -656,7 +648,6 @@ export default function Header() {
                 gap-2.5
               "
             >
-
               <div
                 className={`
                   relative
@@ -669,13 +660,13 @@ export default function Header() {
                   transition-all
                   duration-500
                   group-hover:ring-[#C59A3A]
-                  ${scrolled
-                    ? "h-9 w-9"
-                    : "h-12 w-12"
+                  ${
+                    scrolled
+                      ? "h-9 w-9"
+                      : "h-12 w-12"
                   }
                 `}
               >
-
                 <Image
                   src="/logo.png"
                   alt="Anand Jivan Foundation Trust"
@@ -689,7 +680,6 @@ export default function Header() {
                     group-hover:scale-105
                   "
                 />
-
               </div>
 
               <div className="hidden sm:block">
@@ -702,9 +692,10 @@ export default function Header() {
                     text-[#102A43]
                     transition-all
                     duration-300
-                    ${scrolled
-                      ? "text-[15px]"
-                      : "text-[18px] lg:text-[20px]"
+                    ${
+                      scrolled
+                        ? "text-[15px]"
+                        : "text-[18px] lg:text-[20px]"
                     }
                   `}
                 >
@@ -726,7 +717,6 @@ export default function Header() {
                 </div>
 
               </div>
-
             </Link>
 
             {/* =================================================
@@ -756,14 +746,12 @@ export default function Header() {
                   hover:text-[#176B87]
                 "
               >
-
                 <Home
                   size={12}
                   className="transition-transform group-hover:-translate-y-0.5"
                 />
 
                 Home
-
               </Link>
 
               {/* =================================================
@@ -800,13 +788,13 @@ export default function Header() {
                         font-semibold
                         transition-all
                         duration-300
-                        ${activeMenu === menu.label
-                          ? "bg-[#EEF6F8] text-[#176B87]"
-                          : "text-[#526575] hover:bg-[#EEF6F8] hover:text-[#176B87]"
+                        ${
+                          activeMenu === menu.label
+                            ? "bg-[#EEF6F8] text-[#176B87]"
+                            : "text-[#526575] hover:bg-[#EEF6F8] hover:text-[#176B87]"
                         }
                       `}
                     >
-
                       {menu.label}
 
                       <ChevronDown
@@ -814,13 +802,13 @@ export default function Header() {
                         className={`
                           transition-transform
                           duration-300
-                          ${activeMenu === menu.label
-                            ? "rotate-180"
-                            : ""
+                          ${
+                            activeMenu === menu.label
+                              ? "rotate-180"
+                              : ""
                           }
                         `}
                       />
-
                     </button>
 
                     {/* MEGA MENU */}
@@ -836,7 +824,6 @@ export default function Header() {
                           pt-3
                         "
                       >
-
                         <div
                           className="
                             overflow-hidden
@@ -848,8 +835,6 @@ export default function Header() {
                             shadow-[0_30px_80px_rgba(16,42,67,0.20)]
                           "
                         >
-
-                          {/* TOP LINE */}
 
                           <div
                             className="
@@ -863,7 +848,6 @@ export default function Header() {
                               pb-3
                             "
                           >
-
                             <div>
 
                               <p
@@ -914,7 +898,6 @@ export default function Header() {
                               gap-1
                             "
                           >
-
                             {menu.items.map(
                               (item) => {
 
@@ -931,16 +914,15 @@ export default function Header() {
                                       p-3
                                       transition-all
                                       duration-300
-                                      ${isDonate
-                                        ? "bg-gradient-to-r from-[#E85D04] via-[#F48C06] to-[#FFB703] shadow-md shadow-orange-500/15 hover:-translate-y-0.5"
-                                        : "hover:bg-[#F3F8FA] hover:-translate-y-0.5"
+                                      ${
+                                        isDonate
+                                          ? "bg-gradient-to-r from-[#E85D04] via-[#F48C06] to-[#FFB703] shadow-md shadow-orange-500/15 hover:-translate-y-0.5"
+                                          : "hover:bg-[#F3F8FA] hover:-translate-y-0.5"
                                       }
                                     `}
                                   >
 
                                     <div className="flex gap-3">
-
-                                      {/* ICON */}
 
                                       <div
                                         className={`
@@ -953,16 +935,15 @@ export default function Header() {
                                           rounded-lg
                                           transition-all
                                           duration-300
-                                          ${isDonate
-                                            ? "bg-white/20 text-white"
-                                            : "bg-[#EEF6F8] text-[#176B87] group-hover:bg-[#176B87] group-hover:text-white"
+                                          ${
+                                            isDonate
+                                              ? "bg-white/20 text-white"
+                                              : "bg-[#EEF6F8] text-[#176B87] group-hover:bg-[#176B87] group-hover:text-white"
                                           }
                                         `}
                                       >
                                         {item.icon}
                                       </div>
-
-                                      {/* TEXT */}
 
                                       <div className="min-w-0 flex-1">
 
@@ -979,9 +960,10 @@ export default function Header() {
                                             className={`
                                               text-[12px]
                                               font-bold
-                                              ${isDonate
-                                                ? "text-white"
-                                                : "text-[#243B53] group-hover:text-[#176B87]"
+                                              ${
+                                                isDonate
+                                                  ? "text-white"
+                                                  : "text-[#243B53] group-hover:text-[#176B87]"
                                               }
                                             `}
                                           >
@@ -992,9 +974,10 @@ export default function Header() {
                                             size={13}
                                             className={`
                                               shrink-0
-                                              ${isDonate
-                                                ? "text-white/75"
-                                                : "text-[#C4CDD3] group-hover:text-[#C59A3A]"
+                                              ${
+                                                isDonate
+                                                  ? "text-white/75"
+                                                  : "text-[#C4CDD3] group-hover:text-[#C59A3A]"
                                               }
                                             `}
                                           />
@@ -1006,9 +989,10 @@ export default function Header() {
                                             mt-1
                                             text-[9px]
                                             leading-4
-                                            ${isDonate
-                                              ? "text-white/75"
-                                              : "text-[#7A8A98]"
+                                            ${
+                                              isDonate
+                                                ? "text-white/75"
+                                                : "text-[#7A8A98]"
                                             }
                                           `}
                                         >
@@ -1023,7 +1007,6 @@ export default function Header() {
                                 );
                               }
                             )}
-
                           </div>
 
                           {/* CTA */}
@@ -1091,7 +1074,6 @@ export default function Header() {
                                 hover:shadow-xl
                               "
                             >
-
                               <Heart
                                 size={11}
                                 fill="currentColor"
@@ -1102,21 +1084,75 @@ export default function Header() {
                               <ArrowUpRight
                                 size={11}
                               />
-
                             </Link>
 
                           </div>
 
                         </div>
-
                       </div>
                     )}
-
                   </div>
                 )
               )}
 
-              {/* CONTACT */}
+              {/* =================================================
+                  DIVYANG ASSISTANCE
+                  CONTACT SE PEHLE
+              ================================================== */}
+
+              <Link
+                href="/apply"
+                className="
+                  group
+                  ml-1
+                  flex
+                  items-center
+                  gap-1.5
+                  rounded-full
+                  border
+                  border-[#176B87]/25
+                  bg-[#EEF8FA]
+                  px-3
+                  py-2
+                  text-[10px]
+                  font-bold
+                  text-[#176B87]
+                  transition-all
+                  duration-300
+                  hover:-translate-y-0.5
+                  hover:border-[#176B87]
+                  hover:bg-[#176B87]
+                  hover:text-white
+                  hover:shadow-md
+                "
+              >
+                <Accessibility
+                  size={13}
+                  className="
+                    transition-transform
+                    duration-300
+                    group-hover:scale-110
+                  "
+                />
+
+                <span className="whitespace-nowrap">
+                  Divyang Assistance
+                </span>
+
+                <ArrowUpRight
+                  size={11}
+                  className="
+                    transition-transform
+                    duration-300
+                    group-hover:translate-x-0.5
+                    group-hover:-translate-y-0.5
+                  "
+                />
+              </Link>
+
+              {/* =================================================
+                  CONTACT
+              ================================================== */}
 
               <Link
                 href="/contact"
@@ -1137,14 +1173,12 @@ export default function Header() {
                   hover:text-[#176B87]
                 "
               >
-
                 <Mail
                   size={12}
                   className="group-hover:-translate-y-0.5"
                 />
 
                 Contact
-
               </Link>
 
             </nav>
@@ -1159,7 +1193,9 @@ export default function Header() {
 
               <button
                 type="button"
-                onClick={() => setSearchOpen(true)}
+                onClick={() =>
+                  setSearchOpen(true)
+                }
                 aria-label="Search website"
                 className="
                   hidden
@@ -1201,14 +1237,11 @@ export default function Header() {
                   lg:flex
                 "
               >
-
                 <ShieldCheck size={12} />
-
                 Verify
-
               </Link>
 
-              {/* ONLY DONATE BUTTON HAS SPECIAL COLOR */}
+              {/* DONATE */}
 
               <Link
                 href="/donate"
@@ -1236,7 +1269,6 @@ export default function Header() {
                   lg:flex
                 "
               >
-
                 <Heart
                   size={12}
                   fill="currentColor"
@@ -1245,14 +1277,15 @@ export default function Header() {
                 Donate
 
                 <ArrowUpRight size={11} />
-
               </Link>
 
               {/* MOBILE */}
 
               <button
                 type="button"
-                onClick={() => setMobileOpen(true)}
+                onClick={() =>
+                  setMobileOpen(true)
+                }
                 aria-label="Open menu"
                 className="
                   flex
@@ -1275,9 +1308,7 @@ export default function Header() {
             </div>
 
           </div>
-
         </div>
-
       </header>
 
       {/* ======================================================
@@ -1294,7 +1325,6 @@ export default function Header() {
             backdrop-blur-xl
           "
         >
-
           <div
             className="
               mx-auto
@@ -1305,7 +1335,13 @@ export default function Header() {
             "
           >
 
-            <div className="flex items-center justify-between">
+            <div
+              className="
+                flex
+                items-center
+                justify-between
+              "
+            >
 
               <div>
 
@@ -1321,7 +1357,13 @@ export default function Header() {
                   Anand Jivan Foundation Trust
                 </p>
 
-                <p className="mt-1 text-xs text-white/45">
+                <p
+                  className="
+                    mt-1
+                    text-xs
+                    text-white/45
+                  "
+                >
                   Search website
                 </p>
 
@@ -1329,7 +1371,9 @@ export default function Header() {
 
               <button
                 type="button"
-                onClick={() => setSearchOpen(false)}
+                onClick={() =>
+                  setSearchOpen(false)
+                }
                 aria-label="Close search"
                 className="
                   flex
@@ -1364,7 +1408,10 @@ export default function Header() {
 
                 <Search
                   size={22}
-                  className="shrink-0 text-white/30"
+                  className="
+                    shrink-0
+                    text-white/30
+                  "
                 />
 
                 <input
@@ -1399,8 +1446,13 @@ export default function Header() {
                   Quick Access
                 </p>
 
-                <div className="flex flex-wrap gap-2">
-
+                <div
+                  className="
+                    flex
+                    flex-wrap
+                    gap-2
+                  "
+                >
                   {[
                     ["About", "/about"],
                     ["Programs", "/programs"],
@@ -1414,40 +1466,45 @@ export default function Header() {
                     ["Gallery", "/gallery"],
                     ["Certificates", "/certificates"],
                     ["Policies", "/policies"],
+                    ["Divyang Assistance", "/apply"],
                     ["Donate", "/donate"],
                     ["Contact", "/contact"],
-                  ].map(([label, href]) => (
+                  ].map(
+                    ([label, href]) => (
 
-                    <Link
-                      key={href}
-                      href={href}
-                      onClick={() => setSearchOpen(false)}
-                      className={`
-                        rounded-full
-                        px-4
-                        py-2
-                        text-[9px]
-                        font-bold
-                        transition-all
-                        ${label === "Donate"
-                          ? "bg-gradient-to-r from-[#E85D04] to-[#FFB703] text-white"
-                          : "bg-white/10 text-white/70 hover:bg-white/20 hover:text-white"
+                      <Link
+                        key={href}
+                        href={href}
+                        onClick={() =>
+                          setSearchOpen(false)
                         }
-                      `}
-                    >
-                      {label}
-                    </Link>
+                        className={`
+                          rounded-full
+                          px-4
+                          py-2
+                          text-[9px]
+                          font-bold
+                          transition-all
+                          ${
+                            label === "Donate"
+                              ? "bg-gradient-to-r from-[#E85D04] to-[#FFB703] text-white"
+                              : label ===
+                                "Divyang Assistance"
+                              ? "bg-[#176B87] text-white hover:bg-[#0F5268]"
+                              : "bg-white/10 text-white/70 hover:bg-white/20 hover:text-white"
+                          }
+                        `}
+                      >
+                        {label}
+                      </Link>
 
-                  ))}
-
+                    )
+                  )}
                 </div>
 
               </div>
-
             </div>
-
           </div>
-
         </div>
       )}
 
@@ -1456,7 +1513,14 @@ export default function Header() {
       ======================================================= */}
 
       {mobileOpen && (
-        <div className="fixed inset-0 z-[9998] xl:hidden">
+        <div
+          className="
+            fixed
+            inset-0
+            z-[9998]
+            xl:hidden
+          "
+        >
 
           {/* BACKDROP */}
 
@@ -1512,11 +1576,20 @@ export default function Header() {
               <Link
                 href="/"
                 onClick={closeMobile}
-                className="flex items-center gap-2"
+                className="
+                  flex
+                  items-center
+                  gap-2
+                "
               >
 
-                <div className="relative h-9 w-9">
-
+                <div
+                  className="
+                    relative
+                    h-9
+                    w-9
+                  "
+                >
                   <Image
                     src="/logo.png"
                     alt="AJFT Logo"
@@ -1524,7 +1597,6 @@ export default function Header() {
                     sizes="36px"
                     className="object-contain"
                   />
-
                 </div>
 
                 <div>
@@ -1602,188 +1674,250 @@ export default function Header() {
                   text-[#176B87]
                 "
               >
-
                 <Home size={14} />
-
                 Home
-
               </Link>
 
               {/* NAVIGATION */}
 
-              {navigation.map((menu) => (
+              {navigation.map(
+                (menu) => (
 
-                <div
-                  key={menu.label}
-                  className="border-b border-[#E7ECEF]"
-                >
-
-                  <button
-                    type="button"
-                    aria-expanded={
-                      mobileMenu === menu.label
-                    }
-                    onClick={() =>
-                      setMobileMenu(
-                        mobileMenu === menu.label
-                          ? null
-                          : menu.label
-                      )
-                    }
+                  <div
+                    key={menu.label}
                     className="
-                      flex
-                      w-full
-                      items-center
-                      justify-between
-                      px-3.5
-                      py-3.5
-                      text-left
-                      text-xs
-                      font-bold
-                      text-[#243B53]
+                      border-b
+                      border-[#E7ECEF]
                     "
                   >
 
-                    {menu.label}
-
-                    <ChevronDown
-                      size={15}
-                      className={`
-                        transition-transform
-                        ${mobileMenu === menu.label
-                          ? "rotate-180 text-[#176B87]"
-                          : ""
-                        }
-                      `}
-                    />
-
-                  </button>
-
-                  {mobileMenu === menu.label && (
-
-                    <div
+                    <button
+                      type="button"
+                      aria-expanded={
+                        mobileMenu ===
+                        menu.label
+                      }
+                      onClick={() =>
+                        setMobileMenu(
+                          mobileMenu ===
+                            menu.label
+                            ? null
+                            : menu.label
+                        )
+                      }
                       className="
-                        mb-2
-                        ml-2
-                        border-l-2
-                        border-[#C59A3A]/40
-                        pl-2
+                        flex
+                        w-full
+                        items-center
+                        justify-between
+                        px-3.5
+                        py-3.5
+                        text-left
+                        text-xs
+                        font-bold
+                        text-[#243B53]
                       "
                     >
 
-                      {menu.items.map((item) => {
+                      {menu.label}
 
-                        const isDonate =
-                          item.title === "Donate";
+                      <ChevronDown
+                        size={15}
+                        className={`
+                          transition-transform
+                          ${
+                            mobileMenu ===
+                            menu.label
+                              ? "rotate-180 text-[#176B87]"
+                              : ""
+                          }
+                        `}
+                      />
 
-                        return (
-                          <Link
-                            key={item.href}
-                            href={item.href}
-                            onClick={closeMobile}
-                            className={`
-                              group
-                              flex
-                              gap-2.5
-                              rounded-lg
-                              px-3
-                              py-2.5
-                              transition-all
-                              ${isDonate
-                                ? "bg-gradient-to-r from-[#E85D04] to-[#FFB703] text-white shadow-sm"
-                                : "hover:bg-[#F4F8FA]"
-                              }
-                            `}
-                          >
+                    </button>
 
-                            {/* ICON */}
+                    {mobileMenu ===
+                      menu.label && (
 
-                            <div
-                              className={`
-                                flex
-                                h-7
-                                w-7
-                                shrink-0
-                                items-center
-                                justify-center
-                                rounded-lg
-                                ${isDonate
-                                  ? "bg-white/20 text-white"
-                                  : "bg-[#EEF6F8] text-[#176B87]"
+                      <div
+                        className="
+                          mb-2
+                          ml-2
+                          border-l-2
+                          border-[#C59A3A]/40
+                          pl-2
+                        "
+                      >
+
+                        {menu.items.map(
+                          (item) => {
+
+                            const isDonate =
+                              item.title ===
+                              "Donate";
+
+                            return (
+                              <Link
+                                key={item.href}
+                                href={item.href}
+                                onClick={
+                                  closeMobile
                                 }
-                              `}
-                            >
-                              {item.icon}
-                            </div>
-
-                            {/* TEXT */}
-
-                            <div
-                              className="
-                                min-w-0
-                                flex-1
-                              "
-                            >
-
-                              <div
-                                className="
-                                  flex
-                                  items-center
-                                  justify-between
-                                "
-                              >
-
-                                <p
-                                  className={`
-                                    text-[11px]
-                                    font-bold
-                                    ${isDonate
-                                      ? "text-white"
-                                      : "text-[#243B53]"
-                                    }
-                                  `}
-                                >
-                                  {item.title}
-                                </p>
-
-                                <ArrowUpRight
-                                  size={11}
-                                  className={
-                                    isDonate
-                                      ? "text-white/70"
-                                      : "text-[#C59A3A]"
-                                  }
-                                />
-
-                              </div>
-
-                              <p
                                 className={`
-                                  mt-0.5
-                                  text-[8px]
-                                  leading-4
-                                  ${isDonate
-                                    ? "text-white/75"
-                                    : "text-[#7A8A98]"
+                                  group
+                                  flex
+                                  gap-2.5
+                                  rounded-lg
+                                  px-3
+                                  py-2.5
+                                  transition-all
+                                  ${
+                                    isDonate
+                                      ? "bg-gradient-to-r from-[#E85D04] to-[#FFB703] text-white shadow-sm"
+                                      : "hover:bg-[#F4F8FA]"
                                   }
                                 `}
                               >
-                                {item.description}
-                              </p>
 
-                            </div>
+                                <div
+                                  className={`
+                                    flex
+                                    h-7
+                                    w-7
+                                    shrink-0
+                                    items-center
+                                    justify-center
+                                    rounded-lg
+                                    ${
+                                      isDonate
+                                        ? "bg-white/20 text-white"
+                                        : "bg-[#EEF6F8] text-[#176B87]"
+                                    }
+                                  `}
+                                >
+                                  {item.icon}
+                                </div>
 
-                          </Link>
-                        );
-                      })}
+                                <div
+                                  className="
+                                    min-w-0
+                                    flex-1
+                                  "
+                                >
 
-                    </div>
-                  )}
+                                  <div
+                                    className="
+                                      flex
+                                      items-center
+                                      justify-between
+                                    "
+                                  >
 
-                </div>
-              ))}
+                                    <p
+                                      className={`
+                                        text-[11px]
+                                        font-bold
+                                        ${
+                                          isDonate
+                                            ? "text-white"
+                                            : "text-[#243B53]"
+                                        }
+                                      `}
+                                    >
+                                      {item.title}
+                                    </p>
 
-              {/* CONTACT */}
+                                    <ArrowUpRight
+                                      size={11}
+                                      className={
+                                        isDonate
+                                          ? "text-white/70"
+                                          : "text-[#C59A3A]"
+                                      }
+                                    />
+
+                                  </div>
+
+                                  <p
+                                    className={`
+                                      mt-0.5
+                                      text-[8px]
+                                      leading-4
+                                      ${
+                                        isDonate
+                                          ? "text-white/75"
+                                          : "text-[#7A8A98]"
+                                      }
+                                    `}
+                                  >
+                                    {
+                                      item.description
+                                    }
+                                  </p>
+
+                                </div>
+
+                              </Link>
+                            );
+                          }
+                        )}
+
+                      </div>
+                    )}
+
+                  </div>
+                )
+              )}
+
+              {/* =================================================
+                  DIVYANG ASSISTANCE
+                  CONTACT SE PEHLE
+              ================================================== */}
+
+              <Link
+                href="/apply"
+                onClick={closeMobile}
+                className="
+                  mt-2
+                  flex
+                  items-center
+                  justify-between
+                  rounded-xl
+                  bg-gradient-to-r
+                  from-[#176B87]
+                  to-[#0F5268]
+                  px-4
+                  py-3.5
+                  text-xs
+                  font-black
+                  text-white
+                  shadow-lg
+                  shadow-[#176B87]/15
+                  transition-all
+                  duration-300
+                  hover:-translate-y-0.5
+                "
+              >
+
+                <span
+                  className="
+                    flex
+                    items-center
+                    gap-2
+                  "
+                >
+                  <Accessibility size={16} />
+
+                  Divyang Assistance
+                </span>
+
+                <ArrowUpRight size={14} />
+
+              </Link>
+
+              {/* =================================================
+                  CONTACT
+              ================================================== */}
 
               <Link
                 href="/contact"
@@ -1799,11 +1933,9 @@ export default function Header() {
                   text-[#243B53]
                 "
               >
-
                 <Mail size={14} />
 
                 Contact Us
-
               </Link>
 
               {/* VERIFY */}
@@ -1829,11 +1961,9 @@ export default function Header() {
                   hover:bg-[#EEF6F8]
                 "
               >
-
                 <ShieldCheck size={14} />
 
                 Verify Donation Receipt
-
               </Link>
 
               {/* MOBILE DONATE */}
@@ -1863,7 +1993,6 @@ export default function Header() {
                   hover:-translate-y-0.5
                 "
               >
-
                 <Heart
                   size={15}
                   fill="currentColor"
@@ -1872,7 +2001,6 @@ export default function Header() {
                 Donate Now
 
                 <ArrowUpRight size={13} />
-
               </Link>
 
               {/* CONTACT INFORMATION */}
@@ -1898,7 +2026,12 @@ export default function Header() {
                   Contact AJFT
                 </p>
 
-                <div className="mt-3 space-y-3">
+                <div
+                  className="
+                    mt-3
+                    space-y-3
+                  "
+                >
 
                   <a
                     href="mailto:info@ajftrust.org"
@@ -1910,14 +2043,12 @@ export default function Header() {
                       text-[#607585]
                     "
                   >
-
                     <Mail
                       size={14}
                       className="text-[#176B87]"
                     />
 
                     info@ajftrust.org
-
                   </a>
 
                   <a
@@ -1930,14 +2061,12 @@ export default function Header() {
                       text-[#607585]
                     "
                   >
-
                     <Phone
                       size={14}
                       className="text-[#176B87]"
                     />
 
                     +91 9155751363
-
                   </a>
 
                   <div
@@ -1950,7 +2079,6 @@ export default function Header() {
                       text-[#607585]
                     "
                   >
-
                     <MapPin
                       size={14}
                       className="
@@ -1973,7 +2101,6 @@ export default function Header() {
                   </div>
 
                 </div>
-
               </div>
 
               {/* SOCIAL */}
@@ -1994,33 +2121,35 @@ export default function Header() {
 
                 <div className="mt-3 flex gap-2">
 
-                  {socialLinks.map((social) => (
+                  {socialLinks.map(
+                    (social) => (
 
-                    <a
-                      key={social.name}
-                      href={social.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={social.name}
-                      className="
-                        flex
-                        h-9
-                        w-9
-                        items-center
-                        justify-center
-                        rounded-full
-                        bg-[#102A43]
-                        text-white
-                        transition-all
-                        duration-300
-                        hover:-translate-y-0.5
-                        hover:bg-[#C59A3A]
-                      "
-                    >
-                      {social.icon}
-                    </a>
+                      <a
+                        key={social.name}
+                        href={social.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={social.name}
+                        className="
+                          flex
+                          h-9
+                          w-9
+                          items-center
+                          justify-center
+                          rounded-full
+                          bg-[#102A43]
+                          text-white
+                          transition-all
+                          duration-300
+                          hover:-translate-y-0.5
+                          hover:bg-[#C59A3A]
+                        "
+                      >
+                        {social.icon}
+                      </a>
 
-                  ))}
+                    )
+                  )}
 
                 </div>
 
@@ -2028,8 +2157,14 @@ export default function Header() {
 
               {/* FOOTER TEXT */}
 
-              <div className="px-2 pb-6 pt-6 text-center">
-
+              <div
+                className="
+                  px-2
+                  pb-6
+                  pt-6
+                  text-center
+                "
+              >
                 <p
                   className="
                     text-[8px]
@@ -2041,13 +2176,11 @@ export default function Header() {
                   <br />
                   Empowering Lives • Building Better Communities
                 </p>
-
               </div>
 
             </div>
 
           </aside>
-
         </div>
       )}
     </>
