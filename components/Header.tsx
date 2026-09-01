@@ -1101,7 +1101,7 @@ export default function Header() {
               ================================================== */}
 
               <Link
-                href="Divyang/apply/"
+                href="/apply"
                 className="
                   group
                   ml-1

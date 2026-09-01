@@ -1,288 +1,97 @@
 import { NextRequest, NextResponse } from "next/server";
-
 import connectDB from "@/lib/mongodb";
-import VisitorSession from "@/models/VisitorSession";
-import PageView from "@/models/PageView";
-import VisitorEvent from "@/models/VisitorEvent";
+import Analytics from "@/models/Analytics";
 
-export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+type AnalyticsPayload = {
+  page?: string;
+  path?: string;
+  event?: string;
+  referrer?: string;
+  metadata?: Record<string, unknown>;
+};
 
 export async function POST(request: NextRequest) {
   try {
+    const enabled =
+      process.env.ANALYTICS_ENABLED !== "false";
+
+    if (!enabled) {
+      return NextResponse.json({
+        success: true,
+        message: "Analytics disabled.",
+      });
+    }
+
+    let body: AnalyticsPayload = {};
+
+    try {
+      body = await request.json();
+    } catch {
+      body = {};
+    }
+
+    const page =
+      typeof body.page === "string"
+        ? body.page.trim()
+        : "";
+
+    const path =
+      typeof body.path === "string"
+        ? body.path.trim()
+        : page;
+
+    const event =
+      typeof body.event === "string"
+        ? body.event.trim()
+        : "page_view";
+
+    const referrer =
+      typeof body.referrer === "string"
+        ? body.referrer.trim()
+        : "";
+
+    const userAgent =
+      request.headers.get("user-agent") || "";
+
+    const forwarded =
+      request.headers.get("x-forwarded-for");
+
+    const ip =
+      forwarded?.split(",")[0]?.trim() ||
+      request.headers.get("x-real-ip") ||
+      "";
+
     await connectDB();
 
-    const body = await request.json();
-
-    const {
-      type,
-      visitorId,
-      sessionId,
-
+    await Analytics.create({
+      page,
       path,
-      title,
+      event,
       referrer,
+      userAgent,
+      ip,
+      metadata:
+        body.metadata &&
+        typeof body.metadata === "object"
+          ? body.metadata
+          : {},
+    });
 
-      source,
-      medium,
-
-      deviceType,
-      browser,
-      operatingSystem,
-
-      screenWidth,
-      screenHeight,
-
-      eventName,
-      eventCategory,
-      eventData,
-    } = body;
-
-    /* ==========================================
-       BASIC VALIDATION
-    ========================================== */
-
-    if (!visitorId || !sessionId) {
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "visitorId and sessionId are required",
-        },
-        {
-          status: 400,
-        }
-      );
-    }
-
-    /* ==========================================
-       PAGE VIEW
-    ========================================== */
-
-    if (type === "pageview") {
-      const now = new Date();
-
-      let session =
-        await VisitorSession.findOne({
-          sessionId,
-        });
-
-      /* ------------------------------------------
-         NEW SESSION
-      ------------------------------------------ */
-
-      if (!session) {
-        session =
-          await VisitorSession.create({
-            visitorId,
-            sessionId,
-
-            landingPage:
-              path || "/",
-
-            exitPage:
-              path || "/",
-
-            // Do not send null to a schema
-            // that expects string | undefined.
-            referrer:
-              typeof referrer === "string" &&
-              referrer.trim()
-                ? referrer.trim()
-                : undefined,
-
-            source:
-              typeof source === "string" &&
-              source.trim()
-                ? source.trim()
-                : "direct",
-
-            medium:
-              typeof medium === "string" &&
-              medium.trim()
-                ? medium.trim()
-                : "none",
-
-            deviceType:
-              typeof deviceType === "string" &&
-              deviceType.trim()
-                ? deviceType.trim()
-                : "unknown",
-
-            browser:
-              typeof browser === "string" &&
-              browser.trim()
-                ? browser.trim()
-                : "unknown",
-
-            operatingSystem:
-              typeof operatingSystem ===
-                "string" &&
-              operatingSystem.trim()
-                ? operatingSystem.trim()
-                : "unknown",
-
-            screenWidth:
-              typeof screenWidth === "number"
-                ? screenWidth
-                : undefined,
-
-            screenHeight:
-              typeof screenHeight === "number"
-                ? screenHeight
-                : undefined,
-
-            pageCount: 1,
-
-            startedAt: now,
-
-            lastSeenAt: now,
-          });
-      }
-
-      /* ------------------------------------------
-         EXISTING SESSION
-      ------------------------------------------ */
-
-      else {
-        session.pageCount =
-          (session.pageCount || 0) + 1;
-
-        session.lastSeenAt = now;
-
-        session.exitPage =
-          path || session.exitPage;
-
-        await session.save();
-      }
-
-      /* ------------------------------------------
-         SAVE PAGE VIEW
-      ------------------------------------------ */
-
-      await PageView.create({
-        visitorId,
-        sessionId,
-
-        path:
-          typeof path === "string" &&
-          path.trim()
-            ? path.trim()
-            : "/",
-
-        title:
-          typeof title === "string" &&
-          title.trim()
-            ? title.trim()
-            : undefined,
-
-        referrer:
-          typeof referrer === "string" &&
-          referrer.trim()
-            ? referrer.trim()
-            : undefined,
-
-        viewedAt: now,
-      });
-
-      return NextResponse.json({
-        success: true,
-        type: "pageview",
-      });
-    }
-
-    /* ==========================================
-       EVENT
-    ========================================== */
-
-    if (type === "event") {
-      if (!eventName) {
-        return NextResponse.json(
-          {
-            success: false,
-            message:
-              "eventName is required",
-          },
-          {
-            status: 400,
-          }
-        );
-      }
-
-      const event =
-        await VisitorEvent.create({
-          visitorId,
-          sessionId,
-
-          eventName,
-
-          eventCategory:
-            typeof eventCategory === "string" &&
-            eventCategory.trim()
-              ? eventCategory.trim()
-              : "general",
-
-          page:
-            typeof path === "string" &&
-            path.trim()
-              ? path.trim()
-              : undefined,
-
-          eventData:
-            eventData &&
-            typeof eventData === "object"
-              ? eventData
-              : {},
-
-          createdAt: new Date(),
-        });
-
-      await VisitorSession.findOneAndUpdate(
-        {
-          sessionId,
-        },
-        {
-          $set: {
-            lastSeenAt: new Date(),
-          },
-        }
-      );
-
-      return NextResponse.json({
-        success: true,
-        type: "event",
-        eventId: event._id,
-      });
-    }
-
-    /* ==========================================
-       INVALID TYPE
-    ========================================== */
-
-    return NextResponse.json(
-      {
-        success: false,
-        message:
-          "Invalid analytics request type",
-      },
-      {
-        status: 400,
-      }
-    );
+    return NextResponse.json({
+      success: true,
+    });
   } catch (error) {
     console.error(
-      "Analytics API Error:",
+      "Analytics tracking error:",
       error
     );
 
-    return NextResponse.json(
-      {
-        success: false,
-        message:
-          "Analytics server error",
-      },
-      {
-        status: 500,
-      }
-    );
+    // Analytics failure should not break website usage
+    return NextResponse.json({
+      success: true,
+      tracked: false,
+    });
   }
 }

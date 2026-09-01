@@ -1,499 +1,629 @@
 import Link from "next/link";
 import {
   ArrowRight,
+  BookOpen,
   Building2,
   CalendarDays,
   CheckCircle2,
-  HeartHandshake,
+  ChevronRight,
+  GraduationCap,
+  HandHeart,
+  HeartPulse,
   MapPin,
   ShieldCheck,
+  Target,
   Users,
+  BriefcaseBusiness,
+  Sparkles,
+  TrendingUp,
 } from "lucide-react";
 
 const projects = [
   {
-    number: "01",
-    icon: Building2,
-    title: "Community Infrastructure",
-    category: "Community Development",
-    description:
-      "Need-based infrastructure initiatives designed to improve essential facilities and support community well-being.",
-    status: "Project Portfolio",
-  },
-  {
-    number: "02",
-    icon: Users,
-    title: "Education Support",
+    id: 1,
+    title: "Education Support Initiative",
     category: "Education",
+    status: "Ongoing",
     description:
-      "Initiatives focused on strengthening learning environments, educational resources and opportunities.",
-    status: "Project Portfolio",
+      "Supporting children and students from underserved communities through educational assistance, learning resources and community-based programmes.",
+    icon: GraduationCap,
+    location: "Darbhanga, Bihar",
+    beneficiaries: "Students & Children",
+    year: "2025–26",
+    href: "/programs/education",
+    number: "01",
   },
   {
-    number: "03",
-    icon: HeartHandshake,
-    title: "Social Support Initiatives",
-    category: "Social Development",
+    id: 2,
+    title: "Community Healthcare Support",
+    category: "Healthcare",
+    status: "Ongoing",
     description:
-      "Community-oriented support activities intended to assist people and families based on identified needs.",
-    status: "Project Portfolio",
+      "Supporting healthcare awareness, medical assistance and community health initiatives for people from economically weaker sections.",
+    icon: HeartPulse,
+    location: "Bihar, India",
+    beneficiaries: "Communities",
+    year: "2025–26",
+    href: "/programs/health",
+    number: "02",
+  },
+  {
+    id: 3,
+    title: "Social Support Programme",
+    category: "Social Welfare",
+    status: "Ongoing",
+    description:
+      "Providing social assistance and support initiatives for vulnerable individuals and families in underserved communities.",
+    icon: HandHeart,
+    location: "Bihar, India",
+    beneficiaries: "Families",
+    year: "2025–26",
+    href: "/programs/social-support",
+    number: "03",
+  },
+  {
+    id: 4,
+    title: "Community Development Initiative",
+    category: "Development",
+    status: "Ongoing",
+    description:
+      "Promoting sustainable community development through participation, awareness, capacity building and local support initiatives.",
+    icon: Building2,
+    location: "Darbhanga & Bihar",
+    beneficiaries: "Local Communities",
+    year: "2025–26",
+    href: "/programs/community-development",
+    number: "04",
   },
 ];
 
-const projectProcess = [
-  "Identify the community need",
-  "Assess feasibility and resources",
-  "Develop an appropriate project plan",
-  "Implement with responsible oversight",
-  "Document activities and outcomes",
-  "Review and communicate progress",
+const focusAreas = [
+  {
+    title: "Education",
+    description:
+      "Creating better learning opportunities and supporting children and students.",
+    icon: BookOpen,
+    href: "/programs/education",
+  },
+  {
+    title: "Healthcare",
+    description:
+      "Promoting healthcare awareness and community health support initiatives.",
+    icon: HeartPulse,
+    href: "/programs/health",
+  },
+  {
+    title: "Social Welfare",
+    description:
+      "Supporting vulnerable individuals and families through social initiatives.",
+    icon: HandHeart,
+    href: "/programs/social-support",
+  },
+  {
+    title: "Community Development",
+    description:
+      "Encouraging sustainable and inclusive community development.",
+    icon: Users,
+    href: "/programs/community-development",
+  },
 ];
 
 export default function ProjectsPage() {
   return (
-    <main className="min-h-screen bg-[#F4F7FA] text-[#243B53]">
-
+    <main className="min-h-screen overflow-hidden bg-[#F4F7FB]">
       {/* =====================================================
           HERO
       ====================================================== */}
 
-      <section className="relative overflow-hidden bg-[#102A43] px-4 py-9 sm:px-5 sm:py-11">
+      <section className="relative overflow-hidden bg-[#0B1F3A]">
+        {/* Background Decorations */}
 
-        <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-[#176B87]/20 blur-3xl" />
+        <div className="absolute inset-0">
+          <div className="absolute -left-40 -top-40 h-[520px] w-[520px] rounded-full bg-[#146C94]/25 blur-3xl" />
 
-        <div className="pointer-events-none absolute -bottom-24 -right-20 h-72 w-72 rounded-full bg-[#C59A3A]/10 blur-3xl" />
+          <div className="absolute -bottom-52 -right-40 h-[560px] w-[560px] rounded-full bg-[#F4B942]/10 blur-3xl" />
 
-        <div className="relative mx-auto max-w-4xl text-center">
-
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#C59A3A] text-white shadow-lg">
-
-            <Building2 size={25} />
-
-          </div>
-
-          <p className="mt-4 text-[9px] font-bold uppercase tracking-[0.25em] text-[#D9B65A]">
-            Anand Jivan Foundation Trust
-          </p>
-
-          <h1 className="mt-2 font-serif text-3xl font-bold text-white sm:text-4xl md:text-5xl">
-            Our Projects
-          </h1>
-
-          <p className="mx-auto mt-3 max-w-2xl text-xs leading-6 text-white/65 sm:text-sm">
-            A portfolio of initiatives through which the
-            Trust seeks to translate its mission into
-            practical community action.
-          </p>
-
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.025)_1px,transparent_1px)] bg-[size:48px_48px]" />
         </div>
 
-      </section>
+        <div className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-24 lg:px-8 lg:py-32">
+          <div className="grid gap-12 lg:grid-cols-[1fr_0.65fr] lg:items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-white/75 backdrop-blur">
+                <BriefcaseBusiness size={15} className="text-[#F4B942]" />
 
-      {/* =====================================================
-          TRUST BAR
-      ====================================================== */}
+                AJFT Development Portfolio
+              </div>
 
-      <section className="border-b border-[#DCE4EA] bg-white">
+              <h1 className="mt-7 max-w-4xl text-4xl font-black leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-6xl">
+                Creating Impact.
+                <span className="block text-[#F4B942]">
+                  Transforming Communities.
+                </span>
+              </h1>
 
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-4 gap-y-1 px-4 py-3 text-center text-[8px] font-semibold text-[#687B8C] sm:text-[9px]">
+              <p className="mt-7 max-w-3xl text-base leading-8 text-slate-300 sm:text-lg">
+                Anand Jivan Foundation Trust implements meaningful social
+                development initiatives focused on education, healthcare,
+                social welfare and sustainable community development.
+              </p>
 
-          <span>
-            DARPAN ID: BR/2023/0343963
-          </span>
+              <div className="mt-9 flex flex-wrap gap-4">
+                <a
+                  href="#projects"
+                  className="group inline-flex items-center gap-2 rounded-xl bg-[#F4B942] px-6 py-3.5 text-sm font-black text-[#0B1F3A] shadow-xl shadow-black/20 transition hover:-translate-y-0.5 hover:bg-[#ffd16a]"
+                >
+                  Explore Our Projects
 
-          <span className="text-[#C59A3A]">•</span>
+                  <ArrowRight
+                    size={18}
+                    className="transition group-hover:translate-x-1"
+                  />
+                </a>
 
-          <span>
-            PAN: AAJTA9323K
-          </span>
+                <Link
+                  href="/about"
+                  className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-6 py-3.5 text-sm font-bold text-white transition hover:bg-white/10"
+                >
+                  About AJFT
+                  <ChevronRight size={17} />
+                </Link>
+              </div>
+            </div>
 
-          <span className="text-[#C59A3A]">•</span>
+            {/* HERO INFORMATION CARD */}
 
-          <span>
-            +91 9155751363
-          </span>
-
-          <span className="text-[#C59A3A]">•</span>
-
-          <span>
-            info@ajftrust.org
-          </span>
-
-        </div>
-
-      </section>
-
-      {/* =====================================================
-          INTRO
-      ====================================================== */}
-
-      <section className="px-4 py-8 sm:px-5 md:py-10">
-
-        <div className="mx-auto max-w-3xl text-center">
-
-          <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-[#C59A3A]">
-            Project Portfolio
-          </p>
-
-          <h2 className="mt-2 font-serif text-2xl font-bold text-[#102A43] md:text-3xl">
-            From ideas to measurable action
-          </h2>
-
-          <p className="mx-auto mt-3 text-[11px] leading-6 text-[#687B8C] sm:text-xs">
-            Projects are developed around identified needs,
-            available resources and the Trust's charitable
-            objectives.
-          </p>
-
-        </div>
-
-      </section>
-
-      {/* =====================================================
-          PROJECT CARDS
-      ====================================================== */}
-
-      <section className="px-4 pb-10 sm:px-5">
-
-        <div className="mx-auto grid max-w-6xl gap-4 lg:grid-cols-3">
-
-          {projects.map(
-            ({
-              number,
-              icon: Icon,
-              title,
-              category,
-              description,
-              status,
-            }) => (
-              <article
-                key={title}
-                className="group overflow-hidden rounded-2xl border border-[#DCE4EA] bg-white shadow-[0_8px_25px_rgba(16,42,67,0.05)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_14px_35px_rgba(16,42,67,0.10)]"
-              >
-
-                {/* Card top */}
-
-                <div className="bg-[#173B4D] p-5">
-
-                  <div className="flex items-start justify-between">
-
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#C59A3A] text-white">
-
-                      <Icon size={21} />
-
-                    </div>
-
-                    <span className="font-serif text-2xl font-bold text-white/10">
-                      {number}
-                    </span>
-
+            <div className="relative">
+              <div className="rounded-3xl border border-white/10 bg-white/[0.06] p-6 shadow-2xl backdrop-blur-xl sm:p-8">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F4B942] text-[#0B1F3A]">
+                    <TrendingUp size={23} />
                   </div>
 
-                  <p className="mt-5 text-[8px] font-bold uppercase tracking-[0.18em] text-[#D9B65A]">
-                    {category}
-                  </p>
-
-                  <h3 className="mt-1 font-serif text-xl font-bold text-white">
-                    {title}
-                  </h3>
-
-                </div>
-
-                {/* Card body */}
-
-                <div className="p-5">
-
-                  <p className="text-[10px] leading-5 text-[#718394] sm:text-[11px]">
-                    {description}
-                  </p>
-
-                  <div className="mt-5 flex items-center justify-between border-t border-[#E9EEF1] pt-4">
-
-                    <span className="flex items-center gap-1.5 rounded-full bg-[#EEF6F8] px-2.5 py-1 text-[8px] font-bold text-[#176B87]">
-
-                      <CheckCircle2 size={11} />
-
-                      {status}
-
-                    </span>
-
-                    <span className="text-[9px] font-semibold text-[#9AA8B3]">
-                      Details coming
-                    </span>
-
-                  </div>
-
-                </div>
-
-              </article>
-            )
-          )}
-
-        </div>
-
-      </section>
-
-      {/* =====================================================
-          PROJECT INFORMATION
-      ====================================================== */}
-
-      <section className="border-y border-[#DCE4EA] bg-white px-4 py-9 sm:px-5 md:py-11">
-
-        <div className="mx-auto max-w-6xl">
-
-          <div className="grid gap-6 md:grid-cols-[0.8fr_1.2fr] md:items-center">
-
-            <div>
-
-              <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-[#C59A3A]">
-                Project Information
-              </p>
-
-              <h2 className="mt-2 font-serif text-2xl font-bold text-[#102A43] md:text-3xl">
-                What every project page can show
-              </h2>
-
-              <p className="mt-3 text-[11px] leading-6 text-[#627789] sm:text-xs">
-                As individual projects are added, their
-                public pages can include verified details,
-                progress and outcomes.
-              </p>
-
-            </div>
-
-            <div className="grid gap-2.5 sm:grid-cols-2">
-
-              <InfoCard
-                icon={CalendarDays}
-                title="Project Duration"
-                text="Start date, duration and current status."
-              />
-
-              <InfoCard
-                icon={MapPin}
-                title="Location"
-                text="Project location and community served."
-              />
-
-              <InfoCard
-                icon={Users}
-                title="Beneficiaries"
-                text="Intended beneficiaries and reach."
-              />
-
-              <InfoCard
-                icon={ShieldCheck}
-                title="Progress"
-                text="Activities, updates and documented outcomes."
-              />
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </section>
-
-      {/* =====================================================
-          PROCESS
-      ====================================================== */}
-
-      <section className="bg-[#173B4D] px-4 py-9 sm:px-5 md:py-11">
-
-        <div className="mx-auto max-w-6xl">
-
-          <div className="grid gap-7 md:grid-cols-[0.8fr_1.2fr] md:items-center">
-
-            <div>
-
-              <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-[#D9B65A]">
-                Our Project Approach
-              </p>
-
-              <h2 className="mt-2 font-serif text-2xl font-bold text-white md:text-3xl">
-                Responsible project development
-              </h2>
-
-              <p className="mt-3 text-[11px] leading-6 text-white/55 sm:text-xs">
-                We aim to approach projects in a structured
-                manner, keeping community needs,
-                implementation and accountability in focus.
-              </p>
-
-            </div>
-
-            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
-
-              {projectProcess.map(
-                (item, index) => (
-                  <div
-                    key={item}
-                    className="rounded-xl border border-white/10 bg-white/[0.06] p-4"
-                  >
-
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#C59A3A]">
-
-                      <span className="text-[9px] font-bold text-white">
-                        {String(
-                          index + 1
-                        ).padStart(2, "0")}
-                      </span>
-
-                    </div>
-
-                    <p className="mt-3 text-[10px] font-semibold leading-4 text-white/80">
-                      {item}
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                      Development Focus
                     </p>
 
+                    <h3 className="mt-1 text-lg font-black text-white">
+                      Sustainable Social Impact
+                    </h3>
                   </div>
-                )
-              )}
+                </div>
 
+                <div className="mt-8 grid grid-cols-2 gap-4">
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <p className="text-2xl font-black text-white">
+                      4+
+                    </p>
+
+                    <p className="mt-1 text-xs text-slate-400">
+                      Focus Areas
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <p className="text-2xl font-black text-white">
+                      Ongoing
+                    </p>
+
+                    <p className="mt-1 text-xs text-slate-400">
+                      Development Work
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <p className="text-2xl font-black text-[#F4B942]">
+                      Bihar
+                    </p>
+
+                    <p className="mt-1 text-xs text-slate-400">
+                      Primary Region
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <p className="text-2xl font-black text-white">
+                      People
+                    </p>
+
+                    <p className="mt-1 text-xs text-slate-400">
+                      At The Centre
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-6 flex items-center gap-3 rounded-2xl border border-[#F4B942]/20 bg-[#F4B942]/10 p-4">
+                  <Sparkles
+                    size={19}
+                    className="shrink-0 text-[#F4B942]"
+                  />
+
+                  <p className="text-xs leading-6 text-slate-200">
+                    Working towards inclusive, responsible and sustainable
+                    development through community participation.
+                  </p>
+                </div>
+              </div>
             </div>
-
           </div>
-
         </div>
-
       </section>
 
       {/* =====================================================
-          TRANSPARENCY
+          QUICK IMPACT BAR
       ====================================================== */}
 
-      <section className="bg-[#F4F7FA] px-4 py-9 sm:px-5 md:py-11">
+      <section className="relative z-10 mx-auto -mt-7 max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="grid overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/5 sm:grid-cols-4">
+          {[
+            ["4+", "Key Development Areas"],
+            ["Education", "Supporting Learning"],
+            ["Healthcare", "Community Support"],
+            ["Development", "Building Communities"],
+          ].map(([value, label], index) => (
+            <div
+              key={label}
+              className={`p-6 text-center ${
+                index !== 3
+                  ? "border-b border-slate-100 sm:border-b-0 sm:border-r"
+                  : ""
+              }`}
+            >
+              <p className="text-xl font-black text-[#0B1F3A]">
+                {value}
+              </p>
 
-        <div className="mx-auto max-w-5xl rounded-2xl border border-[#DCE4EA] bg-white p-6 text-center md:p-8">
+              <p className="mt-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                {label}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
 
-          <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-[#E8F3F6]">
+      {/* =====================================================
+          INTRODUCTION
+      ====================================================== */}
 
-            <ShieldCheck
-              size={20}
-              className="text-[#176B87]"
-            />
+      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+        <div className="grid gap-12 lg:grid-cols-[1fr_0.8fr] lg:items-center">
+          <div>
+            <div className="inline-flex items-center gap-2 text-[#146C94]">
+              <Target size={18} />
 
+              <span className="text-xs font-black uppercase tracking-[0.18em]">
+                Our Approach
+              </span>
+            </div>
+
+            <h2 className="mt-5 text-3xl font-black leading-tight text-[#0B1F3A] sm:text-4xl">
+              Projects Designed Around
+              <span className="block text-[#146C94]">
+                Community Needs.
+              </span>
+            </h2>
+
+            <p className="mt-6 max-w-2xl leading-8 text-slate-600">
+              Our development initiatives are designed to respond to the real
+              needs of communities and promote inclusive opportunities for
+              individuals and families.
+            </p>
+
+            <p className="mt-4 max-w-2xl leading-8 text-slate-600">
+              We believe meaningful development requires responsible planning,
+              community participation and continuous evaluation.
+            </p>
+
+            <div className="mt-8 grid gap-3 sm:grid-cols-2">
+              {[
+                "Community-focused planning",
+                "Inclusive implementation",
+                "Responsible project management",
+                "Long-term social impact",
+              ].map((item) => (
+                <div
+                  key={item}
+                  className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-4 shadow-sm"
+                >
+                  <CheckCircle2
+                    size={18}
+                    className="shrink-0 text-[#1E7A46]"
+                  />
+
+                  <span className="text-sm font-semibold text-slate-700">
+                    {item}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <p className="mt-3 text-[9px] font-bold uppercase tracking-[0.22em] text-[#C59A3A]">
-            Transparency
+          {/* IMPLEMENTATION CARD */}
+
+          <div className="rounded-3xl bg-gradient-to-br from-[#146C94] to-[#0B1F3A] p-7 shadow-2xl sm:p-9">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 text-[#F4B942]">
+              <ShieldCheck size={28} />
+            </div>
+
+            <h3 className="mt-6 text-2xl font-black text-white">
+              Responsible Implementation
+            </h3>
+
+            <p className="mt-4 leading-7 text-slate-200">
+              Each initiative follows a structured approach designed to promote
+              transparency, participation and measurable social outcomes.
+            </p>
+
+            <div className="mt-8 space-y-5">
+              {[
+                "Needs Assessment",
+                "Project Planning",
+                "Community Participation",
+                "Monitoring & Review",
+              ].map((step, index) => (
+                <div
+                  key={step}
+                  className="flex items-center gap-4"
+                >
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/10 text-sm font-black text-[#F4B942]">
+                    {String(index + 1).padStart(2, "0")}
+                  </div>
+
+                  <span className="font-semibold text-white">
+                    {step}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =====================================================
+          PROJECT LIST
+      ====================================================== */}
+
+      <section
+        id="projects"
+        className="border-y border-slate-200 bg-white"
+      >
+        <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+          <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
+            <div className="max-w-3xl">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#146C94]">
+                Development Initiatives
+              </p>
+
+              <h2 className="mt-4 text-3xl font-black text-[#0B1F3A] sm:text-4xl">
+                Our Ongoing Projects
+              </h2>
+
+              <p className="mt-4 leading-7 text-slate-600">
+                Explore AJFT initiatives designed to create meaningful and
+                sustainable impact across different areas of social
+                development.
+              </p>
+            </div>
+
+            <div className="inline-flex w-fit items-center gap-2 rounded-full bg-[#EAF3F7] px-4 py-2 text-xs font-bold text-[#146C94]">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-[#1E7A46]" />
+              Active Development Initiatives
+            </div>
+          </div>
+
+          <div className="mt-12 grid gap-7 md:grid-cols-2">
+            {projects.map((project) => {
+              const Icon = project.icon;
+
+              return (
+                <article
+                  key={project.id}
+                  className="group relative overflow-hidden rounded-3xl border border-slate-200 bg-white transition duration-300 hover:-translate-y-1 hover:border-[#146C94]/30 hover:shadow-2xl hover:shadow-slate-900/10"
+                >
+                  {/* TOP STRIP */}
+
+                  <div className="h-1.5 bg-gradient-to-r from-[#146C94] via-[#1E7A46] to-[#F4B942]" />
+
+                  <div className="p-6 sm:p-8">
+                    <div className="flex items-start justify-between gap-5">
+                      <div className="flex items-center gap-4">
+                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#EAF3F7] text-[#146C94]">
+                          <Icon size={28} />
+                        </div>
+
+                        <div>
+                          <p className="text-[10px] font-black tracking-[0.16em] text-slate-400">
+                            PROJECT {project.number}
+                          </p>
+
+                          <span className="mt-1 inline-block text-xs font-bold text-[#146C94]">
+                            {project.category}
+                          </span>
+                        </div>
+                      </div>
+
+                      <span className="rounded-full border border-[#1E7A46]/20 bg-[#EAF7EF] px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-[#1E7A46]">
+                        {project.status}
+                      </span>
+                    </div>
+
+                    <h3 className="mt-7 text-xl font-black leading-snug text-[#0B1F3A] sm:text-2xl">
+                      {project.title}
+                    </h3>
+
+                    <p className="mt-4 text-sm leading-7 text-slate-600">
+                      {project.description}
+                    </p>
+
+                    <div className="mt-7 grid gap-3 border-t border-slate-100 pt-6 sm:grid-cols-3">
+                      <div>
+                        <div className="flex items-center gap-2 text-[#146C94]">
+                          <MapPin size={14} />
+
+                          <span className="text-[10px] font-bold uppercase tracking-wide">
+                            Location
+                          </span>
+                        </div>
+
+                        <p className="mt-2 text-xs font-semibold text-slate-600">
+                          {project.location}
+                        </p>
+                      </div>
+
+                      <div>
+                        <div className="flex items-center gap-2 text-[#146C94]">
+                          <Users size={14} />
+
+                          <span className="text-[10px] font-bold uppercase tracking-wide">
+                            Focus
+                          </span>
+                        </div>
+
+                        <p className="mt-2 text-xs font-semibold text-slate-600">
+                          {project.beneficiaries}
+                        </p>
+                      </div>
+
+                      <div>
+                        <div className="flex items-center gap-2 text-[#146C94]">
+                          <CalendarDays size={14} />
+
+                          <span className="text-[10px] font-bold uppercase tracking-wide">
+                            Period
+                          </span>
+                        </div>
+
+                        <p className="mt-2 text-xs font-semibold text-slate-600">
+                          {project.year}
+                        </p>
+                      </div>
+                    </div>
+
+                    <Link
+                      href={project.href}
+                      className="mt-7 inline-flex items-center gap-2 text-sm font-black text-[#146C94] transition hover:gap-3"
+                    >
+                      Explore Programme
+
+                      <ArrowRight size={17} />
+                    </Link>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* =====================================================
+          FOCUS AREAS
+      ====================================================== */}
+
+      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-[#146C94]">
+            Areas Of Intervention
           </p>
 
-          <h2 className="mt-2 font-serif text-2xl font-bold text-[#102A43]">
-            Project information should be verifiable
+          <h2 className="mt-4 text-3xl font-black text-[#0B1F3A] sm:text-4xl">
+            Our Development Focus
           </h2>
 
-          <p className="mx-auto mt-3 max-w-2xl text-[10px] leading-5 text-[#718394] sm:text-[11px]">
-            As project records become available, individual
-            project pages can publish appropriate details,
-            photographs, progress updates and reports.
+          <p className="mt-5 leading-7 text-slate-600">
+            Our programmes are focused on areas where collective action and
+            community participation can create meaningful social impact.
           </p>
-
         </div>
 
+        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {focusAreas.map((area) => {
+            const Icon = area.icon;
+
+            return (
+              <Link
+                key={area.title}
+                href={area.href}
+                className="group rounded-3xl border border-slate-200 bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:border-[#146C94]/30 hover:shadow-xl"
+              >
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#EAF3F7] text-[#146C94] transition group-hover:bg-[#146C94] group-hover:text-white">
+                  <Icon size={25} />
+                </div>
+
+                <h3 className="mt-6 font-black text-[#0B1F3A]">
+                  {area.title}
+                </h3>
+
+                <p className="mt-3 text-sm leading-6 text-slate-600">
+                  {area.description}
+                </p>
+
+                <div className="mt-6 flex items-center gap-2 text-xs font-black text-[#146C94]">
+                  Explore
+
+                  <ArrowRight
+                    size={15}
+                    className="transition group-hover:translate-x-1"
+                  />
+                </div>
+              </Link>
+            );
+          })}
+        </div>
       </section>
 
       {/* =====================================================
           CTA
       ====================================================== */}
 
-      <section className="border-t border-[#DCE4EA] bg-white px-4 py-8">
+      <section className="px-4 pb-20 sm:px-6 lg:px-8">
+        <div className="relative mx-auto max-w-7xl overflow-hidden rounded-[2rem] bg-[#0B1F3A] px-6 py-14 sm:px-10 lg:px-14">
+          <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-[#146C94]/30 blur-3xl" />
 
-        <div className="mx-auto max-w-5xl text-center">
+          <div className="absolute -bottom-32 left-1/2 h-64 w-64 rounded-full bg-[#F4B942]/10 blur-3xl" />
 
-          <h2 className="font-serif text-2xl font-bold text-[#102A43]">
-            Support community-focused initiatives
-          </h2>
+          <div className="relative grid gap-10 lg:grid-cols-[1fr_auto] lg:items-center">
+            <div className="max-w-3xl">
+              <div className="inline-flex items-center gap-2 text-[#F4B942]">
+                <Sparkles size={17} />
 
-          <p className="mx-auto mt-2 max-w-xl text-[10px] leading-5 text-[#718394]">
-            Your support can contribute towards charitable
-            and community development initiatives.
-          </p>
+                <span className="text-xs font-black uppercase tracking-[0.18em]">
+                  Work With AJFT
+                </span>
+              </div>
 
-          <div className="mt-5 flex flex-col justify-center gap-2.5 sm:flex-row">
+              <h2 className="mt-5 text-3xl font-black text-white sm:text-4xl">
+                Together We Can Create
+                <span className="block text-[#F4B942]">
+                  Meaningful Social Impact.
+                </span>
+              </h2>
 
-            <Link
-              href="/donate"
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#176B87] px-6 text-xs font-bold text-white shadow-md transition hover:bg-[#12566D]"
-            >
-              Support Our Work
-              <ArrowRight size={15} />
-            </Link>
+              <p className="mt-5 leading-7 text-slate-300">
+                Partner with Anand Jivan Foundation Trust to support meaningful
+                initiatives and contribute towards stronger and more inclusive
+                communities.
+              </p>
+            </div>
 
-            <Link
-              href="/programs"
-              className="inline-flex h-10 items-center justify-center rounded-xl border border-[#CBD5DC] bg-white px-6 text-xs font-bold text-[#176B87] transition hover:border-[#176B87]"
-            >
-              View Programs
-            </Link>
+            <div className="flex flex-wrap gap-4">
+              <Link
+                href="/partner"
+                className="inline-flex items-center justify-center rounded-xl bg-[#F4B942] px-6 py-3.5 text-sm font-black text-[#0B1F3A] transition hover:bg-[#ffd16a]"
+              >
+                Partner With Us
+              </Link>
 
+              <Link
+                href="/volunteer"
+                className="inline-flex items-center justify-center rounded-xl border border-white/20 px-6 py-3.5 text-sm font-black text-white transition hover:bg-white/10"
+              >
+                Become a Volunteer
+              </Link>
+            </div>
           </div>
-
         </div>
-
       </section>
-
-      {/* =====================================================
-          FOOTER
-      ====================================================== */}
-
-      <footer className="bg-[#102A43] px-4 py-5 text-center">
-
-        <p className="text-[9px] font-bold tracking-wide text-white">
-          ANAND JIVAN FOUNDATION TRUST
-        </p>
-
-        <p className="mt-1 text-[8px] leading-4 text-white/45">
-          MABBI BELAUNA, POST - LALSHAHPUR,
-          PANCHAYAT - SHAHBAJPUR,
-          DARBHANGA, BIHAR - 846005, INDIA
-        </p>
-
-        <p className="mt-1 text-[8px] text-[#D9B65A]">
-          DARPAN ID: BR/2023/0343963
-          &nbsp; • &nbsp;
-          PAN: AAJTA9323K
-          &nbsp; • &nbsp;
-          +91 9155751363
-          &nbsp; • &nbsp;
-          info@ajftrust.org
-        </p>
-
-      </footer>
-
     </main>
-  );
-}
-
-function InfoCard({
-  icon: Icon,
-  title,
-  text,
-}: {
-  icon: typeof CalendarDays;
-  title: string;
-  text: string;
-}) {
-  return (
-    <div className="rounded-xl border border-[#DCE4EA] bg-[#F7FAFC] p-4">
-
-      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#E8F3F6]">
-
-        <Icon
-          size={17}
-          className="text-[#176B87]"
-        />
-
-      </div>
-
-      <h3 className="mt-3 text-xs font-bold text-[#102A43]">
-        {title}
-      </h3>
-
-      <p className="mt-1 text-[9px] leading-4 text-[#718394]">
-        {text}
-      </p>
-
-    </div>
   );
 }
