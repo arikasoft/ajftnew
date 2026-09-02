@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import Script from "next/script";
+
 import "./globals.css";
 
 import Header from "@/components/Header";
@@ -24,18 +26,70 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+
+        {/* Google Consent Mode default */}
+        <Script
+          id="google-consent-mode"
+          strategy="beforeInteractive"
+        >
+          {`
+            window.dataLayer = window.dataLayer || [];
+
+            function gtag() {
+              dataLayer.push(arguments);
+            }
+
+            gtag("consent", "default", {
+              ad_storage: "denied",
+              ad_user_data: "denied",
+              ad_personalization: "denied",
+              analytics_storage: "denied",
+              wait_for_update: 500
+            });
+          `}
+        </Script>
+
+        {/* CookieYes Consent Banner */}
+        <Script
+          id="cookieyes"
+          src="https://cdn-cookieyes.com/client_data/5cfe4f28d3b2e213a2c75d46/script.js"
+          strategy="beforeInteractive"
+        />
+
+        {/* Google Analytics */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-JB64YSPXVE"
+          strategy="afterInteractive"
+        />
+
+        <Script
+          id="google-analytics"
+          strategy="afterInteractive"
+        >
+          {`
+            window.dataLayer = window.dataLayer || [];
+
+            function gtag() {
+              dataLayer.push(arguments);
+            }
+
+            gtag("js", new Date());
+
+            gtag("config", "G-JB64YSPXVE");
+          `}
+        </Script>
+
+      </head>
+
       <body className="bg-white text-gray-900 antialiased">
 
-        {/* Website Header */}
         <Header />
 
-        {/* Visitor Analytics */}
         <AnalyticsTracker />
 
-        {/* Page Content */}
         {children}
 
-        {/* Website Footer */}
         <Footer />
 
       </body>
