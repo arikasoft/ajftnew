@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 
 const VISITOR_KEY = "ajft_visitor_id";
@@ -16,18 +16,27 @@ function getVisitorId() {
 
   if (!visitorId) {
     visitorId = createId("visitor");
-    localStorage.setItem(VISITOR_KEY, visitorId);
+
+    localStorage.setItem(
+      VISITOR_KEY,
+      visitorId
+    );
   }
 
   return visitorId;
 }
 
 function getSessionId() {
-  let sessionId = sessionStorage.getItem(SESSION_KEY);
+  let sessionId =
+    sessionStorage.getItem(SESSION_KEY);
 
   if (!sessionId) {
     sessionId = createId("session");
-    sessionStorage.setItem(SESSION_KEY, sessionId);
+
+    sessionStorage.setItem(
+      SESSION_KEY,
+      sessionId
+    );
   }
 
   sessionStorage.setItem(
@@ -69,7 +78,10 @@ function getBrowser() {
     return "Safari";
   }
 
-  if (ua.includes("Opera") || ua.includes("OPR")) {
+  if (
+    ua.includes("Opera") ||
+    ua.includes("OPR")
+  ) {
     return "Opera";
   }
 
@@ -103,21 +115,27 @@ function getOperatingSystem() {
 }
 
 function getTrafficSource() {
-  const params = new URLSearchParams(
-    window.location.search
-  );
+  const params =
+    new URLSearchParams(
+      window.location.search
+    );
 
-  const utmSource = params.get("utm_source");
-  const utmMedium = params.get("utm_medium");
+  const utmSource =
+    params.get("utm_source");
+
+  const utmMedium =
+    params.get("utm_medium");
 
   if (utmSource) {
     return {
       source: utmSource,
-      medium: utmMedium || "unknown",
+      medium:
+        utmMedium || "unknown",
     };
   }
 
-  const referrer = document.referrer;
+  const referrer =
+    document.referrer;
 
   if (!referrer) {
     return {
@@ -127,37 +145,59 @@ function getTrafficSource() {
   }
 
   try {
-    const hostname = new URL(referrer).hostname;
+    const hostname =
+      new URL(referrer).hostname;
 
-    if (hostname.includes("google.")) {
+    if (
+      hostname.includes(
+        "google."
+      )
+    ) {
       return {
         source: "google",
         medium: "organic",
       };
     }
 
-    if (hostname.includes("facebook.")) {
+    if (
+      hostname.includes(
+        "facebook."
+      )
+    ) {
       return {
         source: "facebook",
         medium: "social",
       };
     }
 
-    if (hostname.includes("instagram.")) {
+    if (
+      hostname.includes(
+        "instagram."
+      )
+    ) {
       return {
         source: "instagram",
         medium: "social",
       };
     }
 
-    if (hostname.includes("twitter.") || hostname.includes("x.com")) {
+    if (
+      hostname.includes(
+        "twitter."
+      ) ||
+      hostname.includes("x.com")
+    ) {
       return {
         source: "x",
         medium: "social",
       };
     }
 
-    if (hostname.includes("youtube.")) {
+    if (
+      hostname.includes(
+        "youtube."
+      )
+    ) {
       return {
         source: "youtube",
         medium: "social",
@@ -179,68 +219,87 @@ function getTrafficSource() {
 export default function AnalyticsTracker() {
   const pathname = usePathname();
 
-  const firstRender = useRef(true);
-
   useEffect(() => {
     if (!pathname) {
       return;
     }
 
-    const trackPageView = async () => {
-      try {
-        const visitorId = getVisitorId();
-        const sessionId = getSessionId();
+    const trackPageView =
+      async () => {
+        try {
+          const visitorId =
+            getVisitorId();
 
-        const traffic = getTrafficSource();
+          const sessionId =
+            getSessionId();
 
-        const payload = {
-          type: "pageview",
+          const traffic =
+            getTrafficSource();
 
-          visitorId,
-          sessionId,
+          const payload = {
+            type: "pageview",
 
-          path: pathname,
+            visitorId,
+            sessionId,
 
-          title: document.title,
+            path: pathname,
 
-          referrer: document.referrer || null,
+            title:
+              document.title,
 
-          source: traffic.source,
-          medium: traffic.medium,
+            referrer:
+              document.referrer ||
+              null,
 
-          deviceType: getDeviceType(),
+            source:
+              traffic.source,
 
-          browser: getBrowser(),
+            medium:
+              traffic.medium,
 
-          operatingSystem: getOperatingSystem(),
+            deviceType:
+              getDeviceType(),
 
-          screenWidth: window.screen.width,
+            browser:
+              getBrowser(),
 
-          screenHeight: window.screen.height,
-        };
+            operatingSystem:
+              getOperatingSystem(),
 
-        await fetch("/api/analytics/track", {
-          method: "POST",
+            screenWidth:
+              window.screen.width,
 
-          headers: {
-            "Content-Type": "application/json",
-          },
+            screenHeight:
+              window.screen.height,
+          };
 
-          body: JSON.stringify(payload),
+          await fetch(
+            "/api/analytics/track",
+            {
+              method: "POST",
 
-          keepalive: true,
-        });
-      } catch (error) {
-        console.error(
-          "Analytics tracking failed:",
-          error
-        );
-      }
-    };
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+
+              body:
+                JSON.stringify(
+                  payload
+                ),
+
+              keepalive: true,
+            }
+          );
+        } catch (error) {
+          console.error(
+            "Analytics tracking failed:",
+            error
+          );
+        }
+      };
 
     trackPageView();
-
-    firstRender.current = false;
   }, [pathname]);
 
   return null;
