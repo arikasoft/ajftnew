@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Script from "next/script";
-
 import "./globals.css";
 
 import Header from "@/components/Header";
@@ -11,12 +10,6 @@ export const metadata: Metadata = {
   title: "Anand Jivan Foundation Trust",
   description:
     "Anand Jivan Foundation Trust — Empowering Lives. Building a Better Tomorrow.",
-
-  icons: {
-    icon: "/icon.png",
-    shortcut: "/icon.png",
-    apple: "/icon.png",
-  },
 };
 
 export default function RootLayout({
@@ -27,30 +20,23 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-
-        {/* Google Consent Mode default */}
-        <Script
-          id="google-consent-mode"
-          strategy="beforeInteractive"
-        >
+        {/* Consent Mode - MUST load before Google Analytics */}
+        <Script id="consent-mode-default" strategy="beforeInteractive">
           {`
             window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
 
-            function gtag() {
-              dataLayer.push(arguments);
-            }
-
-            gtag("consent", "default", {
-              ad_storage: "denied",
-              ad_user_data: "denied",
-              ad_personalization: "denied",
-              analytics_storage: "denied",
+            gtag('consent', 'default', {
+              ad_storage: 'denied',
+              analytics_storage: 'denied',
+              ad_user_data: 'denied',
+              ad_personalization: 'denied',
               wait_for_update: 500
             });
           `}
         </Script>
 
-        {/* CookieYes Consent Banner */}
+        {/* CookieYes Banner */}
         <Script
           id="cookieyes"
           src="https://cdn-cookieyes.com/client_data/5cfe4f28d3b2e213a2c75d46/script.js"
@@ -63,27 +49,22 @@ export default function RootLayout({
           strategy="afterInteractive"
         />
 
-        <Script
-          id="google-analytics"
-          strategy="afterInteractive"
-        >
+        <Script id="google-analytics" strategy="afterInteractive">
           {`
             window.dataLayer = window.dataLayer || [];
 
-            function gtag() {
+            function gtag(){
               dataLayer.push(arguments);
             }
 
-            gtag("js", new Date());
+            gtag('js', new Date());
 
-            gtag("config", "G-JB64YSPXVE");
+            gtag('config', 'G-JB64YSPXVE');
           `}
         </Script>
-
       </head>
 
       <body className="bg-white text-gray-900 antialiased">
-
         <Header />
 
         <AnalyticsTracker />
@@ -91,7 +72,6 @@ export default function RootLayout({
         {children}
 
         <Footer />
-
       </body>
     </html>
   );
