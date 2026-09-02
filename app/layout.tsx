@@ -18,7 +18,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         {/* Consent Mode - Load before analytics */}
         <Script
@@ -27,7 +27,10 @@ export default function RootLayout({
         >
           {`
             window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
+
+            function gtag() {
+              dataLayer.push(arguments);
+            }
 
             gtag('consent', 'default', {
               ad_storage: 'denied',
@@ -40,10 +43,14 @@ export default function RootLayout({
         </Script>
 
         {/* Google Tag Manager */}
-        <Script id="google-tag-manager" strategy="beforeInteractive">
+        <Script
+          id="google-tag-manager"
+          strategy="beforeInteractive"
+        >
           {`
             (function(w,d,s,l,i){
               w[l]=w[l]||[];
+
               w[l].push({
                 'gtm.start': new Date().getTime(),
                 event:'gtm.js'
@@ -56,6 +63,7 @@ export default function RootLayout({
                     : '';
 
               j.async=true;
+
               j.src=
                 'https://www.googletagmanager.com/gtm.js?id='
                 + i + dl;
@@ -74,8 +82,10 @@ export default function RootLayout({
         />
       </head>
 
-      <body className="bg-white text-gray-900 antialiased">
-
+      <body
+        suppressHydrationWarning
+        className="bg-white text-gray-900 antialiased"
+      >
         {/* Google Tag Manager (noscript) */}
         <noscript>
           <iframe
@@ -96,7 +106,6 @@ export default function RootLayout({
         {children}
 
         <Footer />
-
       </body>
     </html>
   );
