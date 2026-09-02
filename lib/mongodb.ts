@@ -1,48 +1,62 @@
 import mongoose from "mongoose";
 
+/* =========================================================
+   TYPES
+========================================================= */
+
 type MongooseCache = {
   conn: typeof mongoose | null;
   promise: Promise<typeof mongoose> | null;
 };
+
+/* =========================================================
+   GLOBAL CACHE
+========================================================= */
 
 declare global {
   // eslint-disable-next-line no-var
   var mongooseCache: MongooseCache | undefined;
 }
 
+const globalCache = global as typeof globalThis & {
+  mongooseCache?: MongooseCache;
+};
+
+const cached: MongooseCache =
+  globalCache.mongooseCache ?? {
+    conn: null,
+    promise: null,
+  };
+
+if (!globalCache.mongooseCache) {
+  globalCache.mongooseCache = cached;
+}
+
 /* =========================================================
-   MONGODB URI
+   GET MONGODB URI
 ========================================================= */
 
 function getMongoURI(): string {
   const uri = process.env.MONGODB_URI;
 
-  if (!uri || typeof uri !== "string" || !uri.trim()) {
+  if (!uri) {
     throw new Error(
-      "MONGODB_URI is missing. Please check .env.local"
+      "MONGODB_URI is missing. Please check environment variables."
     );
   }
 
-  return uri.trim();
-}
+  const cleanURI = uri.trim();
 
-/* =========================================================
-   GLOBAL CONNECTION CACHE
+  if (
+    !cleanURI.startsWith("mongodb://") &&
+    !cleanURI.startsWith("mongodb+srv://")
+  ) {
+    throw new Error(
+      'Invalid MongoDB URI. URI must start with "mongodb://" or "mongodb+srv://".'
+    );
+  }
 
-   Prevents multiple MongoDB connections during:
-   - Next.js development
-   - Hot reload
-   - API route requests
-========================================================= */
-
-const cached: MongooseCache =
-  global.mongooseCache ?? {
-    conn: null,
-    promise: null,
-  };
-
-if (!global.mongooseCache) {
-  global.mongooseCache = cached;
+  return cleanURI;
 }
 
 /* =========================================================
@@ -62,8 +76,7 @@ async function connectDB(): Promise<typeof mongoose> {
   }
 
   /*
-   * If a connection attempt is already running,
-   * reuse the same promise.
+   * Connection is already in progress.
    */
 
   if (cached.promise) {
@@ -71,106 +84,61 @@ async function connectDB(): Promise<typeof mongoose> {
       cached.conn = await cached.promise;
 
       return cached.conn;
-    } catch {
+    } catch (error) {
       cached.promise = null;
       cached.conn = null;
+
+      throw error;
     }
   }
+
+  /*
+   * Get MongoDB URI.
+   */
 
   const uri = getMongoURI();
 
   /*
-   * Create one shared MongoDB connection.
+   * Create MongoDB connection.
    */
 
   cached.promise = mongoose
     .connect(uri, {
-      /*
-       * Do not buffer database queries while
-       * MongoDB is disconnected.
-       */
-
-      bufferCommands: false,
-
-      /*
-       * CONNECTION POOL
-
-       * Increased from 10 to 20 to handle
-       * concurrent Next.js API requests.
-       */
-
       maxPoolSize: 20,
-
-      /*
-       * Keep one connection available.
-       */
-
       minPoolSize: 1,
-
-      /*
-       * Limit simultaneous connection creation.
-       */
-
       maxConnecting: 5,
 
-      /*
-       * Allow requests enough time to obtain
-       * a connection from the pool.
-       */
-
-      waitQueueTimeoutMS: 15000,
-
-      /*
-       * DATABASE SERVER SELECTION
-       */
-
-      serverSelectionTimeoutMS: 15000,
-
-      /*
-       * INITIAL CONNECTION TIMEOUT
-       */
-
-      connectTimeoutMS: 15000,
-
-      /*
-       * SOCKET TIMEOUT
-       */
-
+      serverSelectionTimeoutMS: 30000,
+      connectTimeoutMS: 30000,
       socketTimeoutMS: 45000,
 
-      /*
-       * Retry support.
-       */
+      waitQueueTimeoutMS: 30000,
 
       retryWrites: true,
-
       retryReads: true,
-
-      /*
-       * Automatically reconnect when possible.
-       */
 
       autoIndex:
         process.env.NODE_ENV !== "production",
     })
     .then((mongooseInstance) => {
+      console.log("=================================");
+      console.log("MongoDB Connected Successfully");
       console.log(
-        `MongoDB connected successfully: ${mongooseInstance.connection.host}/${mongooseInstance.connection.name}`
+        `Host: ${mongooseInstance.connection.host}`
       );
+      console.log(
+        `Database: ${mongooseInstance.connection.name}`
+      );
+      console.log("=================================");
 
       return mongooseInstance;
     })
     .catch((error) => {
-      /*
-       * Reset cache after connection failure.
-       * This allows the next API request to retry.
-       */
-
       cached.promise = null;
       cached.conn = null;
 
       console.error(
-        "MongoDB connection failed:",
+        "MongoDB Connection Error:",
         error instanceof Error
           ? error.message
           : error
@@ -189,6 +157,26 @@ async function connectDB(): Promise<typeof mongoose> {
 
     throw error;
   }
+}
+
+/* =========================================================
+   ENSURE DATABASE CONNECTION
+========================================================= */
+
+export async function ensureDBConnection() {
+  /*
+   * Already connected.
+   */
+
+  if (mongoose.connection.readyState === 1) {
+    return mongoose;
+  }
+
+  /*
+   * Wait for the connection.
+   */
+
+  return await connectDB();
 }
 
 /* =========================================================
@@ -211,7 +199,7 @@ export function getMongoStatus() {
     readyState,
 
     status:
-      states[readyState] ||
+      states[readyState] ??
       "unknown",
 
     host:
@@ -221,24 +209,15 @@ export function getMongoStatus() {
     database:
       mongoose.connection.name ||
       null,
-
-    pool: {
-      maxPoolSize: 20,
-      minPoolSize: 1,
-      maxConnecting: 5,
-      waitQueueTimeoutMS: 15000,
-    },
   };
 }
 
 /* =========================================================
-   DATABASE CHECK
+   CHECK CONNECTION
 ========================================================= */
 
-export async function isMongoConnected(): Promise<boolean> {
-  return (
-    mongoose.connection.readyState === 1
-  );
+export function isMongoConnected(): boolean {
+  return mongoose.connection.readyState === 1;
 }
 
 /* =========================================================
