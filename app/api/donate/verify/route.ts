@@ -7,9 +7,11 @@ import Donation from "@/models/Donation";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// ============================================================
-// HELPERS
-// ============================================================
+/*
+|--------------------------------------------------------------------------
+| AJFT PAYMENT VERIFICATION + SAMADHAAN4U LEDGER SYNC
+|--------------------------------------------------------------------------
+*/
 
 function clean(value: unknown): string {
   const result = String(value ?? "").trim();
@@ -25,17 +27,278 @@ function clean(value: unknown): string {
   return result;
 }
 
-// ============================================================
-// POST
-// ============================================================
+function jsonResponse(
+  data: Record<string, unknown>,
+  status = 200
+) {
+  return NextResponse.json(data, {
+    status,
+    headers: {
+      "Cache-Control": "no-store",
+    },
+  });
+}
+
+/*
+|--------------------------------------------------------------------------
+| SYNC DONATION TO SAMADHAAN4U
+|--------------------------------------------------------------------------
+*/
+
+async function syncDonationToLedger(donation: any) {
+  const ledgerUrl = clean(
+    process.env.AJFT_LEDGER_SYNC_URL
+  );
+
+  const syncSecret = clean(
+    process.env.AJFT_LEDGER_SYNC_SECRET
+  );
+
+  if (!ledgerUrl) {
+    console.error(
+      "AJFT_LEDGER_SYNC_URL is missing."
+    );
+
+    return {
+      success: false,
+      message: "Ledger sync URL is not configured.",
+    };
+  }
+
+  if (!syncSecret) {
+    console.error(
+      "AJFT_LEDGER_SYNC_SECRET is missing."
+    );
+
+    return {
+      success: false,
+      message: "Ledger sync secret is not configured.",
+    };
+  }
+
+  const payload = {
+    donationReference:
+      clean(donation.donationReference),
+
+    donorName:
+      clean(donation.donorName),
+
+    mobile:
+      clean(donation.mobile),
+
+    email:
+      clean(donation.email),
+
+    address:
+      clean(donation.address),
+
+    pan:
+      clean(donation.pan),
+
+    amount:
+      Number(donation.amount || 0),
+
+    currency:
+      clean(donation.currency) || "INR",
+
+    paymentId:
+      clean(donation.paymentId),
+
+    razorpayOrderId:
+      clean(donation.razorpayOrderId) ||
+      clean(donation.orderId),
+
+    receiptNo:
+      clean(donation.receiptNo),
+
+    paymentStatus:
+      "SUCCESS",
+
+    donationType:
+      clean(donation.donationType) ||
+      "One-time",
+
+    donationMode:
+      clean(donation.donationMode) ||
+      "Indian",
+
+    country:
+      clean(donation.country),
+
+    requires80G:
+      Boolean(donation.requires80G),
+
+    donationDate:
+      donation.createdAt
+        ? new Date(donation.createdAt)
+            .toISOString()
+            .slice(0, 10)
+        : new Date()
+            .toISOString()
+            .slice(0, 10),
+
+    source:
+      "AJFTrust.org",
+  };
+
+  console.log(
+    "======================================"
+  );
+
+  console.log(
+    "AJFT → SAMADHAAN4U LEDGER SYNC"
+  );
+
+  console.log(
+    "Ledger URL:",
+    ledgerUrl
+  );
+
+  console.log(
+    "Donation Reference:",
+    payload.donationReference
+  );
+
+  console.log(
+    "Payment ID:",
+    payload.paymentId
+  );
+
+  console.log(
+    "Amount:",
+    payload.amount
+  );
+
+  console.log(
+    "======================================"
+  );
+
+  try {
+    const response = await fetch(
+      ledgerUrl,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json",
+
+          Accept:
+            "application/json",
+
+          "X-AJFT-SECRET":
+            syncSecret,
+        },
+
+        body: JSON.stringify(
+          payload
+        ),
+
+        cache: "no-store",
+      }
+    );
+
+    const rawResponse =
+      await response.text();
+
+    let data: any = {};
+
+    try {
+      data = rawResponse
+        ? JSON.parse(rawResponse)
+        : {};
+    } catch {
+      data = {
+        success: false,
+        message:
+          "Invalid response from Ledger server.",
+        rawResponse,
+      };
+    }
+
+    console.log(
+      "Ledger HTTP Status:",
+      response.status
+    );
+
+    console.log(
+      "Ledger Response:",
+      data
+    );
+
+    if (
+      !response.ok ||
+      data?.success !== true
+    ) {
+      return {
+        success: false,
+
+        message:
+          data?.message ||
+          "Ledger synchronization failed.",
+
+        status:
+          response.status,
+
+        response: data,
+      };
+    }
+
+    return {
+      success: true,
+
+      message:
+        data?.message ||
+        "Donation synchronized successfully.",
+
+      donationId:
+        data?.donationId ?? null,
+
+      ledgerId:
+        data?.ledgerId ?? null,
+
+      duplicate:
+        Boolean(data?.duplicate),
+
+      response: data,
+    };
+
+  } catch (error) {
+
+    console.error(
+      "AJFT LEDGER SYNC ERROR:",
+      error
+    );
+
+    return {
+      success: false,
+
+      message:
+        error instanceof Error
+          ? error.message
+          : "Unable to connect to Ledger server.",
+    };
+  }
+}
+
+/*
+|--------------------------------------------------------------------------
+| POST
+|--------------------------------------------------------------------------
+| Razorpay payment verification
+|--------------------------------------------------------------------------
+*/
 
 export async function POST(
   request: Request
 ) {
   try {
-    // ========================================================
-    // REQUEST BODY
-    // ========================================================
+
+    /*
+    |--------------------------------------------------------------------------
+    | REQUEST BODY
+    |--------------------------------------------------------------------------
+    */
 
     const body =
       await request.json();
@@ -49,17 +312,14 @@ export async function POST(
     );
 
     console.log(
-      "REQUEST BODY:",
-      body
-    );
-
-    console.log(
       "======================================"
     );
 
-    // ========================================================
-    // INPUT
-    // ========================================================
+    /*
+    |--------------------------------------------------------------------------
+    | INPUT
+    |--------------------------------------------------------------------------
+    */
 
     const donationId =
       clean(
@@ -69,83 +329,79 @@ export async function POST(
     const razorpayOrderId =
       clean(
         body?.razorpay_order_id ||
-          body?.razorpayOrderId ||
-          body?.orderId
+        body?.razorpayOrderId ||
+        body?.orderId
       );
 
     const razorpayPaymentId =
       clean(
         body?.razorpay_payment_id ||
-          body?.razorpayPaymentId ||
-          body?.paymentId
+        body?.razorpayPaymentId ||
+        body?.paymentId
       );
 
     const razorpaySignature =
       clean(
         body?.razorpay_signature ||
-          body?.razorpaySignature ||
-          body?.signature
+        body?.razorpaySignature ||
+        body?.signature
       );
 
-    // ========================================================
-    // VALIDATION
-    // ========================================================
+    /*
+    |--------------------------------------------------------------------------
+    | VALIDATION
+    |--------------------------------------------------------------------------
+    */
 
     if (!donationId) {
-      return NextResponse.json(
+      return jsonResponse(
         {
           success: false,
           message:
             "Donation ID is required.",
         },
-        {
-          status: 400,
-        }
+        400
       );
     }
 
     if (!razorpayOrderId) {
-      return NextResponse.json(
+      return jsonResponse(
         {
           success: false,
           message:
             "Razorpay order ID is required.",
         },
-        {
-          status: 400,
-        }
+        400
       );
     }
 
     if (!razorpayPaymentId) {
-      return NextResponse.json(
+      return jsonResponse(
         {
           success: false,
           message:
             "Razorpay payment ID is required.",
         },
-        {
-          status: 400,
-        }
+        400
       );
     }
 
     if (!razorpaySignature) {
-      return NextResponse.json(
+      return jsonResponse(
         {
           success: false,
           message:
             "Razorpay signature is required.",
         },
-        {
-          status: 400,
-        }
+        400
       );
     }
 
-    // ========================================================
-    // RAZORPAY SECRET
-    // ========================================================
+    /*
+    |--------------------------------------------------------------------------
+    | RAZORPAY SECRET
+    |--------------------------------------------------------------------------
+    */
 
     const razorpaySecret =
       clean(
@@ -154,31 +410,34 @@ export async function POST(
       );
 
     if (!razorpaySecret) {
+
       console.error(
         "RAZORPAY_KEY_SECRET IS MISSING."
       );
 
-      return NextResponse.json(
+      return jsonResponse(
         {
           success: false,
           message:
             "Razorpay server configuration is missing.",
         },
-        {
-          status: 500,
-        }
+        500
       );
     }
 
-    // ========================================================
-    // DATABASE
-    // ========================================================
+    /*
+    |--------------------------------------------------------------------------
+    | DATABASE
+    |--------------------------------------------------------------------------
+    */
 
     await connectDB();
 
-    // ========================================================
-    // FIND DONATION
-    // ========================================================
+    /*
+    |--------------------------------------------------------------------------
+    | FIND DONATION
+    |--------------------------------------------------------------------------
+    */
 
     const donation =
       await Donation.findById(
@@ -186,21 +445,153 @@ export async function POST(
       );
 
     if (!donation) {
-      return NextResponse.json(
+      return jsonResponse(
         {
           success: false,
           message:
             "Donation record was not found.",
         },
-        {
-          status: 404,
-        }
+        404
       );
     }
 
-    // ========================================================
-    // SAVED ORDER
-    // ========================================================
+    /*
+    |--------------------------------------------------------------------------
+    | ALREADY VERIFIED
+    |--------------------------------------------------------------------------
+    |
+    | If frontend retries verification, don't create another payment.
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+      String(
+        donation.paymentStatus || ""
+      ).toUpperCase() === "SUCCESS"
+    ) {
+
+      console.log(
+        "Donation already verified."
+      );
+
+      /*
+      | Still attempt Ledger sync.
+      | The Ledger API itself has duplicate protection.
+      */
+
+      const ledgerSync =
+        await syncDonationToLedger(
+          donation
+        );
+
+      return jsonResponse({
+        success: true,
+
+        message:
+          "Donation was already verified.",
+
+        alreadyVerified: true,
+
+        ledgerSync,
+
+        donation: {
+          _id:
+            String(
+              donation._id
+            ),
+
+          donationReference:
+            clean(
+              donation.donationReference
+            ),
+
+          donorName:
+            clean(
+              donation.donorName
+            ),
+
+          mobile:
+            clean(
+              donation.mobile
+            ),
+
+          email:
+            clean(
+              donation.email
+            ),
+
+          address:
+            clean(
+              donation.address
+            ),
+
+          requires80G:
+            Boolean(
+              donation.requires80G
+            ),
+
+          pan:
+            clean(
+              donation.pan
+            ),
+
+          amount:
+            Number(
+              donation.amount || 0
+            ),
+
+          currency:
+            clean(
+              donation.currency
+            ) || "INR",
+
+          razorpayOrderId:
+            clean(
+              donation.razorpayOrderId
+            ),
+
+          orderId:
+            clean(
+              donation.orderId
+            ),
+
+          paymentStatus:
+            "SUCCESS",
+
+          paymentId:
+            clean(
+              donation.paymentId
+            ),
+
+          receiptNo:
+            clean(
+              donation.receiptNo
+            ),
+
+          createdAt:
+            donation.createdAt,
+
+          updatedAt:
+            donation.updatedAt,
+        },
+
+        receiptUrl:
+          `/api/donate/receipt?donationId=${encodeURIComponent(
+            String(donation._id)
+          )}`,
+
+        verifyUrl:
+          `/verify?receiptNo=${encodeURIComponent(
+            clean(donation.receiptNo)
+          )}`,
+      });
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | SAVED RAZORPAY ORDER
+    |--------------------------------------------------------------------------
+    */
 
     const savedOrderId =
       clean(
@@ -210,37 +601,17 @@ export async function POST(
         donation.orderId
       );
 
-    console.log(
-      "Donation ID:",
-      String(
-        donation._id
-      )
-    );
-
-    console.log(
-      "Saved Razorpay Order:",
-      savedOrderId
-    );
-
-    console.log(
-      "Received Razorpay Order:",
-      razorpayOrderId
-    );
-
-    // ========================================================
-    // ORDER MATCH
-    // ========================================================
-
     if (
       !savedOrderId ||
       savedOrderId !==
         razorpayOrderId
     ) {
+
       console.error(
         "RAZORPAY ORDER MISMATCH"
       );
 
-      return NextResponse.json(
+      return jsonResponse(
         {
           success: false,
 
@@ -249,20 +620,15 @@ export async function POST(
 
           orderMatch: false,
         },
-        {
-          status: 400,
-        }
+        400
       );
     }
 
-    // ========================================================
-    // SIGNATURE
-    //
-    // Razorpay:
-    //
-    // HMAC SHA256
-    // order_id|payment_id
-    // ========================================================
+    /*
+    |--------------------------------------------------------------------------
+    | RAZORPAY SIGNATURE
+    |--------------------------------------------------------------------------
+    */
 
     const signaturePayload =
       `${razorpayOrderId}|${razorpayPaymentId}`;
@@ -278,9 +644,11 @@ export async function POST(
         )
         .digest("hex");
 
-    // ========================================================
-    // SAFE SIGNATURE COMPARE
-    // ========================================================
+    /*
+    |--------------------------------------------------------------------------
+    | SAFE SIGNATURE COMPARE
+    |--------------------------------------------------------------------------
+    */
 
     const expectedBuffer =
       Buffer.from(
@@ -307,16 +675,19 @@ export async function POST(
       signatureValid
     );
 
-    // ========================================================
-    // INVALID SIGNATURE
-    // ========================================================
+    /*
+    |--------------------------------------------------------------------------
+    | INVALID SIGNATURE
+    |--------------------------------------------------------------------------
+    */
 
     if (!signatureValid) {
+
       console.error(
         "RAZORPAY SIGNATURE INVALID"
       );
 
-      return NextResponse.json(
+      return jsonResponse(
         {
           success: false,
 
@@ -326,15 +697,15 @@ export async function POST(
           paymentStatus:
             "FAILED",
         },
-        {
-          status: 400,
-        }
+        400
       );
     }
 
-    // ========================================================
-    // RECEIPT NUMBER
-    // ========================================================
+    /*
+    |--------------------------------------------------------------------------
+    | RECEIPT NUMBER
+    |--------------------------------------------------------------------------
+    */
 
     let receiptNo =
       clean(
@@ -342,6 +713,7 @@ export async function POST(
       );
 
     if (!receiptNo) {
+
       const year =
         donation.createdAt
           ? new Date(
@@ -357,9 +729,11 @@ export async function POST(
           .toUpperCase()}`;
     }
 
-    // ========================================================
-    // UPDATE DONATION
-    // ========================================================
+    /*
+    |--------------------------------------------------------------------------
+    | UPDATE DONATION
+    |--------------------------------------------------------------------------
+    */
 
     donation.paymentStatus =
       "SUCCESS";
@@ -378,9 +752,25 @@ export async function POST(
 
     await donation.save();
 
-    // ========================================================
-    // VERIFY AGAIN FROM DATABASE
-    // ========================================================
+    /*
+    |--------------------------------------------------------------------------
+    | LEDGER SYNC
+    |--------------------------------------------------------------------------
+    |
+    | Payment has already been cryptographically verified.
+    |--------------------------------------------------------------------------
+    */
+
+    const ledgerSync =
+      await syncDonationToLedger(
+        donation
+      );
+
+    /*
+    |--------------------------------------------------------------------------
+    | VERIFY AGAIN FROM DATABASE
+    |--------------------------------------------------------------------------
+    */
 
     const verifiedDonation =
       await Donation.findById(
@@ -388,53 +778,74 @@ export async function POST(
       ).lean();
 
     if (!verifiedDonation) {
-      return NextResponse.json(
+
+      return jsonResponse(
         {
           success: false,
+
           message:
             "Donation could not be loaded after verification.",
+
+          ledgerSync,
         },
-        {
-          status: 500,
-        }
+        500
       );
     }
 
-    // ========================================================
-    // RESPONSE
-    // ========================================================
+    /*
+    |--------------------------------------------------------------------------
+    | FINAL RESPONSE
+    |--------------------------------------------------------------------------
+    */
 
     const responseData = {
+
       success: true,
 
       message:
         "Donation verified successfully.",
 
+      paymentStatus:
+        "SUCCESS",
+
+      ledgerSync,
+
+      ledgerSynced:
+        Boolean(
+          ledgerSync?.success
+        ),
+
       donation: {
+
         _id:
           String(
             verifiedDonation._id
           ),
 
         donationReference:
-          verifiedDonation.donationReference ||
-          "",
+          clean(
+            verifiedDonation.donationReference
+          ),
 
         donorName:
-          verifiedDonation.donorName ||
-          "",
+          clean(
+            verifiedDonation.donorName
+          ),
 
         mobile:
-          verifiedDonation.mobile ||
-          "",
+          clean(
+            verifiedDonation.mobile
+          ),
 
         email:
-          verifiedDonation.email ||
-          "",
+          clean(
+            verifiedDonation.email
+          ),
 
         address:
-          verifiedDonation.address ||
-          "",
+          clean(
+            verifiedDonation.address
+          ),
 
         requires80G:
           Boolean(
@@ -442,38 +853,44 @@ export async function POST(
           ),
 
         pan:
-          verifiedDonation.pan ||
-          "",
+          clean(
+            verifiedDonation.pan
+          ),
 
         amount:
           Number(
-            verifiedDonation.amount ||
-              0
+            verifiedDonation.amount || 0
           ),
 
         currency:
-          verifiedDonation.currency ||
-          "INR",
+          clean(
+            verifiedDonation.currency
+          ) || "INR",
 
         razorpayOrderId:
-          verifiedDonation.razorpayOrderId ||
-          "",
+          clean(
+            verifiedDonation.razorpayOrderId
+          ),
 
         orderId:
-          verifiedDonation.orderId ||
-          "",
+          clean(
+            verifiedDonation.orderId
+          ),
 
         paymentStatus:
-          verifiedDonation.paymentStatus ||
-          "SUCCESS",
+          clean(
+            verifiedDonation.paymentStatus
+          ) || "SUCCESS",
 
         paymentId:
-          verifiedDonation.paymentId ||
-          "",
+          clean(
+            verifiedDonation.paymentId
+          ),
 
         receiptNo:
-          verifiedDonation.receiptNo ||
-          receiptNo,
+          clean(
+            verifiedDonation.receiptNo
+          ) || receiptNo,
 
         createdAt:
           verifiedDonation.createdAt,
@@ -491,8 +908,9 @@ export async function POST(
 
       verifyUrl:
         `/verify?receiptNo=${encodeURIComponent(
-          verifiedDonation.receiptNo ||
-            receiptNo
+          clean(
+            verifiedDonation.receiptNo
+          ) || receiptNo
         )}`,
     };
 
@@ -534,38 +952,27 @@ export async function POST(
     );
 
     console.log(
-      "Status:",
-      responseData.donation
-        .paymentStatus
+      "Ledger Synced:",
+      responseData.ledgerSynced
     );
 
     console.log(
       "======================================"
     );
 
-    return NextResponse.json(
+    return jsonResponse(
       responseData,
-      {
-        status: 200,
-
-        headers: {
-          "Cache-Control":
-            "no-store",
-        },
-      }
+      200
     );
-  } catch (
-    error
-  ) {
+
+  } catch (error) {
+
     console.error(
       "======================================"
     );
 
     console.error(
-      "AJFT VERIFY ERROR:"
-    );
-
-    console.error(
+      "AJFT VERIFY ERROR:",
       error
     );
 
@@ -573,7 +980,7 @@ export async function POST(
       "======================================"
     );
 
-    return NextResponse.json(
+    return jsonResponse(
       {
         success: false,
 
@@ -582,29 +989,24 @@ export async function POST(
             ? error.message
             : "Unable to verify donation.",
       },
-      {
-        status: 500,
-
-        headers: {
-          "Cache-Control":
-            "no-store",
-        },
-      }
+      500
     );
   }
 }
 
-// ============================================================
-// GET
-//
-// GET is ONLY for checking an already verified donation.
-// Payment signature verification happens through POST.
-// ============================================================
+/*
+|--------------------------------------------------------------------------
+| GET
+|--------------------------------------------------------------------------
+| Used only for checking an already verified donation.
+|--------------------------------------------------------------------------
+*/
 
 export async function GET(
   request: Request
 ) {
   try {
+
     const url =
       new URL(
         request.url
@@ -645,10 +1047,6 @@ export async function GET(
         )
       );
 
-    // ========================================================
-    // VALIDATION
-    // ========================================================
-
     if (
       !donationId &&
       !receiptNo &&
@@ -656,66 +1054,70 @@ export async function GET(
       !orderId &&
       !paymentId
     ) {
-      return NextResponse.json(
+
+      return jsonResponse(
         {
           success: false,
 
           message:
             "Donation ID or receipt number is required.",
         },
-        {
-          status: 400,
-        }
+        400
       );
     }
 
-    // ========================================================
-    // DATABASE
-    // ========================================================
-
     await connectDB();
 
-    let donation: any =
-      null;
+    let donation: any = null;
 
-    // ========================================================
-    // 1. DONATION ID
-    // ========================================================
+    /*
+    |--------------------------------------------------------------------------
+    | 1. DONATION ID
+    |--------------------------------------------------------------------------
+    */
 
     if (donationId) {
+
       try {
+
         donation =
           await Donation.findById(
             donationId
           ).lean();
+
       } catch {
-        donation =
-          null;
+        donation = null;
       }
     }
 
-    // ========================================================
-    // 2. RECEIPT
-    // ========================================================
+    /*
+    |--------------------------------------------------------------------------
+    | 2. RECEIPT
+    |--------------------------------------------------------------------------
+    */
 
     if (
       !donation &&
       receiptNo
     ) {
+
       donation =
         await Donation.findOne({
           receiptNo,
         }).lean();
     }
 
-    // ========================================================
-    // 3. REFERENCE
-    // ========================================================
+    /*
+    |--------------------------------------------------------------------------
+    | 3. REFERENCE
+    |--------------------------------------------------------------------------
+    */
 
     if (
       !donation &&
       reference
     ) {
+
       donation =
         await Donation.findOne({
           donationReference:
@@ -723,14 +1125,17 @@ export async function GET(
         }).lean();
     }
 
-    // ========================================================
-    // 4. ORDER
-    // ========================================================
+    /*
+    |--------------------------------------------------------------------------
+    | 4. ORDER
+    |--------------------------------------------------------------------------
+    */
 
     if (
       !donation &&
       orderId
     ) {
+
       donation =
         await Donation.findOne({
           $or: [
@@ -746,50 +1151,56 @@ export async function GET(
         }).lean();
     }
 
-    // ========================================================
-    // 5. PAYMENT
-    // ========================================================
+    /*
+    |--------------------------------------------------------------------------
+    | 5. PAYMENT
+    |--------------------------------------------------------------------------
+    */
 
     if (
       !donation &&
       paymentId
     ) {
+
       donation =
         await Donation.findOne({
           paymentId,
         }).lean();
     }
 
-    // ========================================================
-    // NOT FOUND
-    // ========================================================
+    /*
+    |--------------------------------------------------------------------------
+    | NOT FOUND
+    |--------------------------------------------------------------------------
+    */
 
     if (!donation) {
-      return NextResponse.json(
+
+      return jsonResponse(
         {
           success: false,
 
           message:
             "Donation receipt could not be found.",
         },
-        {
-          status: 404,
-        }
+        404
       );
     }
 
-    // ========================================================
-    // PAYMENT STATUS
-    // ========================================================
+    /*
+    |--------------------------------------------------------------------------
+    | PAYMENT STATUS
+    |--------------------------------------------------------------------------
+    */
 
     if (
       String(
-        donation.paymentStatus ||
-          ""
+        donation.paymentStatus || ""
       ).toUpperCase() !==
       "SUCCESS"
     ) {
-      return NextResponse.json(
+
+      return jsonResponse(
         {
           success: false,
 
@@ -800,24 +1211,23 @@ export async function GET(
             donation.paymentStatus ||
             "PENDING",
         },
-        {
-          status: 403,
-        }
+        403
       );
     }
 
-    // ========================================================
-    // RECEIPT
-    // ========================================================
+    /*
+    |--------------------------------------------------------------------------
+    | RECEIPT
+    |--------------------------------------------------------------------------
+    */
 
     let finalReceiptNo =
       clean(
         donation.receiptNo
       );
 
-    if (
-      !finalReceiptNo
-    ) {
+    if (!finalReceiptNo) {
+
       const year =
         donation.createdAt
           ? new Date(
@@ -833,118 +1243,122 @@ export async function GET(
           .toUpperCase()}`;
     }
 
-    // ========================================================
-    // RESPONSE
-    // ========================================================
+    /*
+    |--------------------------------------------------------------------------
+    | RESPONSE
+    |--------------------------------------------------------------------------
+    */
 
-    return NextResponse.json(
-      {
-        success: true,
+    return jsonResponse({
 
-        message:
-          "Donation verified successfully.",
+      success: true,
 
-        donation: {
-          _id:
-            String(
-              donation._id
-            ),
+      message:
+        "Donation verified successfully.",
 
-          donationReference:
-            donation.donationReference ||
-            "",
+      donation: {
 
-          donorName:
-            donation.donorName ||
-            "",
+        _id:
+          String(
+            donation._id
+          ),
 
-          mobile:
-            donation.mobile ||
-            "",
+        donationReference:
+          clean(
+            donation.donationReference
+          ),
 
-          email:
-            donation.email ||
-            "",
+        donorName:
+          clean(
+            donation.donorName
+          ),
 
-          address:
-            donation.address ||
-            "",
+        mobile:
+          clean(
+            donation.mobile
+          ),
 
-          requires80G:
-            Boolean(
-              donation.requires80G
-            ),
+        email:
+          clean(
+            donation.email
+          ),
 
-          pan:
-            donation.pan ||
-            "",
+        address:
+          clean(
+            donation.address
+          ),
 
-          amount:
-            Number(
-              donation.amount ||
-                0
-            ),
+        requires80G:
+          Boolean(
+            donation.requires80G
+          ),
 
-          currency:
-            donation.currency ||
-            "INR",
+        pan:
+          clean(
+            donation.pan
+          ),
 
-          razorpayOrderId:
-            donation.razorpayOrderId ||
-            "",
+        amount:
+          Number(
+            donation.amount || 0
+          ),
 
-          orderId:
-            donation.orderId ||
-            "",
+        currency:
+          clean(
+            donation.currency
+          ) || "INR",
 
-          paymentStatus:
-            donation.paymentStatus ||
-            "",
+        razorpayOrderId:
+          clean(
+            donation.razorpayOrderId
+          ),
 
-          paymentId:
-            donation.paymentId ||
-            "",
+        orderId:
+          clean(
+            donation.orderId
+          ),
 
-          receiptNo:
-            finalReceiptNo,
+        paymentStatus:
+          clean(
+            donation.paymentStatus
+          ),
 
-          createdAt:
-            donation.createdAt,
+        paymentId:
+          clean(
+            donation.paymentId
+          ),
 
-          updatedAt:
-            donation.updatedAt,
-        },
+        receiptNo:
+          finalReceiptNo,
 
-        receiptUrl:
-          `/api/donate/receipt?donationId=${encodeURIComponent(
-            String(
-              donation._id
-            )
-          )}`,
+        createdAt:
+          donation.createdAt,
 
-        verifyUrl:
-          `/verify?receiptNo=${encodeURIComponent(
-            finalReceiptNo
-          )}`,
+        updatedAt:
+          donation.updatedAt,
       },
-      {
-        status: 200,
 
-        headers: {
-          "Cache-Control":
-            "no-store",
-        },
-      }
-    );
-  } catch (
-    error
-  ) {
+      receiptUrl:
+        `/api/donate/receipt?donationId=${encodeURIComponent(
+          String(
+            donation._id
+          )
+        )}`,
+
+      verifyUrl:
+        `/verify?receiptNo=${encodeURIComponent(
+          finalReceiptNo
+        )}`,
+    });
+
+  } catch (error) {
+
     console.error(
       "AJFT VERIFY GET ERROR:",
       error
     );
 
-    return NextResponse.json(
+    return jsonResponse(
       {
         success: false,
 
@@ -953,9 +1367,7 @@ export async function GET(
             ? error.message
             : "Unable to verify donation.",
       },
-      {
-        status: 500,
-      }
+      500
     );
   }
 }
