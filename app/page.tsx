@@ -11,81 +11,149 @@ import VolunteerCTA from "@/components/home/VolunteerCTA";
 import DonateCTA from "@/components/home/DonateCTA";
 import FAQSection from "@/components/home/FAQSection";
 
+import CampaignTracking from "@/components/tracking/CampaignTracking";
+
 export default function HomePage() {
   return (
     <main className="min-h-screen overflow-hidden bg-[#F5F8FA]">
 
       {/* =====================================================
+          GLOBAL CAMPAIGN TRACKING
+      ====================================================== */}
+
+      <CampaignTracking />
+
+      {/* =====================================================
           01. HERO
       ====================================================== */}
 
-      <HeroSlider />
+      <section
+        data-source-action="Home Hero"
+        data-section="Hero"
+      >
+        <HeroSlider />
+      </section>
 
       {/* =====================================================
           02. QUICK ACTIONS
       ====================================================== */}
 
-      <QuickActions />
+      <section
+        data-source-action="Quick Actions"
+        data-section="QuickActions"
+      >
+        <QuickActions />
+      </section>
 
       {/* =====================================================
           03. ABOUT AJFT
       ====================================================== */}
 
-      <AboutSection />
+      <section
+        data-source-action="Home About"
+        data-section="About"
+      >
+        <AboutSection />
+      </section>
 
       {/* =====================================================
           04. FOCUS AREAS
       ====================================================== */}
 
-      <FocusAreas />
+      <section
+        data-source-action="Focus Areas"
+        data-section="FocusAreas"
+      >
+        <FocusAreas />
+      </section>
 
       {/* =====================================================
           05. IMPACT
       ====================================================== */}
 
-      <ImpactStats />
+      <section
+        data-source-action="Home Impact"
+        data-section="Impact"
+      >
+        <ImpactStats />
+      </section>
 
       {/* =====================================================
           06. FEATURED PROJECTS
       ====================================================== */}
 
-      <FeaturedProjects />
+      <section
+        data-source-action="Featured Projects"
+        data-section="Projects"
+      >
+        <FeaturedProjects />
+      </section>
 
       {/* =====================================================
           07. SUCCESS STORIES
       ====================================================== */}
 
-      <SuccessStories />
+      <section
+        data-source-action="Success Stories"
+        data-section="Stories"
+      >
+        <SuccessStories />
+      </section>
 
       {/* =====================================================
           08. LATEST NEWS
       ====================================================== */}
 
-      <LatestNews />
+      <section
+        data-source-action="Latest News"
+        data-section="News"
+      >
+        <LatestNews />
+      </section>
 
       {/* =====================================================
           09. UPCOMING EVENTS
       ====================================================== */}
 
-      <UpcomingEvents />
+      <section
+        data-source-action="Upcoming Events"
+        data-section="Events"
+      >
+        <UpcomingEvents />
+      </section>
 
       {/* =====================================================
           10. VOLUNTEER
       ====================================================== */}
 
-      <VolunteerCTA />
+      <section
+        data-source-action="Volunteer"
+        data-section="Volunteer"
+      >
+        <VolunteerCTA />
+      </section>
 
       {/* =====================================================
           11. DONATE
       ====================================================== */}
 
-      <DonateCTA />
+      <section
+        data-source-action="Home Donate"
+        data-section="Donate"
+      >
+        <DonateCTA />
+      </section>
 
       {/* =====================================================
           12. FAQ
       ====================================================== */}
 
-      <FAQSection />
+      <section
+        data-source-action="Home FAQ"
+        data-section="FAQ"
+      >
+        <FAQSection />
+      </section>
 
     </main>
   );

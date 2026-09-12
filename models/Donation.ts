@@ -8,9 +8,16 @@ import mongoose, {
 // DONATION INTERFACE
 // ============================================================
 
-export interface IDonation
-  extends Document {
+export interface IDonation extends Document {
+  // ----------------------------------------------------------
+  // DONATION REFERENCE
+  // ----------------------------------------------------------
+
   donationReference: string;
+
+  // ----------------------------------------------------------
+  // DONOR
+  // ----------------------------------------------------------
 
   donorName: string;
 
@@ -20,13 +27,47 @@ export interface IDonation
 
   address: string;
 
+  city: string;
+
+  state: string;
+
+  pinCode: string;
+
+  country: string;
+
+  // ----------------------------------------------------------
+  // DONOR TYPE
+  // ----------------------------------------------------------
+
+  donorType: string;
+
+  donationMode: string;
+
+  // ----------------------------------------------------------
+  // DONATION TYPE
+  // ----------------------------------------------------------
+
+  donationType: string;
+
+  // ----------------------------------------------------------
+  // 80G
+  // ----------------------------------------------------------
+
   requires80G: boolean;
 
   pan: string;
 
+  // ----------------------------------------------------------
+  // AMOUNT
+  // ----------------------------------------------------------
+
   amount: number;
 
   currency: string;
+
+  // ----------------------------------------------------------
+  // RAZORPAY
+  // ----------------------------------------------------------
 
   razorpayOrderId: string;
 
@@ -36,7 +77,37 @@ export interface IDonation
 
   paymentId: string;
 
+  // ----------------------------------------------------------
+  // RECEIPT
+  // ----------------------------------------------------------
+
   receiptNo: string;
+
+  // ----------------------------------------------------------
+  // CAMPAIGN TRACKING
+  // ----------------------------------------------------------
+
+  sourceAction: string;
+
+  action: string;
+
+  buttonId: string;
+
+  utmSource: string;
+
+  utmMedium: string;
+
+  utmCampaign: string;
+
+  utmContent: string;
+
+  utmTerm: string;
+
+  landingPage: string;
+
+  // ----------------------------------------------------------
+  // TIMESTAMPS
+  // ----------------------------------------------------------
 
   createdAt: Date;
 
@@ -50,9 +121,9 @@ export interface IDonation
 const DonationSchema =
   new Schema<IDonation>(
     {
-      // --------------------------------------------------------
+      // ======================================================
       // DONATION REFERENCE
-      // --------------------------------------------------------
+      // ======================================================
 
       donationReference: {
         type: String,
@@ -66,9 +137,9 @@ const DonationSchema =
         trim: true,
       },
 
-      // --------------------------------------------------------
+      // ======================================================
       // DONOR
-      // --------------------------------------------------------
+      // ======================================================
 
       donorName: {
         type: String,
@@ -76,6 +147,8 @@ const DonationSchema =
         required: true,
 
         trim: true,
+
+        maxlength: 150,
       },
 
       mobile: {
@@ -84,6 +157,7 @@ const DonationSchema =
         required: true,
 
         trim: true,
+
       },
 
       email: {
@@ -94,6 +168,8 @@ const DonationSchema =
         trim: true,
 
         lowercase: true,
+
+        maxlength: 200,
       },
 
       address: {
@@ -102,16 +178,116 @@ const DonationSchema =
         default: "",
 
         trim: true,
+
+        maxlength: 500,
       },
 
-      // --------------------------------------------------------
+      city: {
+        type: String,
+
+        default: "",
+
+        trim: true,
+
+        maxlength: 100,
+      },
+
+      state: {
+        type: String,
+
+        default: "",
+
+        trim: true,
+
+        maxlength: 100,
+      },
+
+      pinCode: {
+        type: String,
+
+        default: "",
+
+        trim: true,
+
+        maxlength: 10,
+      },
+
+      country: {
+        type: String,
+
+        default: "India",
+
+        trim: true,
+
+        maxlength: 100,
+      },
+
+      // ======================================================
+      // DONOR TYPE
+      // ======================================================
+
+      donorType: {
+        type: String,
+
+        default: "indian",
+
+        enum: [
+          "indian",
+          "nri",
+          "foreign",
+        ],
+
+        index: true,
+
+        trim: true,
+      },
+
+      donationMode: {
+        type: String,
+
+        default: "indian",
+
+        enum: [
+          "indian",
+          "nri",
+          "foreign",
+        ],
+
+        index: true,
+
+        trim: true,
+      },
+
+      // ======================================================
+      // DONATION TYPE
+      // ======================================================
+
+      donationType: {
+        type: String,
+
+        default: "one-time",
+
+        enum: [
+          "one-time",
+          "one_time",
+          "monthly",
+        ],
+
+        index: true,
+
+        trim: true,
+      },
+
+      // ======================================================
       // 80G
-      // --------------------------------------------------------
+      // ======================================================
 
       requires80G: {
         type: Boolean,
 
         default: false,
+
+        index: true,
       },
 
       pan: {
@@ -122,11 +298,13 @@ const DonationSchema =
         trim: true,
 
         uppercase: true,
+
+        maxlength: 10,
       },
 
-      // --------------------------------------------------------
+      // ======================================================
       // AMOUNT
-      // --------------------------------------------------------
+      // ======================================================
 
       amount: {
         type: Number,
@@ -144,11 +322,13 @@ const DonationSchema =
         trim: true,
 
         uppercase: true,
+
+        maxlength: 10,
       },
 
-      // --------------------------------------------------------
+      // ======================================================
       // RAZORPAY ORDER
-      // --------------------------------------------------------
+      // ======================================================
 
       razorpayOrderId: {
         type: String,
@@ -170,9 +350,9 @@ const DonationSchema =
         index: true,
       },
 
-      // --------------------------------------------------------
+      // ======================================================
       // PAYMENT STATUS
-      // --------------------------------------------------------
+      // ======================================================
 
       paymentStatus: {
         type: String,
@@ -189,9 +369,9 @@ const DonationSchema =
         index: true,
       },
 
-      // --------------------------------------------------------
+      // ======================================================
       // RAZORPAY PAYMENT ID
-      // --------------------------------------------------------
+      // ======================================================
 
       paymentId: {
         type: String,
@@ -203,9 +383,9 @@ const DonationSchema =
         index: true,
       },
 
-      // --------------------------------------------------------
+      // ======================================================
       // RECEIPT
-      // --------------------------------------------------------
+      // ======================================================
 
       receiptNo: {
         type: String,
@@ -216,7 +396,113 @@ const DonationSchema =
 
         index: true,
       },
+
+      // ======================================================
+      // CAMPAIGN TRACKING
+      // ======================================================
+
+      sourceAction: {
+        type: String,
+
+        default: "",
+
+        trim: true,
+
+        maxlength: 150,
+
+        index: true,
+      },
+
+      action: {
+        type: String,
+
+        default: "",
+
+        trim: true,
+
+        maxlength: 100,
+      },
+
+      buttonId: {
+        type: String,
+
+        default: "",
+
+        trim: true,
+
+        maxlength: 100,
+      },
+
+      utmSource: {
+        type: String,
+
+        default: "",
+
+        trim: true,
+
+        maxlength: 100,
+
+        index: true,
+      },
+
+      utmMedium: {
+        type: String,
+
+        default: "",
+
+        trim: true,
+
+        maxlength: 100,
+
+        index: true,
+      },
+
+      utmCampaign: {
+        type: String,
+
+        default: "",
+
+        trim: true,
+
+        maxlength: 150,
+
+        index: true,
+      },
+
+      utmContent: {
+        type: String,
+
+        default: "",
+
+        trim: true,
+
+        maxlength: 150,
+      },
+
+      utmTerm: {
+        type: String,
+
+        default: "",
+
+        trim: true,
+
+        maxlength: 150,
+      },
+
+      landingPage: {
+        type: String,
+
+        default: "",
+
+        trim: true,
+
+        maxlength: 500,
+      },
     },
+
+    // ========================================================
+    // OPTIONS
+    // ========================================================
 
     {
       timestamps: true,
@@ -227,6 +513,11 @@ const DonationSchema =
 
 // ============================================================
 // MODEL
+// ============================================================
+//
+// IMPORTANT:
+// Next.js development mode hot-reloads files.
+// mongoose.models.Donation prevents model overwrite errors.
 // ============================================================
 
 const Donation: Model<IDonation> =

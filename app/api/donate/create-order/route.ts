@@ -28,85 +28,134 @@ function clean(value: unknown): string {
 function generateDonationReference(): string {
   const timestamp = Date.now();
 
-  const random =
-    crypto
-      .randomBytes(2)
-      .toString("hex")
-      .toUpperCase();
+  const random = crypto
+    .randomBytes(3)
+    .toString("hex")
+    .toUpperCase();
 
   return `AJFT-${timestamp}-${random}`;
+}
+
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function isValidMobile(mobile: string): boolean {
+  return /^[6-9]\d{9}$/.test(mobile);
+}
+
+function isValidPAN(pan: string): boolean {
+  return /^[A-Z]{5}[0-9]{4}[A-Z]$/.test(pan);
+}
+
+function safeNumber(value: unknown): number {
+  const number = Number(value);
+
+  return Number.isFinite(number) ? number : 0;
 }
 
 // ============================================================
 // POST
 // ============================================================
 
-export async function POST(
-  request: Request
-) {
+export async function POST(request: Request) {
+  let createdDonationId = "";
+
   try {
     // ========================================================
     // READ REQUEST
     // ========================================================
 
-    const body =
-      await request.json();
+    const body = await request.json();
 
-    console.log(
-      "======================================"
-    );
-
-    console.log(
-      "AJFT CREATE DONATION ORDER"
-    );
-
-    console.log(
-      "REQUEST:",
-      body
-    );
-
-    console.log(
-      "======================================"
-    );
+    console.log("======================================");
+    console.log("AJFT CREATE DONATION ORDER");
+    console.log("======================================");
 
     // ========================================================
-    // INPUT
+    // BASIC DONOR INFORMATION
     // ========================================================
 
-    const donorName =
-      clean(
-        body?.donorName
-      );
+    const donorName = clean(body?.donorName);
 
-    const mobile =
-      clean(
-        body?.mobile
-      );
+    const mobile = clean(body?.mobile);
 
-    const email =
-      clean(
-        body?.email
-      ).toLowerCase();
+    const email = clean(body?.email).toLowerCase();
 
-    const address =
-      clean(
-        body?.address
-      );
+    const address = clean(body?.address);
 
-    const pan =
-      clean(
-        body?.pan
-      ).toUpperCase();
+    const city = clean(body?.city);
 
-    const requires80G =
-      Boolean(
-        body?.requires80G
-      );
+    const state = clean(body?.state);
 
-    const amount =
-      Number(
-        body?.amount
-      );
+    const pinCode = clean(body?.pinCode);
+
+    // ========================================================
+    // DONATION INFORMATION
+    // ========================================================
+
+    const amount = safeNumber(body?.amount);
+
+    const currency = clean(body?.currency).toUpperCase() || "INR";
+
+    const donationType =
+      clean(body?.donationType).toLowerCase() || "one-time";
+
+    const donationMode =
+      clean(body?.donationMode).toLowerCase() || "indian";
+
+    const donorType =
+      clean(body?.donorType).toLowerCase() || donationMode;
+
+    const country =
+      clean(body?.country) || "India";
+
+    // ========================================================
+    // 80G INFORMATION
+    // ========================================================
+
+    const requires80G = Boolean(body?.requires80G);
+
+    const pan = clean(body?.pan).toUpperCase();
+
+    // ========================================================
+    // CAMPAIGN / UTM TRACKING
+    // ========================================================
+
+    const sourceAction = clean(body?.sourceAction);
+
+    const action = clean(body?.action);
+
+    const buttonId = clean(body?.buttonId);
+
+    const utmSource = clean(body?.utmSource);
+
+    const utmMedium = clean(body?.utmMedium);
+
+    const utmCampaign = clean(body?.utmCampaign);
+
+    const utmContent = clean(body?.utmContent);
+
+    const utmTerm = clean(body?.utmTerm);
+
+    const landingPage = clean(body?.landingPage);
+
+    // ========================================================
+    // LOG SAFE REQUEST INFORMATION
+    // ========================================================
+
+    console.log("Donor:", donorName);
+    console.log("Mobile:", mobile);
+    console.log("Email:", email);
+    console.log("Amount:", amount);
+    console.log("Currency:", currency);
+    console.log("Donation Type:", donationType);
+    console.log("Donation Mode:", donationMode);
+    console.log("Donor Type:", donorType);
+    console.log("Country:", country);
+    console.log("80G:", requires80G);
+    console.log("Source:", sourceAction);
+    console.log("Campaign:", utmCampaign);
 
     // ========================================================
     // VALIDATION
@@ -116,88 +165,280 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
-          message:
-            "Donor name is required.",
+          message: "Donor name is required.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
+
+    if (donorName.length < 2) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Please enter a valid donor name.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // ========================================================
+    // MOBILE
+    // ========================================================
 
     if (!mobile) {
       return NextResponse.json(
         {
           success: false,
-          message:
-            "Mobile number is required.",
+          message: "Mobile number is required.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
+
+    if (!isValidMobile(mobile)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Please enter a valid 10-digit Indian mobile number.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // ========================================================
+    // EMAIL
+    // ========================================================
 
     if (!email) {
       return NextResponse.json(
         {
           success: false,
-          message:
-            "Email address is required.",
+          message: "Email address is required.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
+    if (!isValidEmail(email)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Please enter a valid email address.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // ========================================================
+    // ADDRESS
+    // ========================================================
+
+    if (!address) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Address is required.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // ========================================================
+    // AMOUNT
+    // ========================================================
+
+    if (!Number.isFinite(amount) || amount < 100) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Minimum donation amount is ₹100.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // ========================================================
+    // CURRENCY
+    //
+    // Current AJFT Razorpay flow is INR.
+    // Do not allow frontend to force another currency.
+    // ========================================================
+
+    if (currency !== "INR") {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Online donations are currently processed in INR only.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // ========================================================
+    // DONATION FREQUENCY
+    //
+    // Monthly subscription is not configured in this API.
+    // Therefore never allow frontend to falsely create
+    // a monthly donation as a one-time Razorpay order.
+    // ========================================================
+
     if (
-      !Number.isFinite(amount) ||
-      amount <= 0
+      donationType !== "one-time" &&
+      donationType !== "one_time"
     ) {
       return NextResponse.json(
         {
           success: false,
           message:
-            "Valid donation amount is required.",
+            "Monthly donation is currently unavailable. Please select Give Once.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
     // ========================================================
-    // PAN VALIDATION
+    // DONOR TYPE
+    // ========================================================
+
+    const allowedDonorTypes = [
+      "indian",
+      "nri",
+      "foreign",
+    ];
+
+    if (!allowedDonorTypes.includes(donorType)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Invalid donor type.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // ========================================================
+    // FOREIGN DONOR
+    //
+    // Foreign currency/FCRA online flow is not enabled here.
+    // Prevent accidental representation of an unsupported flow.
+    // ========================================================
+
+    if (donorType === "foreign") {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Foreign donor online payment is currently unavailable. Please contact Anand Jivan Foundation Trust for international donation assistance.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // ========================================================
+    // NRI COUNTRY
     // ========================================================
 
     if (
-      requires80G &&
-      pan &&
-      !/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(
-        pan
-      )
+      donorType === "nri" &&
+      (!country || country.toLowerCase() === "india")
     ) {
       return NextResponse.json(
         {
           success: false,
           message:
-            "Invalid PAN number.",
+            "Please select your country for NRI donation.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
     // ========================================================
-    // CONNECT DATABASE
+    // PIN CODE
+    // ========================================================
+
+    if (pinCode && !/^\d{6}$/.test(pinCode)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Please enter a valid 6-digit PIN code.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // ========================================================
+    // 80G / PAN
+    // ========================================================
+
+    if (requires80G) {
+      if (!pan) {
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              "PAN is required when 80G information is requested.",
+          },
+          { status: 400 }
+        );
+      }
+
+      if (!isValidPAN(pan)) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Invalid PAN number.",
+          },
+          { status: 400 }
+        );
+      }
+    }
+
+    // ========================================================
+    // NRI DOES NOT USE INDIAN 80G FLOW HERE
+    // ========================================================
+
+    const finalRequires80G =
+      donorType === "indian" ? requires80G : false;
+
+    const finalPAN =
+      finalRequires80G ? pan : "";
+
+    // ========================================================
+    // RAZORPAY CONFIGURATION
+    // ========================================================
+
+    const keyId = clean(
+      process.env.RAZORPAY_KEY_ID
+    );
+
+    const keySecret = clean(
+      process.env.RAZORPAY_KEY_SECRET
+    );
+
+    if (!keyId || !keySecret) {
+      console.error(
+        "RAZORPAY ENVIRONMENT VARIABLES ARE MISSING."
+      );
+
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Online payment configuration is currently unavailable.",
+        },
+        { status: 500 }
+      );
+    }
+
+    // ========================================================
+    // DATABASE
     // ========================================================
 
     await connectDB();
 
     // ========================================================
-    // CREATE UNIQUE REFERENCE
+    // UNIQUE DONATION REFERENCE
     // ========================================================
 
     let donationReference =
@@ -208,7 +449,9 @@ export async function POST(
         donationReference,
       }).lean();
 
-    while (existing) {
+    let referenceAttempts = 0;
+
+    while (existing && referenceAttempts < 5) {
       donationReference =
         generateDonationReference();
 
@@ -216,13 +459,23 @@ export async function POST(
         await Donation.findOne({
           donationReference,
         }).lean();
+
+      referenceAttempts++;
+    }
+
+    if (existing) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Unable to generate a unique donation reference. Please try again.",
+        },
+        { status: 500 }
+      );
     }
 
     // ========================================================
-    // CREATE DONATION
-    //
-    // IMPORTANT:
-    // Initially paymentStatus = PENDING
+    // CREATE PENDING DONATION
     // ========================================================
 
     const donation =
@@ -237,110 +490,110 @@ export async function POST(
 
         address,
 
-        requires80G,
+        requires80G:
+          finalRequires80G,
 
         pan:
-
-          requires80G
-            ? pan
-            : "",
+          finalPAN,
 
         amount,
 
-        currency:
-          "INR",
+        currency: "INR",
 
-        razorpayOrderId:
-          "",
+        razorpayOrderId: "",
 
-        orderId:
-          "",
+        orderId: "",
 
-        paymentStatus:
-          "PENDING",
+        paymentStatus: "PENDING",
 
-        paymentId:
-          "",
+        paymentId: "",
 
-        receiptNo:
-          "",
+        receiptNo: "",
       });
 
-    // ========================================================
-    // CHECK RAZORPAY ENV
-    // ========================================================
-
-    const keyId =
-      clean(
-        process.env
-          .RAZORPAY_KEY_ID
-      );
-
-    const keySecret =
-      clean(
-        process.env
-          .RAZORPAY_KEY_SECRET
-      );
-
-    if (
-      !keyId ||
-      !keySecret
-    ) {
-      console.error(
-        "RAZORPAY ENVIRONMENT VARIABLES ARE MISSING."
-      );
-
-      // ------------------------------------------------------
-      // Remove test donation because Razorpay order
-      // cannot be created.
-      // ------------------------------------------------------
-
-      await Donation.deleteOne({
-        _id:
-          donation._id,
-      });
-
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "Razorpay configuration is missing.",
-        },
-        {
-          status: 500,
-        }
-      );
-    }
+    createdDonationId =
+      String(donation._id);
 
     // ========================================================
-    // RAZORPAY ORDER
+    // RAZORPAY ORDER PAYLOAD
     // ========================================================
+
+    const amountPaise =
+      Math.round(amount * 100);
 
     const razorpayOrderPayload = {
-      amount:
-        Math.round(
-          amount * 100
-        ),
+      amount: amountPaise,
 
-      currency:
-        "INR",
+      currency: "INR",
 
-      receipt:
-        donationReference,
+      receipt: donationReference,
 
       notes: {
+        // -----------------------------------------------
+        // Donation
+        // -----------------------------------------------
+
         donationId:
-          String(
-            donation._id
-          ),
+          createdDonationId,
 
         donationReference,
+
+        donationType:
+          "one-time",
+
+        donorType,
+
+        donationMode,
+
+        country,
+
+        // -----------------------------------------------
+        // Donor
+        // -----------------------------------------------
 
         donorName,
 
         mobile,
 
         email,
+
+        city,
+
+        state,
+
+        pinCode,
+
+        // -----------------------------------------------
+        // 80G
+        // -----------------------------------------------
+
+        requires80G:
+          String(finalRequires80G),
+
+        pan:
+          finalPAN,
+
+        // -----------------------------------------------
+        // Campaign tracking
+        // -----------------------------------------------
+
+        sourceAction,
+
+        action,
+
+        buttonId,
+
+        utmSource,
+
+        utmMedium,
+
+        utmCampaign,
+
+        utmContent,
+
+        utmTerm,
+
+        landingPage,
       },
     };
 
@@ -349,11 +602,17 @@ export async function POST(
     );
 
     console.log(
-      "RAZORPAY ORDER PAYLOAD:"
+      "RAZORPAY ORDER"
     );
 
     console.log(
-      razorpayOrderPayload
+      "Reference:",
+      donationReference
+    );
+
+    console.log(
+      "Amount Paise:",
+      amountPaise
     );
 
     console.log(
@@ -367,9 +626,7 @@ export async function POST(
     const auth =
       Buffer.from(
         `${keyId}:${keySecret}`
-      ).toString(
-        "base64"
-      );
+      ).toString("base64");
 
     // ========================================================
     // CREATE RAZORPAY ORDER
@@ -402,33 +659,27 @@ export async function POST(
       );
 
     // ========================================================
-    // READ RAZORPAY RESPONSE AS TEXT
+    // RESPONSE
     // ========================================================
 
     const razorpayRaw =
       await razorpayResponse.text();
 
     console.log(
-      "RAZORPAY STATUS:",
+      "Razorpay HTTP Status:",
       razorpayResponse.status
-    );
-
-    console.log(
-      "RAZORPAY RAW RESPONSE:",
-      razorpayRaw
     );
 
     // ========================================================
     // EMPTY RESPONSE
     // ========================================================
 
-    if (
-      !razorpayRaw.trim()
-    ) {
+    if (!razorpayRaw.trim()) {
       await Donation.deleteOne({
-        _id:
-          donation._id,
+        _id: donation._id,
       });
+
+      createdDonationId = "";
 
       return NextResponse.json(
         {
@@ -436,28 +687,25 @@ export async function POST(
           message:
             "Razorpay returned an empty response.",
         },
-        {
-          status: 502,
-        }
+        { status: 502 }
       );
     }
 
     // ========================================================
-    // PARSE RAZORPAY JSON
+    // PARSE RESPONSE
     // ========================================================
 
     let razorpayData: any;
 
     try {
       razorpayData =
-        JSON.parse(
-          razorpayRaw
-        );
+        JSON.parse(razorpayRaw);
     } catch {
       await Donation.deleteOne({
-        _id:
-          donation._id,
+        _id: donation._id,
       });
+
+      createdDonationId = "";
 
       return NextResponse.json(
         {
@@ -465,9 +713,7 @@ export async function POST(
           message:
             "Invalid response received from Razorpay.",
         },
-        {
-          status: 502,
-        }
+        { status: 502 }
       );
     }
 
@@ -485,9 +731,10 @@ export async function POST(
       );
 
       await Donation.deleteOne({
-        _id:
-          donation._id,
+        _id: donation._id,
       });
+
+      createdDonationId = "";
 
       return NextResponse.json(
         {
@@ -499,8 +746,21 @@ export async function POST(
             "Unable to create Razorpay order.",
 
           razorpayError:
-            razorpayData?.error ||
-            null,
+            razorpayData?.error
+              ? {
+                  code:
+                    razorpayData.error.code ||
+                    null,
+
+                  description:
+                    razorpayData.error.description ||
+                    null,
+
+                  reason:
+                    razorpayData.error.reason ||
+                    null,
+                }
+              : null,
         },
         {
           status:
@@ -512,13 +772,11 @@ export async function POST(
     }
 
     // ========================================================
-    // ORDER ID
+    // RAZORPAY ORDER ID
     // ========================================================
 
     const razorpayOrderId =
-      clean(
-        razorpayData.id
-      );
+      clean(razorpayData.id);
 
     // ========================================================
     // UPDATE DONATION
@@ -545,9 +803,11 @@ export async function POST(
         }
       ).lean();
 
-    if (
-      !updatedDonation
-    ) {
+    // ========================================================
+    // UPDATE FAILURE
+    // ========================================================
+
+    if (!updatedDonation) {
       console.error(
         "DONATION UPDATE FAILED:",
         donation._id
@@ -557,19 +817,14 @@ export async function POST(
         {
           success: false,
           message:
-            "Donation was created but could not be updated with Razorpay order.",
+            "Donation was created but could not be linked with Razorpay order.",
         },
-        {
-          status: 500,
-        }
+        { status: 500 }
       );
     }
 
     // ========================================================
     // FINAL RESPONSE
-    //
-    // IMPORTANT:
-    // Frontend needs donationId.
     // ========================================================
 
     const responseData = {
@@ -592,17 +847,13 @@ export async function POST(
       razorpayOrderId,
 
       amount:
-        updatedDonation.amount,
-
-      amountPaise:
-        Math.round(
-          Number(
-            updatedDonation.amount
-          ) * 100
+        Number(
+          updatedDonation.amount
         ),
 
-      currency:
-        updatedDonation.currency,
+      amountPaise,
+
+      currency: "INR",
 
       paymentStatus:
         updatedDonation.paymentStatus,
@@ -616,6 +867,22 @@ export async function POST(
       mobile:
         updatedDonation.mobile,
 
+      donationType:
+        "one-time",
+
+      donorType,
+
+      donationMode,
+
+      country,
+
+      requires80G:
+        finalRequires80G,
+
+      // ------------------------------------------------------
+      // Frontend Razorpay configuration
+      // ------------------------------------------------------
+
       razorpay: {
         keyId,
 
@@ -623,14 +890,34 @@ export async function POST(
           razorpayOrderId,
 
         amount:
-          Math.round(
-            Number(
-              updatedDonation.amount
-            ) * 100
-          ),
+          amountPaise,
 
         currency:
           "INR",
+      },
+
+      // ------------------------------------------------------
+      // Tracking data returned to frontend
+      // ------------------------------------------------------
+
+      tracking: {
+        sourceAction,
+
+        action,
+
+        buttonId,
+
+        utmSource,
+
+        utmMedium,
+
+        utmCampaign,
+
+        utmContent,
+
+        utmTerm,
+
+        landingPage,
       },
     };
 
@@ -658,8 +945,8 @@ export async function POST(
     );
 
     console.log(
-      "Payment Status:",
-      responseData.paymentStatus
+      "Amount:",
+      responseData.amount
     );
 
     console.log(
@@ -673,28 +960,47 @@ export async function POST(
 
         headers: {
           "Cache-Control":
-            "no-store",
+            "no-store, no-cache, must-revalidate",
         },
       }
     );
-  } catch (
-    error
-  ) {
+  } catch (error) {
     console.error(
       "======================================"
     );
 
     console.error(
-      "AJFT CREATE ORDER ERROR:"
+      "AJFT CREATE ORDER ERROR"
     );
 
-    console.error(
-      error
-    );
+    console.error(error);
 
     console.error(
       "======================================"
     );
+
+    // ========================================================
+    // CLEAN UP DONATION IF SOMETHING FAILED
+    // ========================================================
+
+    if (createdDonationId) {
+      try {
+        await Donation.deleteOne({
+          _id: createdDonationId,
+          paymentStatus: "PENDING",
+          razorpayOrderId: "",
+        });
+      } catch (cleanupError) {
+        console.error(
+          "DONATION CLEANUP ERROR:",
+          cleanupError
+        );
+      }
+    }
+
+    // ========================================================
+    // RESPONSE
+    // ========================================================
 
     return NextResponse.json(
       {

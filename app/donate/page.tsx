@@ -1,141 +1,116 @@
 "use client";
 
-import { FormEvent, useState } from "react";
-
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
   AlertCircle,
+  ArrowLeft,
   ArrowRight,
   BadgeCheck,
+  Check,
   CheckCircle2,
+  ChevronRight,
   CreditCard,
   Globe2,
   Heart,
   IndianRupee,
-  Loader2,
+  LockKeyhole,
   Mail,
   MapPin,
   Phone,
   Repeat2,
   ShieldCheck,
+  Sparkles,
   UserRound,
-  WalletCards,
 } from "lucide-react";
-
-/* =========================================================
-   RAZORPAY TYPES
-========================================================= */
-
-declare global {
-  interface Window {
-    Razorpay: new (
-      options: RazorpayOptions
-    ) => RazorpayInstance;
-  }
-}
-
-interface RazorpayOptions {
-  key: string;
-  amount: number;
-  currency: string;
-  name: string;
-  description: string;
-  order_id: string;
-
-  prefill?: {
-    name?: string;
-    email?: string;
-    contact?: string;
-  };
-
-  notes?: Record<string, string>;
-
-  theme?: {
-    color?: string;
-  };
-
-  modal?: {
-    ondismiss?: () => void;
-  };
-
-  handler: (
-    response: RazorpayPaymentResponse
-  ) => void;
-}
-
-interface RazorpayInstance {
-  open: () => void;
-}
-
-interface RazorpayPaymentResponse {
-  razorpay_payment_id: string;
-  razorpay_order_id: string;
-  razorpay_signature: string;
-}
 
 /* =========================================================
    TYPES
 ========================================================= */
 
-type DonationType =
-  | "one-time"
-  | "monthly";
+type DonorType = "indian" | "nri" | "foreign";
+type DonationFrequency = "one-time" | "monthly";
 
-type DonationMode =
-  | "indian"
-  | "nri";
-
-interface CreateOrderResponse {
-  success?: boolean;
-  message?: string;
-
-  donationId?: string;
-  donationReference?: string;
-
-  orderId?: string;
-  razorpayOrderId?: string;
-
-  amount?: number;
-  amountPaise?: number;
-
-  currency?: string;
-  paymentStatus?: string;
-
-  donorName?: string;
-  email?: string;
-  mobile?: string;
-
-  razorpay?: {
-    keyId?: string;
-    orderId?: string;
-    amount?: number;
-    currency?: string;
-  };
-}
-
-interface VerifyPaymentResponse {
-  success?: boolean;
-  message?: string;
-
-  donation?: {
-    _id?: string;
-    donationReference?: string;
-    receiptNo?: string;
-  };
+interface TrackingData {
+  sourceAction: string;
+  action: string;
+  buttonId: string;
+  utmSource: string;
+  utmMedium: string;
+  utmCampaign: string;
+  utmContent: string;
+  utmTerm: string;
 }
 
 /* =========================================================
    CONSTANTS
 ========================================================= */
 
-const primaryColor = "#0f766e";
+const amounts = [
+  {
+    value: 500,
+    title: "₹500",
+    description: "Support a community activity",
+  },
+  {
+    value: 1000,
+    title: "₹1,000",
+    description: "Support education initiatives",
+  },
+  {
+    value: 2500,
+    title: "₹2,500",
+    description: "Support community development",
+  },
+  {
+    value: 5000,
+    title: "₹5,000",
+    description: "Support social welfare",
+  },
+  {
+    value: 10000,
+    title: "₹10,000",
+    description: "Support a larger initiative",
+  },
+  {
+    value: 25000,
+    title: "₹25,000",
+    description: "Support long-term impact",
+  },
+];
 
-const donationAmounts = [
-  500,
-  1000,
-  2500,
-  5000,
-  10000,
-  25000,
+const indianStates = [
+  "Andhra Pradesh",
+  "Arunachal Pradesh",
+  "Assam",
+  "Bihar",
+  "Chhattisgarh",
+  "Goa",
+  "Gujarat",
+  "Haryana",
+  "Himachal Pradesh",
+  "Jharkhand",
+  "Karnataka",
+  "Kerala",
+  "Madhya Pradesh",
+  "Maharashtra",
+  "Manipur",
+  "Meghalaya",
+  "Mizoram",
+  "Nagaland",
+  "Odisha",
+  "Punjab",
+  "Rajasthan",
+  "Sikkim",
+  "Tamil Nadu",
+  "Telangana",
+  "Tripura",
+  "Uttar Pradesh",
+  "Uttarakhand",
+  "West Bengal",
+  "Delhi",
+  "Jammu and Kashmir",
+  "Ladakh",
+  "Puducherry",
 ];
 
 const countries = [
@@ -147,99 +122,98 @@ const countries = [
   "Singapore",
   "Germany",
   "France",
+  "Saudi Arabia",
+  "Qatar",
   "Other",
+];
+
+const steps = [
+  {
+    number: 1,
+    title: "Donation",
+    description: "Choose your support",
+  },
+  {
+    number: 2,
+    title: "Details",
+    description: "Your information",
+  },
+  {
+    number: 3,
+    title: "Review",
+    description: "Confirm donation",
+  },
 ];
 
 /* =========================================================
    HELPERS
 ========================================================= */
 
-function clean(value: unknown): string {
-  const result = String(value ?? "").trim();
-
-  if (
-    !result ||
-    result === "undefined" ||
-    result === "null"
-  ) {
-    return "";
+function getTracking(): TrackingData {
+  if (typeof window === "undefined") {
+    return {
+      sourceAction: "",
+      action: "",
+      buttonId: "",
+      utmSource: "",
+      utmMedium: "",
+      utmCampaign: "",
+      utmContent: "",
+      utmTerm: "",
+    };
   }
 
-  return result;
+  const params = new URLSearchParams(window.location.search);
+
+  return {
+    sourceAction: params.get("source-action") || "",
+    action: params.get("action") || "",
+    buttonId: params.get("button-id") || "",
+    utmSource: params.get("utm_source") || "",
+    utmMedium: params.get("utm_medium") || "",
+    utmCampaign: params.get("utm_campaign") || "",
+    utmContent: params.get("utm_content") || "",
+    utmTerm: params.get("utm_term") || "",
+  };
 }
 
-function formatAmount(
-  amount: number,
-  currency = "INR"
-) {
-  try {
-    return new Intl.NumberFormat(
-      "en-IN",
-      {
-        style: "currency",
-        currency,
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      }
-    ).format(Number(amount || 0));
-  } catch {
-    return `₹${Number(
-      amount || 0
-    ).toLocaleString("en-IN")}`;
+function getAmountFromUrl(): number {
+  if (typeof window === "undefined") return 0;
+
+  const params = new URLSearchParams(window.location.search);
+  const value = Number(params.get("donation_amount") || 0);
+
+  if (Number.isFinite(value) && value >= 100) {
+    return value;
   }
+
+  return 0;
 }
 
-/* =========================================================
-   RAZORPAY LOADER
-========================================================= */
+function formatAmount(value: number) {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value);
+}
 
-function loadRazorpay(): Promise<boolean> {
-  return new Promise((resolve) => {
-    if (
-      typeof window !== "undefined" &&
-      window.Razorpay
-    ) {
-      resolve(true);
-      return;
-    }
+function getButtonTracking() {
+  if (typeof window === "undefined") return {};
 
-    const existing =
-      document.querySelector(
-        'script[src="https://checkout.razorpay.com/v1/checkout.js"]'
-      );
+  const tracking = getTracking();
 
-    if (existing) {
-      existing.addEventListener(
-        "load",
-        () => resolve(true),
-        { once: true }
-      );
-
-      existing.addEventListener(
-        "error",
-        () => resolve(false),
-        { once: true }
-      );
-
-      return;
-    }
-
-    const script =
-      document.createElement("script");
-
-    script.src =
-      "https://checkout.razorpay.com/v1/checkout.js";
-
-    script.async = true;
-
-    script.onload = () =>
-      resolve(true);
-
-    script.onerror = () =>
-      resolve(false);
-
-    document.body.appendChild(script);
-  });
+  return {
+    sourceAction: tracking.sourceAction,
+    action: tracking.action,
+    buttonId: tracking.buttonId,
+    utmSource: tracking.utmSource,
+    utmMedium: tracking.utmMedium,
+    utmCampaign: tracking.utmCampaign,
+    utmContent: tracking.utmContent,
+    utmTerm: tracking.utmTerm,
+  };
 }
 
 /* =========================================================
@@ -248,17 +222,19 @@ function loadRazorpay(): Promise<boolean> {
 
 export default function DonatePage() {
   /* =======================================================
-     STATES
+     STATE
   ======================================================= */
 
-  const [donationType, setDonationType] =
-    useState<DonationType>("one-time");
+  const [step, setStep] = useState(1);
 
-  const [donationMode, setDonationMode] =
-    useState<DonationMode>("indian");
+  const [donorType, setDonorType] =
+    useState<DonorType>("indian");
 
-  const [amount, setAmount] =
-    useState("");
+  const [frequency, setFrequency] =
+    useState<DonationFrequency>("one-time");
+
+  const [selectedAmount, setSelectedAmount] =
+    useState<number | null>(null);
 
   const [customAmount, setCustomAmount] =
     useState("");
@@ -275,395 +251,478 @@ export default function DonatePage() {
   const [address, setAddress] =
     useState("");
 
+  const [city, setCity] =
+    useState("");
+
+  const [state, setState] =
+    useState("");
+
+  const [pinCode, setPinCode] =
+    useState("");
+
   const [country, setCountry] =
+    useState("");
+
+  const [pan, setPan] =
     useState("");
 
   const [requires80G, setRequires80G] =
     useState(true);
 
-  const [pan, setPan] =
-    useState("");
-
-  const [loading, setLoading] =
+  const [agree, setAgree] =
     useState(false);
-
-  const [message, setMessage] =
-    useState("");
 
   const [error, setError] =
     useState("");
 
+  const [tracking, setTracking] =
+    useState<TrackingData>({
+      sourceAction: "",
+      action: "",
+      buttonId: "",
+      utmSource: "",
+      utmMedium: "",
+      utmCampaign: "",
+      utmContent: "",
+      utmTerm: "",
+    });
+
   /* =======================================================
-     DERIVED VALUES
+     READ URL TRACKING
   ======================================================= */
 
-  const isNRI =
-    donationMode === "nri";
+  useEffect(() => {
+    const urlTracking = getTracking();
 
-  const isMonthly =
-    donationType === "monthly";
+    setTracking(urlTracking);
 
-  const selectedAmount =
-    Number(customAmount || amount || 0);
+    const urlAmount = getAmountFromUrl();
 
-  const currency =
-    isNRI ? "INR" : "INR";
+    if (urlAmount > 0) {
+      setSelectedAmount(urlAmount);
+      setCustomAmount("");
+    }
+
+    /*
+      Save campaign attribution so it can be used
+      later during the payment process.
+    */
+
+    try {
+      sessionStorage.setItem(
+        "ajft_donation_tracking",
+        JSON.stringify(urlTracking)
+      );
+
+      localStorage.setItem(
+        "ajft_donation_tracking",
+        JSON.stringify(urlTracking)
+      );
+    } catch {
+      // Storage can be unavailable in some browsers.
+    }
+
+    /*
+      Push landing event.
+    */
+
+    const dataLayer =
+      window.dataLayer ||
+      [];
+
+    dataLayer.push({
+      event: "ajft_donation_page_view",
+      page_path: window.location.pathname,
+      source_action: urlTracking.sourceAction,
+      action: urlTracking.action,
+      button_id: urlTracking.buttonId,
+      utm_source: urlTracking.utmSource,
+      utm_medium: urlTracking.utmMedium,
+      utm_campaign: urlTracking.utmCampaign,
+      utm_content: urlTracking.utmContent,
+      utm_term: urlTracking.utmTerm,
+    });
+
+    window.dataLayer = dataLayer;
+  }, []);
+
+  /* =======================================================
+     DERIVED
+  ======================================================= */
+
+  const amount = useMemo(() => {
+    if (customAmount.trim()) {
+      return Number(customAmount);
+    }
+
+    return Number(selectedAmount || 0);
+  }, [customAmount, selectedAmount]);
+
+  const isForeign =
+    donorType === "foreign";
+
+  const isNri =
+    donorType === "nri";
 
   /* =======================================================
      SELECT AMOUNT
   ======================================================= */
 
-  function selectAmount(
-    value: number
-  ) {
-    setAmount(String(value));
-
+  function handleAmount(value: number) {
+    setSelectedAmount(value);
     setCustomAmount("");
-
     setError("");
   }
 
   /* =======================================================
-     VERIFY PAYMENT
+     VALIDATE STEP 1
   ======================================================= */
 
-  async function verifyPayment(
-    paymentResponse: RazorpayPaymentResponse,
-    donationId: string
-  ) {
-    setMessage(
-      "Payment received. Verifying your donation..."
-    );
-
-    const response =
-      await fetch(
-        "/api/donate/verify",
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json",
-            Accept:
-              "application/json",
-          },
-
-          body: JSON.stringify({
-            donationId,
-
-            razorpay_order_id:
-              paymentResponse.razorpay_order_id,
-
-            razorpay_payment_id:
-              paymentResponse.razorpay_payment_id,
-
-            razorpay_signature:
-              paymentResponse.razorpay_signature,
-          }),
-
-          cache: "no-store",
-        }
-      );
-
-    const raw =
-      await response.text();
-
-    if (!raw.trim()) {
-      throw new Error(
-        "Payment verification server returned an empty response."
-      );
-    }
-
-    let data:
-      VerifyPaymentResponse;
-
-    try {
-      data = JSON.parse(raw);
-    } catch {
-      throw new Error(
-        "Payment verification returned invalid JSON."
-      );
-    }
-
+  function validateDonation() {
     if (
-      !response.ok ||
-      !data?.success
+      !Number.isFinite(amount) ||
+      amount < 100
     ) {
-      throw new Error(
-        data?.message ||
-          "Payment verification failed."
+      setError(
+        "Please select or enter a donation amount of at least ₹100."
       );
+
+      return false;
     }
 
-    const receiptNo =
-      clean(
-        data?.donation?.receiptNo
+    /*
+      Current backend supports INR Razorpay.
+      Foreign currency processing should not be
+      falsely presented as active.
+    */
+
+    if (isForeign) {
+      setError(
+        "Foreign currency donations are not currently enabled. Please use the supported Indian/NRI INR donation route or contact AJFT for international donation assistance."
       );
 
-    const reference =
-      clean(
-        data?.donation
-          ?.donationReference
-      );
-
-    const params =
-      new URLSearchParams();
-
-    params.set(
-      "donationId",
-      donationId
-    );
-
-    if (receiptNo) {
-      params.set(
-        "receiptNo",
-        receiptNo
-      );
+      return false;
     }
 
-    if (reference) {
-      params.set(
-        "reference",
-        reference
+    /*
+      Monthly subscription requires backend
+      Razorpay Subscription API configuration.
+    */
+
+    if (frequency === "monthly") {
+      setError(
+        "Monthly recurring donation is currently being prepared. Please select Give Once for the available secure payment flow."
       );
+
+      return false;
     }
 
-    params.set(
-      "paymentId",
-      paymentResponse.razorpay_payment_id
-    );
-
-    window.location.href =
-      `/donate/success?${params.toString()}`;
+    return true;
   }
 
   /* =======================================================
-     SUBMIT
+     VALIDATE STEP 2
   ======================================================= */
 
-  async function handleSubmit(
-    event: FormEvent<HTMLFormElement>
-  ) {
-    event.preventDefault();
-
-    if (loading) {
-      return;
-    }
-
-    setError("");
-    setMessage("");
-
-    /* =====================================================
-       CLEAN VALUES
-    ===================================================== */
-
-    const finalName =
+  function validateDetails() {
+    const name =
       donorName.trim();
 
-    const finalMobile =
-      mobile.replace(
-        /\D/g,
-        ""
-      );
+    const phone =
+      mobile.replace(/\D/g, "");
 
-    const finalEmail =
+    const mail =
       email.trim().toLowerCase();
 
-    const finalAddress =
+    const completeAddress =
       address.trim();
 
-    const finalCountry =
+    const completeCity =
+      city.trim();
+
+    const completeState =
+      state.trim();
+
+    const completePin =
+      pinCode.replace(/\D/g, "");
+
+    const completeCountry =
       country.trim();
 
-    const finalPan =
+    const completePan =
       pan.trim().toUpperCase();
 
-    const finalAmount =
-      Number(
-        customAmount ||
-          amount ||
-          0
-      );
-
-    /* =====================================================
-       VALIDATION
-    ===================================================== */
-
-    if (!finalName) {
-      setError(
-        "Please enter your full name."
-      );
-      return;
+    if (!name) {
+      setError("Please enter your full name.");
+      return false;
     }
 
     if (
-      !/^[6-9]\d{9}$/.test(
-        finalMobile
-      )
+      !/^[6-9]\d{9}$/.test(phone)
     ) {
       setError(
         "Please enter a valid 10 digit mobile number."
       );
-      return;
+      return false;
     }
 
     if (
       !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
-        finalEmail
+        mail
       )
     ) {
       setError(
         "Please enter a valid email address."
       );
-      return;
+      return false;
     }
 
-    if (!finalAddress) {
+    if (!completeAddress) {
       setError(
         "Please enter your complete address."
       );
-      return;
+      return false;
+    }
+
+    if (!completeCity) {
+      setError("Please enter your city.");
+      return false;
+    }
+
+    if (!completeState) {
+      setError("Please select your state.");
+      return false;
     }
 
     if (
-      !Number.isFinite(
-        finalAmount
-      ) ||
-      finalAmount <= 0
+      !/^\d{6}$/.test(
+        completePin
+      )
     ) {
       setError(
-        "Please select or enter a valid donation amount."
+        "Please enter a valid 6 digit PIN code."
       );
-      return;
+      return false;
     }
 
     if (
-      finalAmount < 100
-    ) {
-      setError(
-        "Minimum donation amount is ₹100."
-      );
-      return;
-    }
-
-    if (
-      isNRI &&
-      !finalCountry
+      (isNri || isForeign) &&
+      !completeCountry
     ) {
       setError(
         "Please select your country."
       );
-      return;
+      return false;
     }
 
     if (
-      !isNRI &&
+      donorType === "indian" &&
       requires80G &&
-      finalPan &&
+      completePan &&
       !/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(
-        finalPan
+        completePan
       )
     ) {
       setError(
         "Please enter a valid PAN number."
       );
-      return;
+      return false;
     }
 
-    /* =====================================================
-       MONTHLY DONATION
-    ===================================================== */
-
-    if (isMonthly) {
+    if (!agree) {
       setError(
-        "Monthly recurring donation requires Razorpay Subscription API configuration in the backend."
+        "Please confirm that the information provided is correct."
       );
+      return false;
+    }
+
+    return true;
+  }
+
+  /* =======================================================
+     NEXT STEP
+  ======================================================= */
+
+  function nextStep() {
+    setError("");
+
+    if (step === 1) {
+      if (!validateDonation()) return;
+      setStep(2);
       return;
     }
 
-    /* =====================================================
-       PAYMENT
-    ===================================================== */
+    if (step === 2) {
+      if (!validateDetails()) return;
+      setStep(3);
+      return;
+    }
+  }
+
+  /* =======================================================
+     PREVIOUS STEP
+  ======================================================= */
+
+  function previousStep() {
+    setError("");
+    setStep((current) =>
+      Math.max(1, current - 1)
+    );
+  }
+
+  /* =======================================================
+     PAYMENT SUBMIT
+  ======================================================= */
+
+  async function handlePayment(
+    event: FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
+
+    setError("");
+
+    if (!validateDonation()) {
+      setStep(1);
+      return;
+    }
+
+    if (!validateDetails()) {
+      setStep(2);
+      return;
+    }
+
+    /*
+      This first page prepares the complete
+      donation information.
+
+      Payment API integration will use this
+      exact payload in the next files.
+    */
+
+    const payload = {
+      donorName: donorName.trim(),
+      mobile: mobile.replace(/\D/g, ""),
+      email: email.trim().toLowerCase(),
+      address: address.trim(),
+      city: city.trim(),
+      state: state.trim(),
+      pinCode: pinCode.replace(/\D/g, ""),
+      country:
+        donorType === "indian"
+          ? "India"
+          : country.trim(),
+
+      amount,
+      currency: "INR",
+
+      donationType: frequency,
+      donationMode:
+        donorType === "indian"
+          ? "indian"
+          : "nri",
+
+      donorType,
+
+      requires80G:
+        donorType === "indian"
+          ? requires80G
+          : false,
+
+      pan:
+        donorType === "indian"
+          ? pan.trim().toUpperCase()
+          : "",
+
+      tracking: {
+        ...getButtonTracking(),
+      },
+    };
+
+    /*
+      Keep payload available for the payment
+      API integration.
+    */
 
     try {
-      setLoading(true);
-
-      setMessage(
-        "Preparing your secure payment..."
+      sessionStorage.setItem(
+        "ajft_pending_donation",
+        JSON.stringify(payload)
       );
+    } catch {
+      // Ignore storage errors.
+    }
 
-      const razorpayLoaded =
-        await loadRazorpay();
+    /*
+      Temporary event for analytics.
+    */
 
-      if (
-        !razorpayLoaded ||
-        !window.Razorpay
-      ) {
-        throw new Error(
-          "Unable to load Razorpay payment gateway."
-        );
-      }
+    window.dataLayer =
+      window.dataLayer || [];
 
-      /* ===================================================
-         CREATE ORDER
-      =================================================== */
+    window.dataLayer.push({
+      event: "ajft_donation_review_confirmed",
 
-      setMessage(
-        "Creating secure payment order..."
-      );
+      donation_amount: amount,
 
+      currency: "INR",
+
+      donor_type: donorType,
+
+      donation_frequency:
+        frequency,
+
+      requires_80g:
+        donorType === "indian"
+          ? requires80G
+          : false,
+
+      source_action:
+        tracking.sourceAction,
+
+      action:
+        tracking.action,
+
+      button_id:
+        tracking.buttonId,
+
+      utm_source:
+        tracking.utmSource,
+
+      utm_medium:
+        tracking.utmMedium,
+
+      utm_campaign:
+        tracking.utmCampaign,
+
+      utm_content:
+        tracking.utmContent,
+
+      utm_term:
+        tracking.utmTerm,
+    });
+
+    /*
+      The actual Razorpay create-order +
+      verify flow will be connected through
+      /api/donate/create-order and
+      /api/donate/verify.
+    */
+
+    try {
       const response =
         await fetch(
           "/api/donate/create-order",
           {
             method: "POST",
-
             headers: {
               "Content-Type":
                 "application/json",
-
               Accept:
                 "application/json",
             },
-
-            body: JSON.stringify({
-              donorName:
-                finalName,
-
-              mobile:
-                finalMobile,
-
-              email:
-                finalEmail,
-
-              address:
-                finalAddress,
-
-              amount:
-                finalAmount,
-
-              currency,
-
-              donationType,
-
-              donationMode,
-
-              isNRI,
-
-              country:
-                finalCountry,
-
-              requires80G:
-                isNRI
-                  ? false
-                  : requires80G,
-
-              pan:
-                isNRI
-                  ? ""
-                  : finalPan,
-            }),
-
+            body: JSON.stringify(
+              payload
+            ),
             cache: "no-store",
           }
         );
@@ -673,18 +732,17 @@ export default function DonatePage() {
 
       if (!raw.trim()) {
         throw new Error(
-          "Create-order server returned an empty response."
+          "Payment server returned an empty response."
         );
       }
 
-      let data:
-        CreateOrderResponse;
+      let data: any;
 
       try {
         data = JSON.parse(raw);
       } catch {
         throw new Error(
-          "Create-order server returned invalid JSON."
+          "Payment server returned invalid JSON."
         );
       }
 
@@ -698,177 +756,325 @@ export default function DonatePage() {
         );
       }
 
-      /* ===================================================
-         ORDER VALUES
-      =================================================== */
+      /*
+        If existing API is already configured,
+        pass order information to Razorpay.
+      */
 
-      const createdDonationId =
-        clean(
-          data?.donationId
-        );
+      const orderId =
+        data?.razorpayOrderId ||
+        data?.orderId ||
+        data?.razorpay?.orderId;
 
-      const razorpayOrderId =
-        clean(
-          data?.razorpayOrderId ||
-            data?.orderId ||
-            data?.razorpay
-              ?.orderId
-        );
+      const keyId =
+        data?.razorpay?.keyId;
 
-      const razorpayKey =
-        clean(
-          data?.razorpay
-            ?.keyId
-        );
-
-      const amountPaise =
-        Number(
-          data?.amountPaise ||
-            data?.razorpay
-              ?.amount ||
-            Math.round(
-              finalAmount * 100
-            )
-        );
-
-      const razorpayCurrency =
-        clean(
-          data?.currency ||
-            data?.razorpay
-              ?.currency
-        ) || currency;
+      const donationId =
+        data?.donationId;
 
       if (
-        !createdDonationId
+        !orderId ||
+        !keyId ||
+        !donationId
       ) {
         throw new Error(
-          "Donation ID was not returned by create-order."
+          "Payment order was created but required Razorpay information was not returned."
         );
       }
 
-      if (
-        !razorpayOrderId
-      ) {
-        throw new Error(
-          "Razorpay order ID was not returned."
-        );
-      }
-
-      if (
-        !razorpayKey
-      ) {
-        throw new Error(
-          "Razorpay key was not returned by server."
-        );
-      }
-
-      /* ===================================================
-         RAZORPAY OPTIONS
-      =================================================== */
-
-      const options:
-        RazorpayOptions = {
-        key:
-          razorpayKey,
-
+      await openRazorpay({
+        keyId,
+        orderId,
+        donationId,
         amount:
-          amountPaise,
-
+          data?.amountPaise ||
+          data?.razorpay?.amount ||
+          Math.round(amount * 100),
         currency:
-          razorpayCurrency,
-
-        name:
-          "Anand Jivan Foundation Trust",
-
-        description:
-          isNRI
-            ? "International Donation"
-            : "Donation to Anand Jivan Foundation Trust",
-
-        order_id:
-          razorpayOrderId,
-
-        prefill: {
-          name:
-            finalName,
-
-          email:
-            finalEmail,
-
-          contact:
-            finalMobile,
-        },
-
-        notes: {
-          donationId:
-            createdDonationId,
-
-          donationType,
-
-          donationMode,
-
-          isNRI:
-            String(isNRI),
-
-          country:
-            finalCountry,
-        },
-
-        theme: {
-          color:
-            primaryColor,
-        },
-
-        modal: {
-          ondismiss: () => {
-            setLoading(false);
-
-            setMessage("");
-          },
-        },
-
-        handler:
-          async (
-            paymentResponse
-          ) => {
-            try {
-              await verifyPayment(
-                paymentResponse,
-                createdDonationId
-              );
-            } catch (paymentError) {
-              setLoading(false);
-
-              setMessage("");
-
-              setError(
-                paymentError instanceof Error
-                  ? paymentError.message
-                  : "Payment verification failed."
-              );
-            }
-          },
-      };
-
-      const razorpay =
-        new window.Razorpay(
-          options
-        );
-
-      setMessage("");
-
-      razorpay.open();
+          data?.currency ||
+          data?.razorpay?.currency ||
+          "INR",
+      });
     } catch (paymentError) {
       setError(
         paymentError instanceof Error
           ? paymentError.message
           : "Unable to start secure payment."
       );
-
-      setMessage("");
-
-      setLoading(false);
     }
+  }
+
+  /* =======================================================
+     RAZORPAY
+  ======================================================= */
+
+  async function openRazorpay({
+    keyId,
+    orderId,
+    donationId,
+    amount: amountPaise,
+    currency,
+  }: {
+    keyId: string;
+    orderId: string;
+    donationId: string;
+    amount: number;
+    currency: string;
+  }) {
+    const script =
+      document.createElement("script");
+
+    script.src =
+      "https://checkout.razorpay.com/v1/checkout.js";
+
+    script.async = true;
+
+    const alreadyLoaded =
+      Boolean(
+        window.Razorpay
+      );
+
+    if (!alreadyLoaded) {
+      await new Promise<void>(
+        (resolve, reject) => {
+          script.onload = () =>
+            resolve();
+
+          script.onerror = () =>
+            reject(
+              new Error(
+                "Unable to load Razorpay."
+              )
+            );
+
+          document.body.appendChild(
+            script
+          );
+        }
+      );
+    }
+
+    if (!window.Razorpay) {
+      throw new Error(
+        "Razorpay checkout is unavailable."
+      );
+    }
+
+    const options = {
+      key: keyId,
+
+      amount:
+        amountPaise,
+
+      currency,
+
+      name:
+        "Anand Jivan Foundation Trust",
+
+      description:
+        "Donation to Anand Jivan Foundation Trust",
+
+      order_id:
+        orderId,
+
+      prefill: {
+        name:
+          donorName.trim(),
+
+        email:
+          email.trim().toLowerCase(),
+
+        contact:
+          mobile.replace(/\D/g, ""),
+      },
+
+      notes: {
+        donationId,
+        donorType,
+        donationType:
+          frequency,
+
+        sourceAction:
+          tracking.sourceAction,
+
+        action:
+          tracking.action,
+
+        buttonId:
+          tracking.buttonId,
+
+        utmSource:
+          tracking.utmSource,
+
+        utmMedium:
+          tracking.utmMedium,
+
+        utmCampaign:
+          tracking.utmCampaign,
+      },
+
+      theme: {
+        color: "#0F766E",
+      },
+
+      modal: {
+        ondismiss: () => {
+          setError(
+            "Payment window was closed. You can try again."
+          );
+        },
+      },
+
+      handler:
+        async (response: any) => {
+          try {
+            const verify =
+              await fetch(
+                "/api/donate/verify",
+                {
+                  method: "POST",
+
+                  headers: {
+                    "Content-Type":
+                      "application/json",
+                    Accept:
+                      "application/json",
+                  },
+
+                  body: JSON.stringify({
+                    donationId,
+
+                    razorpay_order_id:
+                      response.razorpay_order_id,
+
+                    razorpay_payment_id:
+                      response.razorpay_payment_id,
+
+                    razorpay_signature:
+                      response.razorpay_signature,
+
+                    tracking,
+                  }),
+
+                  cache: "no-store",
+                }
+              );
+
+            const raw =
+              await verify.text();
+
+            if (!raw.trim()) {
+              throw new Error(
+                "Payment verification returned an empty response."
+              );
+            }
+
+            const data =
+              JSON.parse(raw);
+
+            if (
+              !verify.ok ||
+              !data?.success
+            ) {
+              throw new Error(
+                data?.message ||
+                  "Payment verification failed."
+              );
+            }
+
+            /*
+              Successful purchase event.
+            */
+
+            window.dataLayer =
+              window.dataLayer || [];
+
+            window.dataLayer.push({
+              event: "purchase",
+
+              transaction_id:
+                response.razorpay_payment_id,
+
+              value: amount,
+
+              currency: "INR",
+
+              source_action:
+                tracking.sourceAction,
+
+              action:
+                tracking.action,
+
+              button_id:
+                tracking.buttonId,
+
+              utm_source:
+                tracking.utmSource,
+
+              utm_medium:
+                tracking.utmMedium,
+
+              utm_campaign:
+                tracking.utmCampaign,
+
+              utm_content:
+                tracking.utmContent,
+
+              utm_term:
+                tracking.utmTerm,
+            });
+
+            const successParams =
+              new URLSearchParams();
+
+            successParams.set(
+              "donationId",
+              donationId
+            );
+
+            successParams.set(
+              "paymentId",
+              response.razorpay_payment_id
+            );
+
+            if (
+              data?.donation?.receiptNo
+            ) {
+              successParams.set(
+                "receiptNo",
+                data.donation.receiptNo
+              );
+            }
+
+            if (
+              data?.donation
+                ?.donationReference
+            ) {
+              successParams.set(
+                "reference",
+                data.donation
+                  .donationReference
+              );
+            }
+
+            window.location.href =
+              `/donate/success?${successParams.toString()}`;
+          } catch (verificationError) {
+            setError(
+              verificationError instanceof Error
+                ? verificationError.message
+                : "Payment verification failed."
+            );
+          }
+        },
+    };
+
+    const razorpay =
+      new window.Razorpay(
+        options
+      );
+
+    razorpay.open();
   }
 
   /* =======================================================
@@ -876,61 +1082,54 @@ export default function DonatePage() {
   ======================================================= */
 
   return (
-    <main className="min-h-screen overflow-hidden bg-slate-50">
+    <main className="min-h-screen bg-[#F5F8FA]">
 
       {/* ===================================================
-         HERO
+          HERO
       =================================================== */}
 
-      <section className="relative overflow-hidden bg-gradient-to-br from-teal-950 via-teal-800 to-emerald-700">
+      <section className="relative overflow-hidden bg-[#102A43]">
 
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute -left-20 -top-20 h-72 w-72 rounded-full bg-cyan-300 blur-3xl" />
+        <div className="absolute inset-0">
 
-          <div className="absolute right-0 top-0 h-80 w-80 rounded-full bg-emerald-300 blur-3xl" />
+          <div className="absolute -left-24 -top-24 h-80 w-80 rounded-full bg-[#087E8B]/30 blur-3xl" />
+
+          <div className="absolute -bottom-32 right-0 h-96 w-96 rounded-full bg-[#D6A63A]/10 blur-3xl" />
+
         </div>
 
-        <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+        <div className="relative mx-auto max-w-7xl px-5 py-12 sm:px-7 md:py-16 lg:px-8">
 
           <div className="mx-auto max-w-3xl text-center">
 
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-emerald-100 backdrop-blur">
-              <Heart size={15} />
-              Make a Difference Today
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[9px] font-black uppercase tracking-[0.24em] text-[#D9B65A] backdrop-blur">
+
+              <Heart
+                size={14}
+                fill="currentColor"
+              />
+
+              Support Our Work
+
             </div>
 
-            <h1 className="mt-6 text-3xl font-black tracking-tight text-white sm:text-5xl">
-              Your Contribution Can
-              <span className="block text-emerald-200">
-                Change a Life
+            <h1 className="mt-6 font-serif text-4xl font-black leading-tight text-white sm:text-5xl md:text-6xl">
+
+              Make A Difference
+
+              <span className="block text-[#D6A63A]">
+                Through Your Giving
               </span>
+
             </h1>
 
-            <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-teal-50 sm:text-base">
-              Support education, healthcare,
-              community development and social
-              welfare initiatives through Anand
-              Jivan Foundation Trust.
+            <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-white/55 sm:text-base">
+              Your contribution can support
+              education, healthcare, women
+              empowerment and community-focused
+              initiatives of Anand Jivan Foundation
+              Trust.
             </p>
-
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white backdrop-blur">
-                <ShieldCheck size={16} />
-                Secure Payment
-              </div>
-
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white backdrop-blur">
-                <BadgeCheck size={16} />
-                Transparent Process
-              </div>
-
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white backdrop-blur">
-                <CreditCard size={16} />
-                Razorpay Protected
-              </div>
-
-            </div>
 
           </div>
 
@@ -939,597 +1138,803 @@ export default function DonatePage() {
       </section>
 
       {/* ===================================================
-         MAIN CONTENT
+          STEPS
       =================================================== */}
 
-      <section className="relative mx-auto -mt-5 max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
+      <section className="relative mx-auto -mt-6 max-w-5xl px-4">
 
-        <div className="grid gap-6 lg:grid-cols-[1.65fr_0.85fr]">
+        <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-900/5 sm:p-5">
 
-          {/* ===============================================
-             DONATION FORM
-          =============================================== */}
+          <div className="grid grid-cols-3">
 
-          <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-900/5">
+            {steps.map(
+              (item, index) => {
+                const active =
+                  step === item.number;
 
-            {/* HEADER */}
+                const completed =
+                  step > item.number;
 
-            <div className="border-b border-slate-100 bg-gradient-to-r from-white to-teal-50 px-5 py-5 sm:px-7">
-
-              <div className="flex items-start gap-4">
-
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-teal-700 text-white shadow-lg shadow-teal-700/20">
-                  <Heart size={23} />
-                </div>
-
-                <div>
-
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-teal-700">
-                    Donation Form
-                  </p>
-
-                  <h2 className="mt-1 text-xl font-black text-slate-900 sm:text-2xl">
-                    Make Your Contribution
-                  </h2>
-
-                  <p className="mt-1 text-sm text-slate-500">
-                    Complete the details below to
-                    proceed with secure payment.
-                  </p>
-
-                </div>
-
-              </div>
-
-            </div>
-
-            <form
-              onSubmit={handleSubmit}
-              className="space-y-8 p-5 sm:p-7"
-            >
-
-              {/* ===========================================
-                 DONATION TYPE
-              =========================================== */}
-
-              <section>
-
-                <div className="mb-4 flex items-center gap-2">
-
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-teal-50 text-teal-700">
-                    <Repeat2 size={16} />
-                  </div>
-
-                  <div>
-
-                    <h3 className="text-sm font-black text-slate-900">
-                      Donation Frequency
-                    </h3>
-
-                    <p className="text-xs text-slate-500">
-                      Choose how you would like to contribute.
-                    </p>
-
-                  </div>
-
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-2">
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setDonationType(
-                        "one-time"
-                      )
-                    }
-                    className={`rounded-2xl border p-4 text-left transition ${
-                      donationType ===
-                      "one-time"
-                        ? "border-teal-600 bg-teal-50 ring-4 ring-teal-600/10"
-                        : "border-slate-200 bg-white hover:border-teal-300"
-                    }`}
+                return (
+                  <div
+                    key={item.number}
+                    className="relative flex items-center justify-center"
                   >
 
-                    <div className="flex items-center justify-between">
-
-                      <WalletCards
-                        size={21}
-                        className={
-                          donationType ===
-                          "one-time"
-                            ? "text-teal-700"
-                            : "text-slate-400"
-                        }
+                    {index < steps.length - 1 && (
+                      <div
+                        className={`absolute left-1/2 top-5 hidden h-px w-full sm:block ${
+                          completed
+                            ? "bg-teal-600"
+                            : "bg-slate-200"
+                        }`}
                       />
+                    )}
 
-                      {donationType ===
-                        "one-time" && (
-                        <CheckCircle2
-                          size={19}
-                          className="text-teal-600"
-                        />
-                      )}
+                    <div className="relative z-10 flex flex-col items-center text-center">
 
-                    </div>
+                      <div
+                        className={`flex h-10 w-10 items-center justify-center rounded-full border-2 text-xs font-black transition ${
+                          completed
+                            ? "border-teal-600 bg-teal-600 text-white"
+                            : active
+                            ? "border-[#D6A63A] bg-[#D6A63A] text-white"
+                            : "border-slate-200 bg-white text-slate-400"
+                        }`}
+                      >
 
-                    <p className="mt-4 text-sm font-black text-slate-900">
-                      One-time Donation
-                    </p>
+                        {completed ? (
+                          <Check size={17} />
+                        ) : (
+                          item.number
+                        )}
 
-                    <p className="mt-1 text-xs leading-5 text-slate-500">
-                      Make a single contribution
-                      whenever you choose.
-                    </p>
-
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setDonationType(
-                        "monthly"
-                      )
-                    }
-                    className={`rounded-2xl border p-4 text-left transition ${
-                      donationType ===
-                      "monthly"
-                        ? "border-teal-600 bg-teal-50 ring-4 ring-teal-600/10"
-                        : "border-slate-200 bg-white hover:border-teal-300"
-                    }`}
-                  >
-
-                    <div className="flex items-center justify-between">
-
-                      <Repeat2
-                        size={21}
-                        className={
-                          donationType ===
-                          "monthly"
-                            ? "text-teal-700"
-                            : "text-slate-400"
-                        }
-                      />
-
-                      {donationType ===
-                        "monthly" && (
-                        <CheckCircle2
-                          size={19}
-                          className="text-teal-600"
-                        />
-                      )}
-
-                    </div>
-
-                    <p className="mt-4 text-sm font-black text-slate-900">
-                      Monthly Support
-                    </p>
-
-                    <p className="mt-1 text-xs leading-5 text-slate-500">
-                      Support regularly every
-                      month.
-                    </p>
-
-                  </button>
-
-                </div>
-
-              </section>
-
-              {/* ===========================================
-                 DONATION MODE
-              =========================================== */}
-
-              <section>
-
-                <div className="mb-4 flex items-center gap-2">
-
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
-                    <Globe2 size={16} />
-                  </div>
-
-                  <div>
-
-                    <h3 className="text-sm font-black text-slate-900">
-                      Donor Type
-                    </h3>
-
-                    <p className="text-xs text-slate-500">
-                      Select your donation category.
-                    </p>
-
-                  </div>
-
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-2">
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setDonationMode(
-                        "indian"
-                      )
-                    }
-                    className={`rounded-2xl border px-4 py-4 text-left transition ${
-                      donationMode ===
-                      "indian"
-                        ? "border-emerald-600 bg-emerald-50 ring-4 ring-emerald-600/10"
-                        : "border-slate-200 hover:border-emerald-300"
-                    }`}
-                  >
-
-                    <div className="flex items-center gap-3">
-
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-emerald-700 shadow-sm">
-                        <IndianRupee size={20} />
                       </div>
 
-                      <div>
+                      <p
+                        className={`mt-2 text-[10px] font-black ${
+                          active ||
+                          completed
+                            ? "text-slate-900"
+                            : "text-slate-400"
+                        }`}
+                      >
+                        {item.title}
+                      </p>
 
-                        <p className="text-sm font-black text-slate-900">
+                      <p className="mt-0.5 hidden text-[8px] text-slate-400 sm:block">
+                        {item.description}
+                      </p>
+
+                    </div>
+
+                  </div>
+                );
+              }
+            )}
+
+          </div>
+
+        </div>
+
+      </section>
+
+      {/* ===================================================
+          CONTENT
+      =================================================== */}
+
+      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 md:py-10 lg:px-8">
+
+        <div className="grid gap-6 lg:grid-cols-[1.6fr_0.75fr]">
+
+          {/* =================================================
+              MAIN CARD
+          ================================================= */}
+
+          <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-xl shadow-slate-900/5">
+
+            <form
+              onSubmit={
+                step === 3
+                  ? handlePayment
+                  : (event) => {
+                      event.preventDefault();
+                      nextStep();
+                    }
+              }
+            >
+
+              {/* =================================================
+                  STEP 1
+              ================================================= */}
+
+              {step === 1 && (
+                <div className="p-5 sm:p-8">
+
+                  <div className="mb-8">
+
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-50 text-teal-700">
+                      <Heart size={23} />
+                    </div>
+
+                    <p className="mt-5 text-[9px] font-black uppercase tracking-[0.25em] text-teal-700">
+                      Step 01
+                    </p>
+
+                    <h2 className="mt-2 text-2xl font-black text-slate-900 sm:text-3xl">
+                      Choose Your Donation
+                    </h2>
+
+                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                      Select your donor category,
+                      frequency and contribution amount.
+                    </p>
+
+                  </div>
+
+                  {/* DONOR TYPE */}
+
+                  <div>
+
+                    <label className="text-xs font-black uppercase tracking-[0.12em] text-slate-600">
+                      I am a
+                    </label>
+
+                    <div className="mt-3 grid gap-3 sm:grid-cols-3">
+
+                      {/* INDIAN */}
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDonorType(
+                            "indian"
+                          );
+                          setError("");
+                        }}
+                        className={`rounded-2xl border p-4 text-left transition ${
+                          donorType ===
+                          "indian"
+                            ? "border-teal-600 bg-teal-50 ring-4 ring-teal-600/10"
+                            : "border-slate-200 bg-white hover:border-teal-300"
+                        }`}
+                      >
+
+                        <div className="flex items-center justify-between">
+
+                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50 text-orange-600">
+                            <IndianRupee size={19} />
+                          </div>
+
+                          {donorType ===
+                            "indian" && (
+                            <CheckCircle2
+                              size={18}
+                              className="text-teal-600"
+                            />
+                          )}
+
+                        </div>
+
+                        <p className="mt-4 text-sm font-black text-slate-900">
                           Indian Donor
                         </p>
 
-                        <p className="text-xs text-slate-500">
-                          Domestic donation
+                        <p className="mt-1 text-xs leading-5 text-slate-500">
+                          Donation from India
                         </p>
 
-                      </div>
+                      </button>
 
-                    </div>
+                      {/* NRI */}
 
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setDonationMode(
-                        "nri"
-                      )
-                    }
-                    className={`rounded-2xl border px-4 py-4 text-left transition ${
-                      donationMode ===
-                      "nri"
-                        ? "border-emerald-600 bg-emerald-50 ring-4 ring-emerald-600/10"
-                        : "border-slate-200 hover:border-emerald-300"
-                    }`}
-                  >
-
-                    <div className="flex items-center gap-3">
-
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-emerald-700 shadow-sm">
-                        <Globe2 size={20} />
-                      </div>
-
-                      <div>
-
-                        <p className="text-sm font-black text-slate-900">
-                          NRI / International
-                        </p>
-
-                        <p className="text-xs text-slate-500">
-                          Overseas contribution
-                        </p>
-
-                      </div>
-
-                    </div>
-
-                  </button>
-
-                </div>
-
-              </section>
-
-              {/* ===========================================
-                 AMOUNT
-              =========================================== */}
-
-              <section>
-
-                <div className="mb-4 flex items-center gap-2">
-
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
-                    <IndianRupee size={16} />
-                  </div>
-
-                  <div>
-
-                    <h3 className="text-sm font-black text-slate-900">
-                      Select Donation Amount
-                    </h3>
-
-                    <p className="text-xs text-slate-500">
-                      Every contribution makes an
-                      impact.
-                    </p>
-
-                  </div>
-
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-
-                  {donationAmounts.map(
-                    (value) => (
                       <button
-                        key={value}
                         type="button"
-                        onClick={() =>
-                          selectAmount(
-                            value
-                          )
-                        }
-                        className={`rounded-xl border px-3 py-3 text-sm font-black transition ${
-                          Number(amount) ===
-                            value &&
-                          !customAmount
-                            ? "border-teal-600 bg-teal-600 text-white shadow-lg shadow-teal-600/20"
-                            : "border-slate-200 bg-white text-slate-700 hover:border-teal-400 hover:bg-teal-50"
+                        onClick={() => {
+                          setDonorType(
+                            "nri"
+                          );
+                          setError("");
+                        }}
+                        className={`rounded-2xl border p-4 text-left transition ${
+                          donorType ===
+                          "nri"
+                            ? "border-teal-600 bg-teal-50 ring-4 ring-teal-600/10"
+                            : "border-slate-200 bg-white hover:border-teal-300"
                         }`}
                       >
-                        ₹
-                        {value.toLocaleString(
-                          "en-IN"
-                        )}
+
+                        <div className="flex items-center justify-between">
+
+                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                            <Globe2 size={19} />
+                          </div>
+
+                          {donorType ===
+                            "nri" && (
+                            <CheckCircle2
+                              size={18}
+                              className="text-teal-600"
+                            />
+                          )}
+
+                        </div>
+
+                        <p className="mt-4 text-sm font-black text-slate-900">
+                          NRI Donor
+                        </p>
+
+                        <p className="mt-1 text-xs leading-5 text-slate-500">
+                          Overseas Indian donor
+                        </p>
+
                       </button>
-                    )
+
+                      {/* FOREIGN */}
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDonorType(
+                            "foreign"
+                          );
+                          setError("");
+                        }}
+                        className={`rounded-2xl border p-4 text-left transition ${
+                          donorType ===
+                          "foreign"
+                            ? "border-amber-500 bg-amber-50 ring-4 ring-amber-500/10"
+                            : "border-slate-200 bg-white hover:border-amber-300"
+                        }`}
+                      >
+
+                        <div className="flex items-center justify-between">
+
+                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
+                            <Globe2 size={19} />
+                          </div>
+
+                          {donorType ===
+                            "foreign" && (
+                            <CheckCircle2
+                              size={18}
+                              className="text-amber-600"
+                            />
+                          )}
+
+                        </div>
+
+                        <p className="mt-4 text-sm font-black text-slate-900">
+                          Foreign Donor
+                        </p>
+
+                        <p className="mt-1 text-xs leading-5 text-slate-500">
+                          International donor
+                        </p>
+
+                      </button>
+
+                    </div>
+
+                  </div>
+
+                  {/* FREQUENCY */}
+
+                  <div className="mt-8">
+
+                    <label className="text-xs font-black uppercase tracking-[0.12em] text-slate-600">
+                      Giving frequency
+                    </label>
+
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFrequency(
+                            "one-time"
+                          );
+                          setError("");
+                        }}
+                        className={`flex items-center gap-4 rounded-2xl border p-4 text-left transition ${
+                          frequency ===
+                          "one-time"
+                            ? "border-teal-600 bg-teal-50 ring-4 ring-teal-600/10"
+                            : "border-slate-200 hover:border-teal-300"
+                        }`}
+                      >
+
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-teal-700 shadow-sm">
+                          <CreditCard size={20} />
+                        </div>
+
+                        <div className="flex-1">
+
+                          <p className="text-sm font-black text-slate-900">
+                            Give Once
+                          </p>
+
+                          <p className="mt-1 text-xs text-slate-500">
+                            Make a one-time contribution
+                          </p>
+
+                        </div>
+
+                        {frequency ===
+                          "one-time" && (
+                          <CheckCircle2
+                            size={19}
+                            className="text-teal-600"
+                          />
+                        )}
+
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFrequency(
+                            "monthly"
+                          );
+                          setError("");
+                        }}
+                        className={`flex items-center gap-4 rounded-2xl border p-4 text-left transition ${
+                          frequency ===
+                          "monthly"
+                            ? "border-teal-600 bg-teal-50 ring-4 ring-teal-600/10"
+                            : "border-slate-200 hover:border-teal-300"
+                        }`}
+                      >
+
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-teal-700 shadow-sm">
+                          <Repeat2 size={20} />
+                        </div>
+
+                        <div className="flex-1">
+
+                          <p className="text-sm font-black text-slate-900">
+                            Give Monthly
+                          </p>
+
+                          <p className="mt-1 text-xs text-slate-500">
+                            Build long-term support
+                          </p>
+
+                        </div>
+
+                        {frequency ===
+                          "monthly" && (
+                          <CheckCircle2
+                            size={19}
+                            className="text-teal-600"
+                          />
+                        )}
+
+                      </button>
+
+                    </div>
+
+                  </div>
+
+                  {/* AMOUNT */}
+
+                  <div className="mt-8">
+
+                    <div className="flex items-center justify-between">
+
+                      <label className="text-xs font-black uppercase tracking-[0.12em] text-slate-600">
+                        Donation amount
+                      </label>
+
+                      <span className="text-[10px] font-bold text-slate-400">
+                        Minimum ₹100
+                      </span>
+
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+
+                      {amounts.map(
+                        (item) => {
+                          const active =
+                            selectedAmount ===
+                              item.value &&
+                            !customAmount;
+
+                          return (
+                            <button
+                              key={
+                                item.value
+                              }
+                              type="button"
+                              onClick={() =>
+                                handleAmount(
+                                  item.value
+                                )
+                              }
+                              className={`group rounded-2xl border p-4 text-left transition ${
+                                active
+                                  ? "border-teal-600 bg-teal-700 text-white shadow-lg shadow-teal-700/20"
+                                  : "border-slate-200 bg-white hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50"
+                              }`}
+                            >
+
+                              <div className="flex items-center justify-between">
+
+                                <span className={`text-lg font-black ${
+                                  active
+                                    ? "text-white"
+                                    : "text-slate-900"
+                                }`}>
+                                  {item.title}
+                                </span>
+
+                                {active && (
+                                  <Check
+                                    size={17}
+                                  />
+                                )}
+
+                              </div>
+
+                              <p
+                                className={`mt-1 text-[9px] leading-4 ${
+                                  active
+                                    ? "text-white/65"
+                                    : "text-slate-400"
+                                }`}
+                              >
+                                {
+                                  item.description
+                                }
+                              </p>
+
+                            </button>
+                          );
+                        }
+                      )}
+
+                    </div>
+
+                    <div className="relative mt-4">
+
+                      <IndianRupee
+                        size={17}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                      />
+
+                      <input
+                        type="number"
+                        min="100"
+                        value={
+                          customAmount
+                        }
+                        onChange={(
+                          event
+                        ) => {
+                          setCustomAmount(
+                            event.target.value
+                          );
+                          setSelectedAmount(
+                            null
+                          );
+                          setError("");
+                        }}
+                        placeholder="Enter your own amount"
+                        className="h-13 w-full rounded-2xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm font-bold text-slate-900 outline-none transition focus:border-teal-500 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
+                      />
+
+                    </div>
+
+                  </div>
+
+                  {/* FOREIGN NOTICE */}
+
+                  {isForeign && (
+                    <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+
+                      <div className="flex gap-3">
+
+                        <AlertCircle
+                          size={19}
+                          className="mt-0.5 shrink-0 text-amber-600"
+                        />
+
+                        <div>
+
+                          <p className="text-sm font-black text-amber-900">
+                            International donation
+                            assistance
+                          </p>
+
+                          <p className="mt-1 text-xs leading-5 text-amber-800">
+                            Foreign currency donation
+                            processing is not enabled in
+                            the current Razorpay flow.
+                            International donors should
+                            contact AJFT for the available
+                            compliant donation route.
+                          </p>
+
+                        </div>
+
+                      </div>
+
+                    </div>
                   )}
 
-                </div>
+                  {/* NEXT */}
 
-                <div className="relative mt-4">
+                  <div className="mt-8 flex justify-end">
 
-                  <IndianRupee
-                    size={18}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-                  />
+                    <button
+                      type="submit"
+                      className="group inline-flex h-13 items-center justify-center gap-2 rounded-2xl bg-teal-700 px-7 text-xs font-black text-white shadow-lg shadow-teal-700/20 transition hover:-translate-y-0.5 hover:bg-teal-800"
+                    >
 
-                  <input
-                    type="number"
-                    min="100"
-                    value={customAmount}
-                    onChange={(event) => {
-                      setCustomAmount(
-                        event.target.value
-                      );
+                      Continue
 
-                      setAmount("");
-                    }}
-                    placeholder="Enter custom amount"
-                    className="h-13 w-full rounded-2xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm font-bold text-slate-900 outline-none transition focus:border-teal-500 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
-                  />
+                      <ArrowRight
+                        size={17}
+                        className="transition group-hover:translate-x-1"
+                      />
 
-                </div>
-
-                {selectedAmount > 0 && (
-                  <div className="mt-4 flex items-center justify-between rounded-2xl bg-teal-950 px-4 py-3 text-white">
-
-                    <span className="text-xs font-semibold text-teal-100">
-                      Your Contribution
-                    </span>
-
-                    <span className="text-lg font-black">
-                      {formatAmount(
-                        selectedAmount,
-                        currency
-                      )}
-                    </span>
+                    </button>
 
                   </div>
-                )}
 
-              </section>
+                </div>
+              )}
 
-              {/* ===========================================
-                 DONOR INFORMATION
-              =========================================== */}
+              {/* =================================================
+                  STEP 2
+              ================================================== */}
 
-              <section>
+              {step === 2 && (
+                <div className="p-5 sm:p-8">
 
-                <div className="mb-4 flex items-center gap-2">
+                  <div className="mb-8">
 
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
-                    <UserRound size={16} />
-                  </div>
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+                      <UserRound size={22} />
+                    </div>
 
-                  <div>
+                    <p className="mt-5 text-[9px] font-black uppercase tracking-[0.25em] text-teal-700">
+                      Step 02
+                    </p>
 
-                    <h3 className="text-sm font-black text-slate-900">
+                    <h2 className="mt-2 text-2xl font-black text-slate-900 sm:text-3xl">
                       Your Information
-                    </h3>
+                    </h2>
 
-                    <p className="text-xs text-slate-500">
-                      Details are used for donation
-                      records and communication.
+                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                      Please provide your details for
+                      donation records and communication.
                     </p>
 
                   </div>
 
-                </div>
+                  <div className="grid gap-5 sm:grid-cols-2">
 
-                <div className="grid gap-4 sm:grid-cols-2">
+                    {/* NAME */}
 
-                  <div className="sm:col-span-2">
+                    <div className="sm:col-span-2">
 
-                    <label className="mb-2 block text-xs font-bold text-slate-600">
-                      Full Name
-                      <span className="ml-1 text-red-500">
-                        *
-                      </span>
-                    </label>
+                      <label className="mb-2 block text-xs font-bold text-slate-600">
+                        Full Name
+                        <span className="ml-1 text-red-500">
+                          *
+                        </span>
+                      </label>
 
-                    <div className="relative">
+                      <div className="relative">
 
-                      <UserRound
-                        size={18}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-                      />
+                        <UserRound
+                          size={17}
+                          className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                        />
 
-                      <input
-                        required
-                        value={donorName}
-                        onChange={(event) =>
-                          setDonorName(
-                            event.target.value
-                          )
-                        }
-                        placeholder="Enter your full name"
-                        className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm outline-none transition focus:border-teal-500 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
-                      />
-
-                    </div>
-
-                  </div>
-
-                  <div>
-
-                    <label className="mb-2 block text-xs font-bold text-slate-600">
-                      Mobile Number
-                      <span className="ml-1 text-red-500">
-                        *
-                      </span>
-                    </label>
-
-                    <div className="relative">
-
-                      <Phone
-                        size={18}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-                      />
-
-                      <input
-                        required
-                        inputMode="numeric"
-                        maxLength={10}
-                        value={mobile}
-                        onChange={(event) =>
-                          setMobile(
-                            event.target.value.replace(
-                              /\D/g,
-                              ""
+                        <input
+                          required
+                          value={
+                            donorName
+                          }
+                          onChange={(
+                            event
+                          ) =>
+                            setDonorName(
+                              event.target.value
                             )
-                          )
-                        }
-                        placeholder="9876543210"
-                        className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm outline-none transition focus:border-teal-500 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
-                      />
+                          }
+                          placeholder="Enter your full name"
+                          className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm outline-none transition focus:border-teal-500 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
+                        />
+
+                      </div>
 
                     </div>
 
-                  </div>
+                    {/* MOBILE */}
 
-                  <div>
+                    <div>
 
-                    <label className="mb-2 block text-xs font-bold text-slate-600">
-                      Email Address
-                      <span className="ml-1 text-red-500">
-                        *
-                      </span>
-                    </label>
+                      <label className="mb-2 block text-xs font-bold text-slate-600">
+                        Mobile Number
+                        <span className="ml-1 text-red-500">
+                          *
+                        </span>
+                      </label>
 
-                    <div className="relative">
+                      <div className="relative">
 
-                      <Mail
-                        size={18}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-                      />
+                        <Phone
+                          size={17}
+                          className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                        />
+
+                        <input
+                          required
+                          inputMode="numeric"
+                          maxLength={10}
+                          value={
+                            mobile
+                          }
+                          onChange={(
+                            event
+                          ) =>
+                            setMobile(
+                              event.target.value.replace(
+                                /\D/g,
+                                ""
+                              )
+                            )
+                          }
+                          placeholder="9876543210"
+                          className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm outline-none transition focus:border-teal-500 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
+                        />
+
+                      </div>
+
+                    </div>
+
+                    {/* EMAIL */}
+
+                    <div>
+
+                      <label className="mb-2 block text-xs font-bold text-slate-600">
+                        Email Address
+                        <span className="ml-1 text-red-500">
+                          *
+                        </span>
+                      </label>
+
+                      <div className="relative">
+
+                        <Mail
+                          size={17}
+                          className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                        />
+
+                        <input
+                          required
+                          type="email"
+                          value={
+                            email
+                          }
+                          onChange={(
+                            event
+                          ) =>
+                            setEmail(
+                              event.target.value
+                            )
+                          }
+                          placeholder="you@example.com"
+                          className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm outline-none transition focus:border-teal-500 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
+                        />
+
+                      </div>
+
+                    </div>
+
+                    {/* ADDRESS */}
+
+                    <div className="sm:col-span-2">
+
+                      <label className="mb-2 block text-xs font-bold text-slate-600">
+                        Complete Address
+                        <span className="ml-1 text-red-500">
+                          *
+                        </span>
+                      </label>
+
+                      <div className="relative">
+
+                        <MapPin
+                          size={17}
+                          className="absolute left-4 top-4 text-slate-400"
+                        />
+
+                        <textarea
+                          required
+                          rows={3}
+                          value={
+                            address
+                          }
+                          onChange={(
+                            event
+                          ) =>
+                            setAddress(
+                              event.target.value
+                            )
+                          }
+                          placeholder="House / Street / Area"
+                          className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm outline-none transition focus:border-teal-500 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
+                        />
+
+                      </div>
+
+                    </div>
+
+                    {/* CITY */}
+
+                    <div>
+
+                      <label className="mb-2 block text-xs font-bold text-slate-600">
+                        City
+                        <span className="ml-1 text-red-500">
+                          *
+                        </span>
+                      </label>
 
                       <input
                         required
-                        type="email"
-                        value={email}
-                        onChange={(event) =>
-                          setEmail(
+                        value={
+                          city
+                        }
+                        onChange={(
+                          event
+                        ) =>
+                          setCity(
                             event.target.value
                           )
                         }
-                        placeholder="you@example.com"
-                        className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm outline-none transition focus:border-teal-500 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
+                        placeholder="Enter city"
+                        className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition focus:border-teal-500 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
                       />
 
                     </div>
 
-                  </div>
+                    {/* STATE */}
 
-                  <div className="sm:col-span-2">
+                    <div>
 
-                    <label className="mb-2 block text-xs font-bold text-slate-600">
-                      Complete Address
-                      <span className="ml-1 text-red-500">
-                        *
-                      </span>
-                    </label>
-
-                    <div className="relative">
-
-                      <MapPin
-                        size={18}
-                        className="absolute left-4 top-4 text-slate-400"
-                      />
-
-                      <textarea
-                        required
-                        rows={3}
-                        value={address}
-                        onChange={(event) =>
-                          setAddress(
-                            event.target.value
-                          )
-                        }
-                        placeholder="Enter your complete address"
-                        className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm outline-none transition focus:border-teal-500 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
-                      />
-
-                    </div>
-
-                  </div>
-
-                </div>
-
-              </section>
-
-              {/* ===========================================
-                 NRI
-              =========================================== */}
-
-              {isNRI && (
-                <section className="rounded-2xl border border-blue-100 bg-blue-50/70 p-5">
-
-                  <div className="flex items-start gap-3">
-
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white">
-                      <Globe2 size={19} />
-                    </div>
-
-                    <div className="flex-1">
-
-                      <h3 className="text-sm font-black text-blue-950">
-                        International Donor Details
-                      </h3>
-
-                      <p className="mt-1 text-xs leading-5 text-blue-700">
-                        Please select your current
-                        country of residence.
-                      </p>
+                      <label className="mb-2 block text-xs font-bold text-slate-600">
+                        State
+                        <span className="ml-1 text-red-500">
+                          *
+                        </span>
+                      </label>
 
                       <select
-                        required={isNRI}
-                        value={country}
-                        onChange={(event) =>
-                          setCountry(
+                        required
+                        value={
+                          state
+                        }
+                        onChange={(
+                          event
+                        ) =>
+                          setState(
                             event.target.value
                           )
                         }
-                        className="mt-4 h-12 w-full rounded-xl border border-blue-200 bg-white px-4 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                        className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition focus:border-teal-500 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
                       >
 
                         <option value="">
-                          Select Country
+                          Select State
                         </option>
 
-                        {countries.map(
+                        {indianStates.map(
                           (item) => (
                             <option
                               key={item}
@@ -1544,241 +1949,685 @@ export default function DonatePage() {
 
                     </div>
 
-                  </div>
+                    {/* PIN */}
 
-                </section>
-              )}
+                    <div>
 
-              {/* ===========================================
-                 80G
-              =========================================== */}
+                      <label className="mb-2 block text-xs font-bold text-slate-600">
+                        PIN Code
+                        <span className="ml-1 text-red-500">
+                          *
+                        </span>
+                      </label>
 
-              {!isNRI && (
-                <section className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-5">
+                      <input
+                        required
+                        inputMode="numeric"
+                        maxLength={6}
+                        value={
+                          pinCode
+                        }
+                        onChange={(
+                          event
+                        ) =>
+                          setPinCode(
+                            event.target.value.replace(
+                              /\D/g,
+                              ""
+                            )
+                          )
+                        }
+                        placeholder="846005"
+                        className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition focus:border-teal-500 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
+                      />
 
-                  <div className="flex items-start gap-3">
-
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white">
-                      <BadgeCheck size={19} />
                     </div>
 
-                    <div className="flex-1">
+                    {/* COUNTRY */}
 
-                      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                    <div>
 
-                        <div>
+                      <label className="mb-2 block text-xs font-bold text-slate-600">
+                        Country
+                        {(isNri ||
+                          isForeign) && (
+                          <span className="ml-1 text-red-500">
+                            *
+                          </span>
+                        )}
+                      </label>
 
-                          <h3 className="text-sm font-black text-emerald-950">
-                            80G Tax Benefit
-                          </h3>
-
-                          <p className="mt-1 text-xs leading-5 text-emerald-700">
-                            Enable this option if you
-                            require your donation details
-                            for applicable tax benefits.
-                          </p>
-
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setRequires80G(
-                              !requires80G
+                      {donorType ===
+                      "indian" ? (
+                        <input
+                          value="India"
+                          readOnly
+                          className="h-12 w-full rounded-xl border border-slate-200 bg-slate-100 px-4 text-sm font-semibold text-slate-600 outline-none"
+                        />
+                      ) : (
+                        <select
+                          required
+                          value={
+                            country
+                          }
+                          onChange={(
+                            event
+                          ) =>
+                            setCountry(
+                              event.target.value
                             )
                           }
-                          className={`relative h-7 w-12 rounded-full transition ${
-                            requires80G
-                              ? "bg-emerald-600"
-                              : "bg-slate-300"
-                          }`}
+                          className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition focus:border-teal-500 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
                         >
-                          <span
-                            className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition ${
-                              requires80G
-                                ? "left-6"
-                                : "left-1"
-                            }`}
-                          />
-                        </button>
 
-                      </div>
+                          <option value="">
+                            Select Country
+                          </option>
 
-                      {requires80G && (
-                        <div className="mt-4">
+                          {countries.map(
+                            (item) => (
+                              <option
+                                key={item}
+                                value={item}
+                              >
+                                {item}
+                              </option>
+                            )
+                          )}
 
-                          <label className="mb-2 block text-xs font-bold text-emerald-800">
-                            PAN Number
-                          </label>
-
-                          <input
-                            value={pan}
-                            maxLength={10}
-                            onChange={(event) =>
-                              setPan(
-                                event.target.value
-                                  .toUpperCase()
-                                  .replace(
-                                    /[^A-Z0-9]/g,
-                                    ""
-                                  )
-                              )
-                            }
-                            placeholder="ABCDE1234F"
-                            className="h-12 w-full rounded-xl border border-emerald-200 bg-white px-4 text-sm font-semibold uppercase outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10"
-                          />
-
-                        </div>
+                        </select>
                       )}
 
                     </div>
 
                   </div>
 
-                </section>
+                  {/* 80G */}
+
+                  {donorType ===
+                    "indian" && (
+                    <div className="mt-7 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-5">
+
+                      <div className="flex items-start gap-4">
+
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white">
+                          <BadgeCheck
+                            size={19}
+                          />
+                        </div>
+
+                        <div className="flex-1">
+
+                          <div className="flex items-start justify-between gap-4">
+
+                            <div>
+
+                              <h3 className="text-sm font-black text-emerald-950">
+                                80G Tax Benefit
+                              </h3>
+
+                              <p className="mt-1 text-xs leading-5 text-emerald-700">
+                                Select this if you require
+                                applicable 80G documentation.
+                              </p>
+
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setRequires80G(
+                                  !requires80G
+                                )
+                              }
+                              className={`relative h-7 w-12 shrink-0 rounded-full transition ${
+                                requires80G
+                                  ? "bg-emerald-600"
+                                  : "bg-slate-300"
+                              }`}
+                              aria-label="Toggle 80G"
+                            >
+
+                              <span
+                                className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition ${
+                                  requires80G
+                                    ? "left-6"
+                                    : "left-1"
+                                }`}
+                              />
+
+                            </button>
+
+                          </div>
+
+                          {requires80G && (
+                            <div className="mt-4">
+
+                              <label className="mb-2 block text-xs font-bold text-emerald-800">
+                                PAN Number
+                              </label>
+
+                              <input
+                                value={
+                                  pan
+                                }
+                                maxLength={
+                                  10
+                                }
+                                onChange={(
+                                  event
+                                ) =>
+                                  setPan(
+                                    event.target.value
+                                      .toUpperCase()
+                                      .replace(
+                                        /[^A-Z0-9]/g,
+                                        ""
+                                      )
+                                  )
+                                }
+                                placeholder="ABCDE1234F"
+                                className="h-12 w-full rounded-xl border border-emerald-200 bg-white px-4 text-sm font-bold uppercase text-slate-900 outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10"
+                              />
+
+                            </div>
+                          )}
+
+                        </div>
+
+                      </div>
+
+                    </div>
+                  )}
+
+                  {/* CONFIRM */}
+
+                  <label className="mt-6 flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+
+                    <input
+                      type="checkbox"
+                      checked={
+                        agree
+                      }
+                      onChange={(
+                        event
+                      ) =>
+                        setAgree(
+                          event.target.checked
+                        )
+                      }
+                      className="mt-0.5 h-4 w-4 accent-teal-700"
+                    />
+
+                    <span className="text-xs leading-5 text-slate-600">
+                      I confirm that the information
+                      provided by me is accurate and
+                      I agree to proceed with the
+                      donation.
+                    </span>
+
+                  </label>
+
+                  {/* BUTTONS */}
+
+                  <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
+
+                    <button
+                      type="button"
+                      onClick={
+                        previousStep
+                      }
+                      className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-6 text-xs font-black text-slate-700 transition hover:bg-slate-50"
+                    >
+
+                      <ArrowLeft
+                        size={16}
+                      />
+
+                      Back
+
+                    </button>
+
+                    <button
+                      type="submit"
+                      className="group inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-teal-700 px-7 text-xs font-black text-white shadow-lg shadow-teal-700/20 transition hover:bg-teal-800"
+                    >
+
+                      Review Donation
+
+                      <ArrowRight
+                        size={16}
+                        className="transition group-hover:translate-x-1"
+                      />
+
+                    </button>
+
+                  </div>
+
+                </div>
               )}
 
-              {/* ===========================================
-                 ALERTS
-              =========================================== */}
+              {/* =================================================
+                  STEP 3
+              ================================================== */}
 
-              {error && (
-                <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-4">
+              {step === 3 && (
+                <div className="p-5 sm:p-8">
+
+                  <div className="mb-8">
+
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-700">
+                      <ShieldCheck
+                        size={22}
+                      />
+                    </div>
+
+                    <p className="mt-5 text-[9px] font-black uppercase tracking-[0.25em] text-teal-700">
+                      Step 03
+                    </p>
+
+                    <h2 className="mt-2 text-2xl font-black text-slate-900 sm:text-3xl">
+                      Review Your Donation
+                    </h2>
+
+                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                      Please check your details before
+                      proceeding to secure payment.
+                    </p>
+
+                  </div>
+
+                  {/* SUMMARY */}
+
+                  <div className="overflow-hidden rounded-3xl border border-slate-200">
+
+                    <div className="bg-[#102A43] p-6 text-white">
+
+                      <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[#D9B65A]">
+                        Donation Summary
+                      </p>
+
+                      <div className="mt-4 flex items-end justify-between gap-4">
+
+                        <div>
+
+                          <p className="text-xs text-white/50">
+                            Your contribution
+                          </p>
+
+                          <p className="mt-1 text-3xl font-black">
+                            {formatAmount(
+                              amount
+                            )}
+                          </p>
+
+                        </div>
+
+                        <Heart
+                          size={34}
+                          className="text-[#D6A63A]"
+                          fill="currentColor"
+                        />
+
+                      </div>
+
+                    </div>
+
+                    <div className="divide-y divide-slate-100">
+
+                      <div className="grid gap-4 p-5 sm:grid-cols-2">
+
+                        <SummaryItem
+                          label="Donor Type"
+                          value={
+                            donorType ===
+                            "indian"
+                              ? "Indian Donor"
+                              : donorType ===
+                                "nri"
+                              ? "NRI Donor"
+                              : "Foreign Donor"
+                          }
+                        />
+
+                        <SummaryItem
+                          label="Frequency"
+                          value={
+                            frequency ===
+                            "one-time"
+                              ? "Give Once"
+                              : "Give Monthly"
+                          }
+                        />
+
+                        <SummaryItem
+                          label="Name"
+                          value={
+                            donorName
+                          }
+                        />
+
+                        <SummaryItem
+                          label="Mobile"
+                          value={
+                            mobile
+                          }
+                        />
+
+                        <SummaryItem
+                          label="Email"
+                          value={
+                            email
+                          }
+                        />
+
+                        <SummaryItem
+                          label="City"
+                          value={
+                            city
+                          }
+                        />
+
+                        <SummaryItem
+                          label="State"
+                          value={
+                            state
+                          }
+                        />
+
+                        <SummaryItem
+                          label="PIN Code"
+                          value={
+                            pinCode
+                          }
+                        />
+
+                        <SummaryItem
+                          label="Country"
+                          value={
+                            donorType ===
+                            "indian"
+                              ? "India"
+                              : country
+                          }
+                        />
+
+                        <SummaryItem
+                          label="80G"
+                          value={
+                            donorType ===
+                            "indian"
+                              ? requires80G
+                                ? "Required"
+                                : "Not Required"
+                              : "Not Applicable"
+                          }
+                        />
+
+                      </div>
+
+                    </div>
+
+                  </div>
+
+                  {/* TRACKING */}
+
+                  {(tracking.utmSource ||
+                    tracking.utmCampaign ||
+                    tracking.buttonId) && (
+                    <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+
+                      <div className="flex items-center gap-2">
+
+                        <Sparkles
+                          size={15}
+                          className="text-[#D6A63A]"
+                        />
+
+                        <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-500">
+                          Campaign Attribution
+                        </p>
+
+                      </div>
+
+                      <div className="mt-3 flex flex-wrap gap-2">
+
+                        {tracking.utmSource && (
+                          <Tag
+                            label={`Source: ${tracking.utmSource}`}
+                          />
+                        )}
+
+                        {tracking.utmMedium && (
+                          <Tag
+                            label={`Medium: ${tracking.utmMedium}`}
+                          />
+                        )}
+
+                        {tracking.utmCampaign && (
+                          <Tag
+                            label={`Campaign: ${tracking.utmCampaign}`}
+                          />
+                        )}
+
+                        {tracking.buttonId && (
+                          <Tag
+                            label={`Button: ${tracking.buttonId}`}
+                          />
+                        )}
+
+                      </div>
+
+                    </div>
+                  )}
+
+                  {/* SECURITY */}
+
+                  <div className="mt-6 grid gap-3 sm:grid-cols-3">
+
+                    <TrustItem
+                      icon={
+                        <LockKeyhole
+                          size={17}
+                        />
+                      }
+                      title="Secure"
+                      text="Protected checkout"
+                    />
+
+                    <TrustItem
+                      icon={
+                        <ShieldCheck
+                          size={17}
+                        />
+                      }
+                      title="Verified"
+                      text="Payment verification"
+                    />
+
+                    <TrustItem
+                      icon={
+                        <BadgeCheck
+                          size={17}
+                        />
+                      }
+                      title="Receipt"
+                      text="Digital record"
+                    />
+
+                  </div>
+
+                  {/* BUTTONS */}
+
+                  <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
+
+                    <button
+                      type="button"
+                      onClick={
+                        previousStep
+                      }
+                      className="inline-flex h-13 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-6 text-xs font-black text-slate-700 transition hover:bg-slate-50"
+                    >
+
+                      <ArrowLeft
+                        size={16}
+                      />
+
+                      Edit Details
+
+                    </button>
+
+                    <button
+                      type="submit"
+                      className="group inline-flex h-13 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-teal-700 to-emerald-600 px-7 text-xs font-black text-white shadow-xl shadow-teal-700/20 transition hover:-translate-y-0.5 hover:shadow-2xl"
+                    >
+
+                      <CreditCard
+                        size={17}
+                      />
+
+                      Donate{" "}
+                      {formatAmount(
+                        amount
+                      )}
+
+                      <ChevronRight
+                        size={17}
+                        className="transition group-hover:translate-x-1"
+                      />
+
+                    </button>
+
+                  </div>
+
+                </div>
+              )}
+
+            </form>
+
+            {/* ERROR */}
+
+            {error && (
+              <div className="border-t border-red-100 bg-red-50 px-5 py-4 sm:px-8">
+
+                <div className="flex items-start gap-3">
 
                   <AlertCircle
                     size={19}
                     className="mt-0.5 shrink-0 text-red-600"
                   />
 
-                  <p className="text-sm font-semibold text-red-700">
+                  <p className="text-xs font-bold leading-5 text-red-700">
                     {error}
                   </p>
 
                 </div>
-              )}
-
-              {message && (
-                <div className="flex items-start gap-3 rounded-2xl border border-teal-200 bg-teal-50 px-4 py-4">
-
-                  <Loader2
-                    size={19}
-                    className="mt-0.5 shrink-0 animate-spin text-teal-700"
-                  />
-
-                  <p className="text-sm font-semibold text-teal-800">
-                    {message}
-                  </p>
-
-                </div>
-              )}
-
-              {/* ===========================================
-                 SUBMIT
-              =========================================== */}
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="group flex h-14 w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-teal-700 via-teal-600 to-emerald-600 px-6 text-sm font-black text-white shadow-xl shadow-teal-700/20 transition hover:-translate-y-0.5 hover:shadow-2xl disabled:cursor-not-allowed disabled:opacity-60"
-              >
-
-                {loading ? (
-                  <>
-                    <Loader2
-                      size={20}
-                      className="animate-spin"
-                    />
-                    Processing Secure Payment...
-                  </>
-                ) : (
-                  <>
-                    <CreditCard size={20} />
-
-                    Donate{" "}
-
-                    {selectedAmount > 0
-                      ? formatAmount(
-                          selectedAmount,
-                          currency
-                        )
-                      : "Securely"}
-
-                    <ArrowRight
-                      size={19}
-                      className="transition group-hover:translate-x-1"
-                    />
-                  </>
-                )}
-
-              </button>
-
-              <div className="flex items-center justify-center gap-2 text-center text-xs text-slate-500">
-
-                <ShieldCheck
-                  size={15}
-                  className="text-teal-600"
-                />
-
-                Your payment is processed through
-                a secure Razorpay checkout.
 
               </div>
-
-            </form>
+            )}
 
           </div>
 
-          {/* ===============================================
-             RIGHT SIDE
-          =============================================== */}
+          {/* =================================================
+              SIDEBAR
+          ================================================== */}
 
           <aside className="space-y-5">
 
-            {/* IMPACT */}
+            {/* AMOUNT CARD */}
 
-            <div className="overflow-hidden rounded-3xl bg-slate-950 p-6 text-white shadow-xl">
+            <div className="rounded-3xl bg-[#102A43] p-6 text-white shadow-xl">
 
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/20 text-emerald-300">
-                <Heart size={23} />
+              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[#D9B65A]">
+                Your Contribution
+              </p>
+
+              <p className="mt-3 text-4xl font-black">
+                {amount > 0
+                  ? formatAmount(amount)
+                  : "₹0"}
+              </p>
+
+              <p className="mt-2 text-xs leading-5 text-white/45">
+                {frequency ===
+                "monthly"
+                  ? "Monthly support"
+                  : "One-time support"}
+              </p>
+
+              <div className="mt-6 h-px bg-white/10" />
+
+              <div className="mt-5 space-y-3">
+
+                <SideRow
+                  label="Donor"
+                  value={
+                    donorType ===
+                    "indian"
+                      ? "Indian"
+                      : donorType ===
+                        "nri"
+                      ? "NRI"
+                      : "Foreign"
+                  }
+                />
+
+                <SideRow
+                  label="Frequency"
+                  value={
+                    frequency ===
+                    "one-time"
+                      ? "Once"
+                      : "Monthly"
+                  }
+                />
+
+                <SideRow
+                  label="Currency"
+                  value="INR"
+                />
+
               </div>
 
-              <p className="mt-5 text-xs font-black uppercase tracking-[0.18em] text-emerald-300">
-                Your Impact
-              </p>
+            </div>
 
-              <h3 className="mt-2 text-2xl font-black">
-                Small Acts.
-                <br />
-                Meaningful Change.
+            {/* WHY DONATE */}
+
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-teal-50 text-teal-700">
+                <Heart
+                  size={20}
+                  fill="currentColor"
+                />
+              </div>
+
+              <h3 className="mt-5 text-lg font-black text-slate-900">
+                Why Your Support Matters
               </h3>
 
-              <p className="mt-4 text-sm leading-7 text-slate-300">
-                Your support helps strengthen
-                programs focused on education,
-                healthcare, social welfare and
-                community development.
-              </p>
-
-              <div className="mt-6 space-y-3">
+              <div className="mt-5 space-y-4">
 
                 {[
-                  "Education & learning support",
-                  "Healthcare assistance",
+                  "Education and learning",
+                  "Healthcare initiatives",
+                  "Women empowerment",
                   "Community development",
-                  "Social support initiatives",
+                  "Child welfare",
+                  "Emergency relief",
                 ].map(
                   (item) => (
                     <div
                       key={item}
-                      className="flex items-center gap-3 rounded-xl bg-white/5 px-3 py-3"
+                      className="flex items-center gap-3"
                     >
 
                       <CheckCircle2
-                        size={17}
-                        className="shrink-0 text-emerald-400"
+                        size={16}
+                        className="shrink-0 text-teal-600"
                       />
 
-                      <span className="text-xs font-semibold text-slate-200">
+                      <span className="text-xs font-semibold text-slate-600">
                         {item}
                       </span>
 
@@ -1790,159 +2639,60 @@ export default function DonatePage() {
 
             </div>
 
-            {/* SECURE */}
+            {/* SECURITY */}
 
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-3xl border border-teal-100 bg-gradient-to-br from-teal-50 to-white p-6">
 
               <div className="flex items-center gap-3">
 
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-teal-50 text-teal-700">
-                  <ShieldCheck size={21} />
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-teal-700 text-white">
+                  <ShieldCheck
+                    size={20}
+                  />
                 </div>
 
                 <div>
 
                   <h3 className="text-sm font-black text-slate-900">
-                    Safe & Secure Donation
+                    Safe & Secure
                   </h3>
 
-                  <p className="mt-1 text-xs text-slate-500">
-                    Protected payment experience
+                  <p className="mt-1 text-[10px] text-slate-500">
+                    Secure payment experience
                   </p>
 
                 </div>
 
               </div>
 
-              <div className="mt-5 space-y-4">
+              <div className="mt-5 space-y-3">
 
-                <div className="flex gap-3">
+                <SecurityRow
+                  icon={
+                    <LockKeyhole
+                      size={15}
+                    />
+                  }
+                  text="Encrypted payment process"
+                />
 
-                  <CheckCircle2
-                    size={18}
-                    className="mt-0.5 shrink-0 text-emerald-600"
-                  />
+                <SecurityRow
+                  icon={
+                    <CreditCard
+                      size={15}
+                    />
+                  }
+                  text="Secure Razorpay checkout"
+                />
 
-                  <div>
-
-                    <p className="text-xs font-black text-slate-800">
-                      Secure Checkout
-                    </p>
-
-                    <p className="mt-1 text-xs leading-5 text-slate-500">
-                      Payments are initiated
-                      through Razorpay checkout.
-                    </p>
-
-                  </div>
-
-                </div>
-
-                <div className="flex gap-3">
-
-                  <CheckCircle2
-                    size={18}
-                    className="mt-0.5 shrink-0 text-emerald-600"
-                  />
-
-                  <div>
-
-                    <p className="text-xs font-black text-slate-800">
-                      Digital Records
-                    </p>
-
-                    <p className="mt-1 text-xs leading-5 text-slate-500">
-                      Donation details are securely
-                      processed for verification and
-                      receipts.
-                    </p>
-
-                  </div>
-
-                </div>
-
-                <div className="flex gap-3">
-
-                  <CheckCircle2
-                    size={18}
-                    className="mt-0.5 shrink-0 text-emerald-600"
-                  />
-
-                  <div>
-
-                    <p className="text-xs font-black text-slate-800">
-                      Transparent Process
-                    </p>
-
-                    <p className="mt-1 text-xs leading-5 text-slate-500">
-                      Your contribution is recorded
-                      against the generated donation
-                      reference.
-                    </p>
-
-                  </div>
-
-                </div>
-
-              </div>
-
-            </div>
-
-            {/* SUMMARY */}
-
-            <div className="rounded-3xl border border-teal-100 bg-gradient-to-br from-teal-50 to-white p-6">
-
-              <p className="text-xs font-black uppercase tracking-[0.16em] text-teal-700">
-                Donation Summary
-              </p>
-
-              <div className="mt-5 space-y-4">
-
-                <div className="flex items-center justify-between border-b border-teal-100 pb-3">
-
-                  <span className="text-xs text-slate-500">
-                    Frequency
-                  </span>
-
-                  <span className="text-xs font-black text-slate-800">
-                    {donationType ===
-                    "monthly"
-                      ? "Monthly"
-                      : "One-time"}
-                  </span>
-
-                </div>
-
-                <div className="flex items-center justify-between border-b border-teal-100 pb-3">
-
-                  <span className="text-xs text-slate-500">
-                    Donor Type
-                  </span>
-
-                  <span className="text-xs font-black text-slate-800">
-                    {isNRI
-                      ? "International"
-                      : "Indian"}
-                  </span>
-
-                </div>
-
-                <div className="flex items-end justify-between">
-
-                  <span className="text-xs font-bold text-slate-500">
-                    Amount
-                  </span>
-
-                  <span className="text-xl font-black text-teal-800">
-                    {selectedAmount > 0
-                      ? formatAmount(
-                          selectedAmount,
-                          currency
-                        )
-                      : "—"}
-                  </span>
-
-                </div>
+                <SecurityRow
+                  icon={
+                    <BadgeCheck
+                      size={15}
+                    />
+                  }
+                  text="Donation reference generated"
+                />
 
               </div>
 
@@ -1954,6 +2704,210 @@ export default function DonatePage() {
 
       </section>
 
+      {/* ===================================================
+          FOOTER TRUST
+      =================================================== */}
+
+      <section className="border-t border-slate-200 bg-white">
+
+        <div className="mx-auto grid max-w-7xl gap-5 px-5 py-8 sm:grid-cols-3 sm:px-7 lg:px-8">
+
+          <FooterTrust
+            icon={
+              <ShieldCheck
+                size={19}
+              />
+            }
+            title="Secure Giving"
+            text="Safe online payment process"
+          />
+
+          <FooterTrust
+            icon={
+              <BadgeCheck
+                size={19}
+              />
+            }
+            title="Transparent Process"
+            text="Donation records and references"
+          />
+
+          <FooterTrust
+            icon={
+              <Heart
+                size={19}
+                fill="currentColor"
+              />
+            }
+            title="Every Contribution Matters"
+            text="Supporting meaningful community work"
+          />
+
+        </div>
+
+      </section>
+
     </main>
   );
+}
+
+/* =========================================================
+   SMALL COMPONENTS
+========================================================= */
+
+function SummaryItem({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div>
+
+      <p className="text-[9px] font-black uppercase tracking-[0.12em] text-slate-400">
+        {label}
+      </p>
+
+      <p className="mt-1 break-words text-sm font-bold text-slate-800">
+        {value || "—"}
+      </p>
+
+    </div>
+  );
+}
+
+function Tag({
+  label,
+}: {
+  label: string;
+}) {
+  return (
+    <span className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[8px] font-bold text-slate-500">
+      {label}
+    </span>
+  );
+}
+
+function SideRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+
+      <span className="text-[10px] text-white/40">
+        {label}
+      </span>
+
+      <span className="text-[10px] font-black text-white">
+        {value}
+      </span>
+
+    </div>
+  );
+}
+
+function TrustItem({
+  icon,
+  title,
+  text,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  text: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+
+      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-teal-700 shadow-sm">
+        {icon}
+      </div>
+
+      <p className="mt-3 text-[10px] font-black text-slate-900">
+        {title}
+      </p>
+
+      <p className="mt-1 text-[9px] text-slate-400">
+        {text}
+      </p>
+
+    </div>
+  );
+}
+
+function SecurityRow({
+  icon,
+  text,
+}: {
+  icon: React.ReactNode;
+  text: string;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+
+      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-teal-700 shadow-sm">
+        {icon}
+      </div>
+
+      <span className="text-[10px] font-semibold text-slate-600">
+        {text}
+      </span>
+
+    </div>
+  );
+}
+
+function FooterTrust({
+  icon,
+  title,
+  text,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  text: string;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-700">
+        {icon}
+      </div>
+
+      <div>
+
+        <p className="text-[10px] font-black text-slate-900">
+          {title}
+        </p>
+
+        <p className="mt-1 text-[9px] text-slate-400">
+          {text}
+        </p>
+
+      </div>
+
+    </div>
+  );
+}
+
+/* =========================================================
+   RAZORPAY GLOBAL TYPES
+========================================================= */
+
+declare global {
+  interface Window {
+    Razorpay: new (
+      options: any
+    ) => {
+      open: () => void;
+    };
+
+    dataLayer?: Record<
+      string,
+      unknown
+    >[];
+  }
 }
