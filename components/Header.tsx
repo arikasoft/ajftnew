@@ -266,7 +266,7 @@ const navigation: NavigationMenu[] = [
         title: "Donate",
         description:
           "Support our charitable activities.",
-        href: "/donate",
+        href: "donate/pay.php",
         icon: <Heart size={16} />,
         color:
           "bg-gradient-to-r from-[#E85D04] via-[#F48C06] to-[#FFB703] text-white shadow-lg shadow-orange-500/20",
