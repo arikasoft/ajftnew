@@ -1,40 +1,24 @@
 import mongoose from "mongoose";
 
-/* =========================================================
-   TYPES
-========================================================= */
-
 type MongooseCache = {
   conn: typeof mongoose | null;
   promise: Promise<typeof mongoose> | null;
 };
-
-/* =========================================================
-   GLOBAL CACHE
-========================================================= */
 
 declare global {
   // eslint-disable-next-line no-var
   var mongooseCache: MongooseCache | undefined;
 }
 
-const globalCache = global as typeof globalThis & {
-  mongooseCache?: MongooseCache;
-};
-
 const cached: MongooseCache =
-  globalCache.mongooseCache ?? {
+  global.mongooseCache ?? {
     conn: null,
     promise: null,
   };
 
-if (!globalCache.mongooseCache) {
-  globalCache.mongooseCache = cached;
-}
-
-/* =========================================================
-   GET MONGODB URI
-========================================================= */
+if (!global.mongooseCache) {
+  global.mongooseCache = cached;
+};
 
 function getMongoURI(): string {
   const uri = process.env.MONGODB_URI;
@@ -59,15 +43,7 @@ function getMongoURI(): string {
   return cleanURI;
 }
 
-/* =========================================================
-   CONNECT DATABASE
-========================================================= */
-
 async function connectDB(): Promise<typeof mongoose> {
-  /*
-   * Already connected.
-   */
-
   if (
     cached.conn &&
     mongoose.connection.readyState === 1
@@ -75,32 +51,18 @@ async function connectDB(): Promise<typeof mongoose> {
     return cached.conn;
   }
 
-  /*
-   * Connection is already in progress.
-   */
-
   if (cached.promise) {
     try {
       cached.conn = await cached.promise;
-
       return cached.conn;
     } catch (error) {
       cached.promise = null;
       cached.conn = null;
-
       throw error;
     }
   }
 
-  /*
-   * Get MongoDB URI.
-   */
-
   const uri = getMongoURI();
-
-  /*
-   * Create MongoDB connection.
-   */
 
   cached.promise = mongoose
     .connect(uri, {
@@ -111,7 +73,6 @@ async function connectDB(): Promise<typeof mongoose> {
       serverSelectionTimeoutMS: 30000,
       connectTimeoutMS: 30000,
       socketTimeoutMS: 45000,
-
       waitQueueTimeoutMS: 30000,
 
       retryWrites: true,
@@ -149,39 +110,21 @@ async function connectDB(): Promise<typeof mongoose> {
 
   try {
     cached.conn = await cached.promise;
-
     return cached.conn;
   } catch (error) {
     cached.promise = null;
     cached.conn = null;
-
     throw error;
   }
 }
 
-/* =========================================================
-   ENSURE DATABASE CONNECTION
-========================================================= */
-
 export async function ensureDBConnection() {
-  /*
-   * Already connected.
-   */
-
   if (mongoose.connection.readyState === 1) {
     return mongoose;
   }
 
-  /*
-   * Wait for the connection.
-   */
-
-  return await connectDB();
+  return connectDB();
 }
-
-/* =========================================================
-   DATABASE STATUS
-========================================================= */
 
 export function getMongoStatus() {
   const states: Record<number, string> = {
@@ -197,31 +140,14 @@ export function getMongoStatus() {
 
   return {
     readyState,
-
-    status:
-      states[readyState] ??
-      "unknown",
-
-    host:
-      mongoose.connection.host ||
-      null,
-
-    database:
-      mongoose.connection.name ||
-      null,
+    status: states[readyState] ?? "unknown",
+    host: mongoose.connection.host || null,
+    database: mongoose.connection.name || null,
   };
 }
-
-/* =========================================================
-   CHECK CONNECTION
-========================================================= */
 
 export function isMongoConnected(): boolean {
   return mongoose.connection.readyState === 1;
 }
-
-/* =========================================================
-   DEFAULT EXPORT
-========================================================= */
 
 export default connectDB;
