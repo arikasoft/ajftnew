@@ -8,48 +8,107 @@ export interface ICareerApplication
   extends Document {
   applicationId: string;
 
+  // ==========================================
+  // JOB SNAPSHOT
+  // ==========================================
+
   jobId: string;
   jobTitle: string;
   department: string;
   location: string;
   employmentType: string;
 
+  // ==========================================
+  // PERSONAL INFORMATION
+  // ==========================================
+
   fullName: string;
+  fatherName: string;
   email: string;
   phone: string;
+  alternatePhone: string;
+
   dateOfBirth: string;
   gender: string;
+  category: string;
+
+  // ==========================================
+  // ADDRESS
+  // ==========================================
 
   address: string;
   city: string;
+  district: string;
   state: string;
   pincode: string;
+
+  // ==========================================
+  // EDUCATION
+  // ==========================================
 
   highestQualification: string;
   university: string;
   passingYear: string;
   percentage: string;
 
+  // ==========================================
+  // EXPERIENCE
+  // ==========================================
+
   experience: string;
   currentOrganization: string;
   currentDesignation: string;
   totalExperience: string;
+  expectedSalary: string;
+
+  // ==========================================
+  // DOCUMENTS
+  // ==========================================
 
   resume: string;
+  photo: string;
   coverLetter: string;
+
+  // ==========================================
+  // DECLARATION
+  // ==========================================
 
   declarationAccepted: boolean;
 
+  // ==========================================
+  // APPLICATION STATUS
+  // ==========================================
+
   status: string;
   stage: string;
-  adminRemarks: string;
 
   // ==========================================
-  // ADMIN ACTION DATES
+  // ADMIN
   // ==========================================
+
+  adminRemarks: string;
 
   approvedAt?: Date | null;
   rejectedAt?: Date | null;
+
+  // ==========================================
+  // INTERVIEW
+  // ==========================================
+
+  interviewDate?: Date | null;
+  interviewMode?: string;
+  interviewRemarks?: string;
+
+  // ==========================================
+  // FINAL DECISION
+  // ==========================================
+
+  selectedAt?: Date | null;
+  joinedAt?: Date | null;
+
+  // ==========================================
+  // AUDIT
+  // ==========================================
 
   createdAt: Date;
   updatedAt: Date;
@@ -70,9 +129,14 @@ const CareerApplicationSchema =
         trim: true,
       },
 
+      // ==========================================
+      // JOB SNAPSHOT
+      // ==========================================
+
       jobId: {
         type: String,
-        default: "",
+        required: true,
+        index: true,
         trim: true,
       },
 
@@ -96,7 +160,7 @@ const CareerApplicationSchema =
 
       employmentType: {
         type: String,
-        default: "",
+        default: "Full Time",
         trim: true,
       },
 
@@ -110,6 +174,12 @@ const CareerApplicationSchema =
         trim: true,
       },
 
+      fatherName: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+
       email: {
         type: String,
         required: true,
@@ -119,6 +189,12 @@ const CareerApplicationSchema =
       },
 
       phone: {
+        type: String,
+        required: true,
+        trim: true,
+      },
+
+      alternatePhone: {
         type: String,
         default: "",
         trim: true,
@@ -136,6 +212,12 @@ const CareerApplicationSchema =
         trim: true,
       },
 
+      category: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+
       // ==========================================
       // ADDRESS
       // ==========================================
@@ -147,6 +229,12 @@ const CareerApplicationSchema =
       },
 
       city: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+
+      district: {
         type: String,
         default: "",
         trim: true,
@@ -220,11 +308,23 @@ const CareerApplicationSchema =
         trim: true,
       },
 
+      expectedSalary: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+
       // ==========================================
       // DOCUMENTS
       // ==========================================
 
       resume: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+
+      photo: {
         type: String,
         default: "",
         trim: true,
@@ -275,7 +375,7 @@ const CareerApplicationSchema =
       },
 
       // ==========================================
-      // APPROVAL / REJECTION DATES
+      // APPROVAL / REJECTION
       // ==========================================
 
       approvedAt: {
@@ -287,24 +387,78 @@ const CareerApplicationSchema =
         type: Date,
         default: null,
       },
+
+      // ==========================================
+      // INTERVIEW
+      // ==========================================
+
+      interviewDate: {
+        type: Date,
+        default: null,
+      },
+
+      interviewMode: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+
+      interviewRemarks: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+
+      // ==========================================
+      // FINAL DECISION
+      // ==========================================
+
+      selectedAt: {
+        type: Date,
+        default: null,
+      },
+
+      joinedAt: {
+        type: Date,
+        default: null,
+      },
     },
 
     {
       timestamps: true,
-
       versionKey: false,
-
-      collection:
-        "careerapplications",
+      collection: "careerapplications",
     }
   );
+
+// ==========================================
+// INDEXES
+// ==========================================
+
+CareerApplicationSchema.index({
+  jobId: 1,
+  status: 1,
+});
+
+CareerApplicationSchema.index({
+  email: 1,
+  createdAt: -1,
+});
+
+CareerApplicationSchema.index({
+  phone: 1,
+  createdAt: -1,
+});
+
+CareerApplicationSchema.index({
+  createdAt: -1,
+});
 
 // ==========================================
 // MODEL
 // ==========================================
 
-const CareerApplication:
-  Model<ICareerApplication> =
+const CareerApplication: Model<ICareerApplication> =
   mongoose.models.CareerApplication ||
   mongoose.model<ICareerApplication>(
     "CareerApplication",

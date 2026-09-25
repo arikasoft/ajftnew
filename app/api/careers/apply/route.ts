@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import nodemailer from "nodemailer";
 
 import connectDB from "@/lib/mongodb";
 import CareerApplication from "@/models/CareerApplication";
@@ -9,437 +8,429 @@ import CareerApplication from "@/models/CareerApplication";
 ========================================================= */
 
 function clean(value: unknown): string {
-  return String(value ?? "").trim();
-}
-
-function generateApplicationId(): string {
-  const year = new Date().getFullYear();
-
-  const random = Math.floor(
-    10000 + Math.random() * 90000
-  );
-
-  return `AJFT-${year}-${random}`;
-}
-
-/* =========================================================
-   SMTP
-========================================================= */
-
-function createTransporter() {
-  const host = process.env.SMTP_HOST;
-  const port = Number(
-    process.env.SMTP_PORT || 465
-  );
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
-
-  if (!host || !user || !pass) {
-    throw new Error(
-      "SMTP configuration is missing."
-    );
+  if (value === undefined || value === null) {
+    return "";
   }
 
-  return nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
-    auth: {
-      user,
-      pass,
-    },
-  });
+  return String(value).trim();
+}
+
+function cleanEmail(value: unknown): string {
+  return clean(value).toLowerCase();
+}
+
+function getValue(
+  data: Record<string, unknown>,
+  ...keys: string[]
+): string {
+  for (const key of keys) {
+    const value = clean(data[key]);
+
+    if (value) {
+      return value;
+    }
+  }
+
+  return "";
 }
 
 /* =========================================================
-   EMAIL HTML
+   FALLBACK JOBS
+   These are the active vacancies shown on Careers page.
 ========================================================= */
 
-function candidateEmailHtml(data: {
-  applicationId: string;
-  fullName: string;
-  email: string;
-  jobTitle: string;
-  department: string;
-}) {
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>AJFT Career Application</title>
-</head>
+const JOBS: Record<
+  string,
+  {
+    jobId: string;
+    title: string;
+    department: string;
+    location: string;
+    employmentType: string;
+    experience: string;
+    salary: string;
+    lastDate: string;
+  }
+> = {
+  "AJFT-MGR-001": {
+    jobId: "AJFT-MGR-001",
+    title: "Program Manager",
+    department: "Programs & Operations",
+    location: "Darbhanga, Bihar",
+    employmentType: "Full Time",
+    experience: "3–6 Years",
+    salary: "Competitive",
+    lastDate: "22-11-2026",
+  },
 
-<body style="margin:0;padding:0;background:#f3f7f9;font-family:Arial,Helvetica,sans-serif;color:#243b53;">
+  "AJFT-SUP-002": {
+    jobId: "AJFT-SUP-002",
+    title: "Field Supervisor",
+    department: "Field Operations",
+    location: "Bihar",
+    employmentType: "Full Time",
+    experience: "1–4 Years",
+    salary: "Competitive",
+    lastDate: "22-11-2026",
+  },
 
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f7f9;padding:35px 15px;">
-<tr>
-<td align="center">
+  "AJFT-FLD-003": {
+    jobId: "AJFT-FLD-003",
+    title: "Field Staff",
+    department: "Community Development",
+    location: "Bihar",
+    employmentType: "Full Time",
+    experience: "0–3 Years",
+    salary: "Competitive",
+    lastDate: "22-11-2026",
+  },
 
-<table width="620" cellpadding="0" cellspacing="0" style="max-width:620px;background:#ffffff;border-radius:18px;overflow:hidden;box-shadow:0 15px 50px rgba(16,42,67,.10);">
+  "AJFT-PO-004": {
+    jobId: "AJFT-PO-004",
+    title: "Program Officer",
+    department: "Program Management",
+    location: "Darbhanga, Bihar",
+    employmentType: "Full Time",
+    experience: "2–5 Years",
+    salary: "Competitive",
+    lastDate: "22-11-2026",
+  },
 
-<tr>
-<td style="background:#071d2b;padding:30px 35px;color:#ffffff;">
+  "AJFT-CO-005": {
+    jobId: "AJFT-CO-005",
+    title: "Community Outreach Coordinator",
+    department: "Community Outreach",
+    location: "Bihar",
+    employmentType: "Full Time",
+    experience: "1–3 Years",
+    salary: "Competitive",
+    lastDate: "22-11-2026",
+  },
 
-<div style="font-size:11px;font-weight:bold;letter-spacing:3px;text-transform:uppercase;color:#f2c94c;">
-ANAND JIVAN FOUNDATION TRUST
-</div>
-
-<div style="font-size:25px;font-weight:bold;margin-top:10px;">
-Career Application Received
-</div>
-
-</td>
-</tr>
-
-<tr>
-<td style="padding:35px;">
-
-<p style="font-size:15px;">
-Dear <strong>${data.fullName}</strong>,
-</p>
-
-<p style="font-size:14px;line-height:1.8;color:#607585;">
-Thank you for applying for a career opportunity with Anand Jivan Foundation Trust.
-Your application has been successfully received.
-</p>
-
-<table width="100%" cellpadding="0" cellspacing="0" style="margin:25px 0;background:#f5f9fa;border-radius:12px;">
-
-<tr>
-<td style="padding:15px;font-size:12px;color:#718394;">
-APPLICATION ID
-</td>
-
-<td style="padding:15px;font-size:16px;font-weight:bold;color:#176b87;text-align:right;">
-${data.applicationId}
-</td>
-</tr>
-
-<tr>
-<td style="padding:12px 15px;font-size:12px;color:#718394;">
-POSITION
-</td>
-
-<td style="padding:12px 15px;font-size:13px;font-weight:bold;text-align:right;">
-${data.jobTitle}
-</td>
-</tr>
-
-<tr>
-<td style="padding:12px 15px;font-size:12px;color:#718394;">
-DEPARTMENT
-</td>
-
-<td style="padding:12px 15px;font-size:13px;text-align:right;">
-${data.department || "—"}
-</td>
-</tr>
-
-</table>
-
-<div style="background:#fff9e8;border-left:4px solid #f2c94c;padding:15px;border-radius:8px;font-size:12px;line-height:1.7;color:#687985;">
-Please keep your Application ID safely. You may need it to check your application status and for future communication.
-</div>
-
-<p style="font-size:13px;line-height:1.7;color:#607585;margin-top:25px;">
-Our recruitment team will review your application. If your profile is shortlisted, you will be contacted through the details provided in your application.
-</p>
-
-<p style="margin-top:30px;font-size:13px;">
-Regards,<br/>
-<strong>Recruitment Team</strong><br/>
-Anand Jivan Foundation Trust
-</p>
-
-</td>
-</tr>
-
-<tr>
-<td style="background:#071d2b;padding:20px 35px;text-align:center;color:#ffffff;">
-
-<div style="font-size:11px;color:rgba(255,255,255,.55);">
-Empowering Lives • Building Better Communities
-</div>
-
-<div style="font-size:10px;color:rgba(255,255,255,.35);margin-top:7px;">
-This is an automated email. Please do not reply directly to this message.
-</div>
-
-</td>
-</tr>
-
-</table>
-
-</td>
-</tr>
-</table>
-
-</body>
-</html>
-`;
-}
+  "AJFT-ACC-006": {
+    jobId: "AJFT-ACC-006",
+    title: "Accounts & Administration Executive",
+    department: "Finance & Administration",
+    location: "Darbhanga, Bihar",
+    employmentType: "Full Time",
+    experience: "1–4 Years",
+    salary: "Competitive",
+    lastDate: "22-11-2026",
+  },
+};
 
 /* =========================================================
-   ADMIN EMAIL
+   GENERATE APPLICATION ID
 ========================================================= */
 
-function adminEmailHtml(data: {
-  applicationId: string;
-  fullName: string;
-  email: string;
-  phone: string;
-  jobTitle: string;
-  department: string;
-  location: string;
-  employmentType: string;
-}) {
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8" />
-<title>New Career Application</title>
-</head>
+async function generateApplicationId(): Promise<string> {
+  const year = new Date().getFullYear();
 
-<body style="margin:0;padding:30px;background:#f3f7f9;font-family:Arial,Helvetica,sans-serif;color:#243b53;">
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const random = Math.floor(
+      100000 + Math.random() * 900000
+    );
 
-<table width="100%" cellpadding="0" cellspacing="0">
-<tr>
-<td align="center">
+    const applicationId =
+      `AJFT-CAREER-${year}-${random}`;
 
-<table width="650" cellpadding="0" cellspacing="0" style="max-width:650px;background:#ffffff;border-radius:18px;overflow:hidden;box-shadow:0 15px 50px rgba(16,42,67,.10);">
+    const exists =
+      await CareerApplication.exists({
+        applicationId,
+      });
 
-<tr>
-<td style="background:#102a43;padding:28px 32px;color:#ffffff;">
+    if (!exists) {
+      return applicationId;
+    }
+  }
 
-<div style="font-size:10px;font-weight:bold;letter-spacing:3px;color:#f2c94c;">
-AJFT ADMINISTRATION
-</div>
-
-<div style="font-size:24px;font-weight:bold;margin-top:8px;">
-New Career Application
-</div>
-
-</td>
-</tr>
-
-<tr>
-<td style="padding:30px;">
-
-<div style="background:#eef6f8;padding:18px;border-radius:12px;margin-bottom:22px;">
-
-<div style="font-size:10px;color:#718394;font-weight:bold;">
-APPLICATION ID
-</div>
-
-<div style="font-size:22px;color:#176b87;font-weight:bold;margin-top:6px;">
-${data.applicationId}
-</div>
-
-</div>
-
-<table width="100%" cellpadding="8" cellspacing="0">
-
-<tr>
-<td width="35%" style="font-size:12px;color:#8997a2;">
-Candidate
-</td>
-
-<td style="font-size:13px;font-weight:bold;">
-${data.fullName}
-</td>
-</tr>
-
-<tr>
-<td style="font-size:12px;color:#8997a2;">
-Email
-</td>
-
-<td style="font-size:13px;">
-${data.email}
-</td>
-</tr>
-
-<tr>
-<td style="font-size:12px;color:#8997a2;">
-Phone
-</td>
-
-<td style="font-size:13px;">
-${data.phone}
-</td>
-</tr>
-
-<tr>
-<td style="font-size:12px;color:#8997a2;">
-Position
-</td>
-
-<td style="font-size:13px;font-weight:bold;">
-${data.jobTitle}
-</td>
-</tr>
-
-<tr>
-<td style="font-size:12px;color:#8997a2;">
-Department
-</td>
-
-<td style="font-size:13px;">
-${data.department || "—"}
-</td>
-</tr>
-
-<tr>
-<td style="font-size:12px;color:#8997a2;">
-Location
-</td>
-
-<td style="font-size:13px;">
-${data.location || "—"}
-</td>
-</tr>
-
-<tr>
-<td style="font-size:12px;color:#8997a2;">
-Employment Type
-</td>
-
-<td style="font-size:13px;">
-${data.employmentType || "—"}
-</td>
-</tr>
-
-</table>
-
-<div style="margin-top:25px;padding:15px;background:#fff9e8;border-radius:10px;font-size:12px;color:#687985;">
-A new career application has been submitted through the AJFT website.
-Please review it from the Admin Recruitment Portal.
-</div>
-
-</td>
-</tr>
-
-<tr>
-<td style="background:#071d2b;padding:18px;text-align:center;color:#ffffff;font-size:10px;">
-Anand Jivan Foundation Trust • Recruitment System
-</td>
-</tr>
-
-</table>
-
-</td>
-</tr>
-</table>
-
-</body>
-</html>
-`;
+  return `AJFT-CAREER-${Date.now()}`;
 }
 
 /* =========================================================
    POST
+   Submit Career Application
 ========================================================= */
 
 export async function POST(
   request: Request
 ) {
   try {
-    const body =
-      await request.json();
+    /* =====================================================
+       READ REQUEST
+    ===================================================== */
+
+    const contentType =
+      request.headers.get("content-type") || "";
+
+    let body: Record<string, unknown> = {};
+
+    if (
+      contentType.includes(
+        "multipart/form-data"
+      )
+    ) {
+      const formData =
+        await request.formData();
+
+      formData.forEach((value, key) => {
+        if (
+          typeof value === "string"
+        ) {
+          body[key] = value;
+        }
+      });
+    } else {
+      body = await request.json();
+    }
 
     /* =====================================================
-       INPUT
+       JOB
+    ===================================================== */
+
+    const jobId = getValue(
+      body,
+      "jobId",
+      "jobID",
+      "job_id"
+    );
+
+    const requestedJobTitle =
+      getValue(
+        body,
+        "jobTitle",
+        "title"
+      );
+
+    const fallbackJob =
+      JOBS[jobId];
+
+    /*
+     * IMPORTANT:
+     *
+     * The Careers page can show fallback vacancies.
+     * Therefore we DO NOT reject the application just
+     * because the job does not exist in another database
+     * collection.
+     */
+
+    const jobTitle =
+      requestedJobTitle ||
+      fallbackJob?.title ||
+      "Open Position";
+
+    const department =
+      getValue(
+        body,
+        "department"
+      ) ||
+      fallbackJob?.department ||
+      "";
+
+    const location =
+      getValue(
+        body,
+        "location"
+      ) ||
+      fallbackJob?.location ||
+      "";
+
+    const employmentType =
+      getValue(
+        body,
+        "employmentType",
+        "employment_type"
+      ) ||
+      fallbackJob?.employmentType ||
+      "";
+
+    /* =====================================================
+       PERSONAL INFORMATION
     ===================================================== */
 
     const fullName =
-      clean(body?.fullName);
+      getValue(
+        body,
+        "fullName",
+        "name"
+      );
 
     const email =
-      clean(body?.email).toLowerCase();
+      cleanEmail(
+        getValue(
+          body,
+          "email",
+          "emailAddress"
+        )
+      );
 
     const phone =
-      clean(body?.phone);
-
-    const jobId =
-      clean(body?.jobId);
-
-    const jobTitle =
-      clean(body?.jobTitle);
-
-    const department =
-      clean(body?.department);
-
-    const location =
-      clean(body?.location);
-
-    const employmentType =
-      clean(body?.employmentType);
+      getValue(
+        body,
+        "phone",
+        "mobile",
+        "mobileNumber"
+      );
 
     const dateOfBirth =
-      clean(body?.dateOfBirth);
+      getValue(
+        body,
+        "dateOfBirth",
+        "dob"
+      );
 
     const gender =
-      clean(body?.gender);
+      getValue(
+        body,
+        "gender"
+      );
+
+    /* =====================================================
+       ADDRESS
+    ===================================================== */
 
     const address =
-      clean(body?.address);
+      getValue(
+        body,
+        "address"
+      );
 
     const city =
-      clean(body?.city);
+      getValue(
+        body,
+        "city"
+      );
 
     const state =
-      clean(body?.state);
+      getValue(
+        body,
+        "state"
+      );
 
     const pincode =
-      clean(body?.pincode);
+      getValue(
+        body,
+        "pincode",
+        "pinCode",
+        "postalCode"
+      );
+
+    /* =====================================================
+       EDUCATION
+    ===================================================== */
 
     const highestQualification =
-      clean(
-        body?.highestQualification
+      getValue(
+        body,
+        "highestQualification",
+        "qualification"
       );
 
     const university =
-      clean(body?.university);
+      getValue(
+        body,
+        "university",
+        "college",
+        "institution"
+      );
 
     const passingYear =
-      clean(body?.passingYear);
+      getValue(
+        body,
+        "passingYear",
+        "yearOfPassing"
+      );
 
     const percentage =
-      clean(body?.percentage);
+      getValue(
+        body,
+        "percentage",
+        "marks",
+        "score"
+      );
+
+    /* =====================================================
+       EXPERIENCE
+    ===================================================== */
 
     const experience =
-      clean(body?.experience);
+      getValue(
+        body,
+        "experience",
+        "experienceLevel"
+      );
 
     const currentOrganization =
-      clean(
-        body?.currentOrganization
+      getValue(
+        body,
+        "currentOrganization",
+        "organization",
+        "currentCompany"
       );
 
     const currentDesignation =
-      clean(
-        body?.currentDesignation
+      getValue(
+        body,
+        "currentDesignation",
+        "designation"
       );
 
     const totalExperience =
-      clean(body?.totalExperience);
+      getValue(
+        body,
+        "totalExperience",
+        "yearsOfExperience"
+      );
+
+    /* =====================================================
+       DOCUMENTS
+    ===================================================== */
 
     const resume =
-      clean(body?.resume);
+      getValue(
+        body,
+        "resume",
+        "resumeUrl",
+        "resumeFile"
+      );
 
     const coverLetter =
-      clean(body?.coverLetter);
+      getValue(
+        body,
+        "coverLetter",
+        "cover_letter"
+      );
+
+    /* =====================================================
+       DECLARATION
+    ===================================================== */
+
+    const declarationRaw =
+      body.declarationAccepted ??
+      body.declaration ??
+      body.agree;
 
     const declarationAccepted =
-      Boolean(
-        body?.declarationAccepted
-      );
+      declarationRaw === true ||
+      declarationRaw === "true" ||
+      declarationRaw === "1" ||
+      declarationRaw === "on" ||
+      declarationRaw === "yes";
 
     /* =====================================================
        VALIDATION
     ===================================================== */
+
+    if (!jobId) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Job information is required.",
+        },
+        { status: 400 }
+      );
+    }
 
     if (!fullName) {
       return NextResponse.json(
@@ -463,22 +454,6 @@ export async function POST(
       );
     }
 
-    const emailValid =
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
-        email
-      );
-
-    if (!emailValid) {
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "Please enter a valid email address.",
-        },
-        { status: 400 }
-      );
-    }
-
     if (!phone) {
       return NextResponse.json(
         {
@@ -490,52 +465,64 @@ export async function POST(
       );
     }
 
-    if (!jobTitle) {
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "Job title is required.",
-        },
-        { status: 400 }
-      );
-    }
-
     if (!declarationAccepted) {
       return NextResponse.json(
         {
           success: false,
           message:
-            "Please accept the declaration.",
+            "Please accept the declaration before submitting your application.",
         },
         { status: 400 }
       );
     }
 
     /* =====================================================
-       DATABASE
+       EMAIL VALIDATION
+    ===================================================== */
+
+    const emailRegex =
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Please enter a valid email address.",
+        },
+        { status: 400 }
+      );
+    }
+
+    /* =====================================================
+       CONNECT DATABASE
     ===================================================== */
 
     await connectDB();
 
     /* =====================================================
-       DUPLICATE CHECK
+       DUPLICATE APPLICATION CHECK
     ===================================================== */
 
-    const existing =
+    const existingApplication =
       await CareerApplication.findOne({
-        email,
         jobId,
-      }).lean();
+        email,
+      })
+        .select(
+          "applicationId jobId jobTitle status createdAt"
+        )
+        .lean();
 
-    if (existing) {
+    if (existingApplication) {
       return NextResponse.json(
         {
           success: false,
+          duplicate: true,
           message:
-            "You have already applied for this position.",
+            "You have already applied for this position with this email address.",
           applicationId:
-            existing.applicationId,
+            existingApplication.applicationId,
         },
         { status: 409 }
       );
@@ -545,23 +532,11 @@ export async function POST(
        APPLICATION ID
     ===================================================== */
 
-    let applicationId = "";
-    let exists = true;
-
-    while (exists) {
-      applicationId =
-        generateApplicationId();
-
-      const found =
-        await CareerApplication.exists({
-          applicationId,
-        });
-
-      exists = Boolean(found);
-    }
+    const applicationId =
+      await generateApplicationId();
 
     /* =====================================================
-       SAVE APPLICATION
+       CREATE APPLICATION
     ===================================================== */
 
     const application =
@@ -570,6 +545,7 @@ export async function POST(
 
         jobId,
         jobTitle,
+
         department,
         location,
         employmentType,
@@ -601,127 +577,16 @@ export async function POST(
         declarationAccepted,
 
         status: "Submitted",
-
-        stage:
-          "Application Submitted",
+        stage: "Application Submitted",
 
         adminRemarks: "",
+
+        approvedAt: null,
+        rejectedAt: null,
       });
 
     /* =====================================================
-       EMAIL
-    ===================================================== */
-
-    let emailStatus:
-      | "sent"
-      | "failed" =
-      "sent";
-
-    try {
-      const transporter =
-        createTransporter();
-
-      const from =
-        process.env.SMTP_FROM ||
-        process.env.SMTP_USER;
-
-      const adminEmail =
-        process.env.ADMIN_EMAIL ||
-        process.env.SMTP_USER;
-
-      /* ===============================================
-         CANDIDATE EMAIL
-      =============================================== */
-
-      await transporter.sendMail({
-        from,
-
-        to: email,
-
-        subject:
-          `Application Received — ${applicationId}`,
-
-        html:
-          candidateEmailHtml({
-            applicationId,
-            fullName,
-            email,
-            jobTitle,
-            department,
-          }),
-
-        text: `
-Dear ${fullName},
-
-Thank you for applying to Anand Jivan Foundation Trust.
-
-Application ID: ${applicationId}
-Position: ${jobTitle}
-Department: ${department || "—"}
-
-Your application has been successfully received.
-
-Please keep your Application ID safely.
-
-Regards,
-Recruitment Team
-Anand Jivan Foundation Trust
-        `.trim(),
-      });
-
-      /* ===============================================
-         ADMIN EMAIL
-      =============================================== */
-
-      await transporter.sendMail({
-        from,
-
-        to: adminEmail,
-
-        subject:
-          `New Career Application — ${applicationId}`,
-
-        html:
-          adminEmailHtml({
-            applicationId,
-            fullName,
-            email,
-            phone,
-            jobTitle,
-            department,
-            location,
-            employmentType,
-          }),
-
-        text: `
-New Career Application
-
-Application ID: ${applicationId}
-Candidate: ${fullName}
-Email: ${email}
-Phone: ${phone}
-Position: ${jobTitle}
-Department: ${department || "—"}
-Location: ${location || "—"}
-Employment Type: ${employmentType || "—"}
-        `.trim(),
-      });
-
-      console.log(
-        "CAREER EMAILS SENT:",
-        applicationId
-      );
-    } catch (mailError) {
-      emailStatus = "failed";
-
-      console.error(
-        "CAREER EMAIL ERROR:",
-        mailError
-      );
-    }
-
-    /* =====================================================
-       RESPONSE
+       SUCCESS
     ===================================================== */
 
     return NextResponse.json(
@@ -729,26 +594,29 @@ Employment Type: ${employmentType || "—"}
         success: true,
 
         message:
-          emailStatus === "sent"
-            ? "Application submitted successfully. Confirmation email sent."
-            : "Application submitted successfully. Email delivery is temporarily unavailable.",
+          "Your job application has been submitted successfully.",
 
-        applicationId,
+        applicationId:
+          application.applicationId,
 
-        emailSent:
-          emailStatus === "sent",
+        job: {
+          jobId,
+          jobTitle,
+          department,
+          location,
+          employmentType,
+          experience:
+            fallbackJob?.experience || "",
+          lastDate:
+            fallbackJob?.lastDate || "",
+        },
 
         application: {
-          applicationId,
-
-          fullName:
-            application.fullName,
-
-          email:
-            application.email,
-
-          jobTitle:
-            application.jobTitle,
+          id: String(
+            application._id
+          ),
+          applicationId:
+            application.applicationId,
 
           status:
             application.status,
@@ -756,26 +624,86 @@ Employment Type: ${employmentType || "—"}
           stage:
             application.stage,
 
-          submittedAt:
+          createdAt:
             application.createdAt,
         },
       },
       { status: 201 }
     );
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(
-      "CAREER APPLICATION ERROR:",
+      "Career application error:",
       error
     );
+
+    /* =====================================================
+       MONGOOSE DUPLICATE KEY
+    ===================================================== */
+
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      (error as { code?: number }).code ===
+        11000
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "An application with this information already exists.",
+        },
+        { status: 409 }
+      );
+    }
+
+    /* =====================================================
+       VALIDATION ERROR
+    ===================================================== */
+
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "name" in error &&
+      (error as { name?: string }).name ===
+        "ValidationError"
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Please check the application details and try again.",
+        },
+        { status: 400 }
+      );
+    }
+
+    /* =====================================================
+       SERVER ERROR
+    ===================================================== */
 
     return NextResponse.json(
       {
         success: false,
-
         message:
-          "Unable to submit application. Please try again.",
+          "Unable to submit your application right now. Please try again later.",
       },
       { status: 500 }
     );
   }
+}
+
+/* =========================================================
+   METHOD HANDLING
+========================================================= */
+
+export async function GET() {
+  return NextResponse.json(
+    {
+      success: false,
+      message:
+        "GET method is not supported for career applications.",
+    },
+    { status: 405 }
+  );
 }

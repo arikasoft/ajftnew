@@ -15,6 +15,7 @@ import {
   ArrowRight,
   BadgeCheck,
   BriefcaseBusiness,
+  CalendarDays,
   Check,
   CheckCircle2,
   ChevronRight,
@@ -42,35 +43,65 @@ import {
 ========================================================= */
 
 const jobs = {
-  "CAREER-2026-001": {
-    title: "Programme Coordinator",
-    department:
-      "Programme & Community Development",
+  "AJFT-MGR-001": {
+    title: "Program Manager",
+    department: "Programs & Operations",
     location: "Darbhanga, Bihar",
     type: "Full Time",
     qualification:
-      "Graduate / Post Graduate",
+      "Graduate / Post Graduate in relevant discipline",
+    experience: "3–6 Years",
+    lastDate: "22-11-2026",
+  },
+
+  "AJFT-SUP-002": {
+    title: "Field Supervisor",
+    department: "Field Operations",
+    location: "Bihar",
+    type: "Full Time",
+    qualification: "Graduate preferred",
+    experience: "1–4 Years",
+    lastDate: "22-11-2026",
+  },
+
+  "AJFT-FLD-003": {
+    title: "Field Staff",
+    department: "Community Development",
+    location: "Bihar",
+    type: "Full Time",
+    qualification: "12th / Graduate",
     experience: "0–3 Years",
+    lastDate: "22-11-2026",
   },
 
-  "CAREER-2026-002": {
-    title: "Field Coordinator",
+  "AJFT-PO-004": {
+    title: "Program Officer",
+    department: "Program Management",
+    location: "Darbhanga, Bihar",
+    type: "Full Time",
+    qualification: "Graduate / Post Graduate",
+    experience: "2–5 Years",
+    lastDate: "22-11-2026",
+  },
+
+  "AJFT-CO-005": {
+    title: "Community Outreach Coordinator",
     department: "Community Outreach",
-    location: "Darbhanga, Bihar",
+    location: "Bihar",
     type: "Full Time",
-    qualification: "Graduate",
-    experience: "0–2 Years",
+    qualification: "Graduate preferred",
+    experience: "1–3 Years",
+    lastDate: "22-11-2026",
   },
 
-  "CAREER-2026-003": {
-    title:
-      "Digital & Documentation Executive",
-    department: "Digital Communication",
+  "AJFT-ACC-006": {
+    title: "Accounts & Administration Executive",
+    department: "Finance & Administration",
     location: "Darbhanga, Bihar",
     type: "Full Time",
-    qualification:
-      "Graduate / Diploma",
-    experience: "0–2 Years",
+    qualification: "B.Com / relevant qualification",
+    experience: "1–4 Years",
+    lastDate: "22-11-2026",
   },
 } as const;
 
@@ -882,6 +913,18 @@ export default function CareerApplyClient({
                     }
                   />
 
+                  <MiniJobInfo
+                    icon={
+                      <CalendarDays
+                        size={13}
+                      />
+                    }
+                    label="Last Date"
+                    value={
+                      selectedJob.lastDate
+                    }
+                  />
+
                 </div>
 
               </div>
@@ -1601,6 +1644,18 @@ export default function CareerApplyClient({
                     label="Experience"
                     text={
                       selectedJob.experience
+                    }
+                  />
+
+                  <SideInfo
+                    icon={
+                      <CalendarDays
+                        size={13}
+                      />
+                    }
+                    label="Last Date"
+                    text={
+                      selectedJob.lastDate
                     }
                   />
 

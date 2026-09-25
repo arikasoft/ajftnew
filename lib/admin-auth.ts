@@ -3,12 +3,10 @@ import { cookies } from "next/headers";
 export async function requireAdmin() {
   const cookieStore = await cookies();
 
-  const session =
-    cookieStore.get(
-      "ajft_admin_session"
-    );
+  const sessionCookie =
+    cookieStore.get("ajft_admin_session");
 
-  if (!session?.value) {
+  if (!sessionCookie?.value) {
     return {
       authorized: false,
       admin: null,
@@ -16,13 +14,29 @@ export async function requireAdmin() {
   }
 
   try {
-    const admin =
-      JSON.parse(session.value);
+    const admin = JSON.parse(
+      sessionCookie.value
+    );
 
     if (
       !admin?.id ||
-      !admin?.email ||
-      admin?.role !== "admin"
+      !admin?.email
+    ) {
+      return {
+        authorized: false,
+        admin: null,
+      };
+    }
+
+    const allowedRoles = [
+      "admin",
+      "superadmin",
+    ];
+
+    if (
+      !allowedRoles.includes(
+        String(admin.role || "").toLowerCase()
+      )
     ) {
       return {
         authorized: false,
@@ -34,7 +48,12 @@ export async function requireAdmin() {
       authorized: true,
       admin,
     };
-  } catch {
+  } catch (error) {
+    console.error(
+      "ADMIN SESSION PARSE ERROR:",
+      error
+    );
+
     return {
       authorized: false,
       admin: null,

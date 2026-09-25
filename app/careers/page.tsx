@@ -1,966 +1,1014 @@
-/* app/careers/page.tsx */
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
   BriefcaseBusiness,
-  Building2,
   CalendarDays,
   CheckCircle2,
   ChevronRight,
   Clock3,
-  FileCheck2,
-  FileText,
-  GraduationCap,
   MapPin,
   Search,
-  ShieldCheck,
-  Sparkles,
   Users,
+  X,
 } from "lucide-react";
 
-const openings = [
+/* =========================================================
+   TYPES
+========================================================= */
+
+type CareerJob = {
+  _id?: string;
+  id?: string;
+  jobId?: string;
+
+  title?: string;
+  jobTitle?: string;
+
+  department?: string;
+  location?: string;
+  employmentType?: string;
+
+  description?: string;
+  requirements?: string[];
+
+  salary?: string;
+  experience?: string;
+
+  lastDate?: string;
+  applicationDeadline?: string;
+  deadline?: string;
+
+  status?: string;
+  featured?: boolean;
+};
+
+/* =========================================================
+   DEFAULT JOBS
+   These remain visible even when API returns count: 0
+========================================================= */
+
+const DEFAULT_JOBS: CareerJob[] = [
   {
-    id: "CAREER-2026-001",
-    title: "Programme Coordinator",
-    department: "Programme & Community Development",
+    jobId: "AJFT-MGR-001",
+    title: "Program Manager",
+    department: "Programs & Operations",
     location: "Darbhanga, Bihar",
-    type: "Full Time",
-    qualification: "Graduate / Post Graduate",
+    employmentType: "Full Time",
+    experience: "3–6 Years",
+    salary: "Competitive",
+    lastDate: "22-11-2026",
+    description:
+      "Lead program planning, implementation, team coordination, reporting and stakeholder engagement across AJFT initiatives.",
+    requirements: [
+      "Graduate / Post Graduate in relevant discipline",
+      "3+ years experience in NGO, development or social sector",
+      "Strong team management and communication skills",
+      "Ability to manage projects, budgets and reports",
+    ],
+    featured: true,
+  },
+
+  {
+    jobId: "AJFT-SUP-002",
+    title: "Field Supervisor",
+    department: "Field Operations",
+    location: "Bihar",
+    employmentType: "Full Time",
+    experience: "1–4 Years",
+    salary: "Competitive",
+    lastDate: "22-11-2026",
+    description:
+      "Supervise field activities, coordinate field staff, monitor beneficiaries and ensure timely implementation of assigned programs.",
+    requirements: [
+      "Graduate preferred",
+      "Experience in field work or community development",
+      "Good communication and reporting skills",
+      "Willingness to travel to project locations",
+    ],
+    featured: true,
+  },
+
+  {
+    jobId: "AJFT-FLD-003",
+    title: "Field Staff",
+    department: "Community Development",
+    location: "Bihar",
+    employmentType: "Full Time",
     experience: "0–3 Years",
+    salary: "Competitive",
+    lastDate: "22-11-2026",
+    description:
+      "Work directly with communities and beneficiaries for surveys, awareness programs, documentation and project implementation.",
+    requirements: [
+      "12th / Graduate",
+      "Freshers can apply",
+      "Good local communication skills",
+      "Ability to travel in field areas",
+    ],
+    featured: false,
   },
+
   {
-    id: "CAREER-2026-002",
-    title: "Field Coordinator",
+    jobId: "AJFT-PO-004",
+    title: "Program Officer",
+    department: "Program Management",
+    location: "Darbhanga, Bihar",
+    employmentType: "Full Time",
+    experience: "2–5 Years",
+    salary: "Competitive",
+    lastDate: "22-11-2026",
+    description:
+      "Support program design, implementation, monitoring, documentation and coordination with internal and external stakeholders.",
+    requirements: [
+      "Graduate / Post Graduate",
+      "Relevant NGO / development sector experience preferred",
+      "Strong documentation and reporting ability",
+      "MS Office / Google Workspace knowledge",
+    ],
+    featured: false,
+  },
+
+  {
+    jobId: "AJFT-CO-005",
+    title: "Community Outreach Coordinator",
     department: "Community Outreach",
-    location: "Darbhanga, Bihar",
-    type: "Full Time",
-    qualification: "Graduate",
-    experience: "0–2 Years",
+    location: "Bihar",
+    employmentType: "Full Time",
+    experience: "1–3 Years",
+    salary: "Competitive",
+    lastDate: "22-11-2026",
+    description:
+      "Build community relationships and coordinate awareness, education, health and welfare activities.",
+    requirements: [
+      "Graduate preferred",
+      "Strong interpersonal and communication skills",
+      "Community mobilization experience preferred",
+      "Willingness to travel",
+    ],
+    featured: false,
   },
+
   {
-    id: "CAREER-2026-003",
-    title: "Digital & Documentation Executive",
-    department: "Digital Communication",
+    jobId: "AJFT-ACC-006",
+    title: "Accounts & Administration Executive",
+    department: "Finance & Administration",
     location: "Darbhanga, Bihar",
-    type: "Full Time",
-    qualification: "Graduate / Diploma",
-    experience: "0–2 Years",
+    employmentType: "Full Time",
+    experience: "1–4 Years",
+    salary: "Competitive",
+    lastDate: "22-11-2026",
+    description:
+      "Manage day-to-day accounting, documentation, administrative records and financial reporting support.",
+    requirements: [
+      "B.Com / relevant qualification",
+      "Accounting and documentation knowledge",
+      "Tally / Excel knowledge preferred",
+      "Good attention to detail",
+    ],
+    featured: false,
   },
 ];
 
-export default function CareersPage() {
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function getJobId(job: CareerJob) {
+  return job.jobId || job.id || job._id || "";
+}
+
+function getTitle(job: CareerJob) {
+  return job.title || job.jobTitle || "Open Position";
+}
+
+function getDeadline(job: CareerJob) {
   return (
-    <main className="min-h-screen overflow-hidden bg-[#F5F8FA] text-[#243B53]">
+    job.lastDate ||
+    job.applicationDeadline ||
+    job.deadline ||
+    "22-11-2026"
+  );
+}
 
-      {/* =====================================================
+function normalizeJobs(data: unknown): CareerJob[] {
+  if (!data || typeof data !== "object") {
+    return [];
+  }
+
+  const value = data as {
+    jobs?: CareerJob[];
+    data?: CareerJob[];
+  };
+
+  if (Array.isArray(value.jobs)) {
+    return value.jobs;
+  }
+
+  if (Array.isArray(value.data)) {
+    return value.data;
+  }
+
+  return [];
+}
+
+/* =========================================================
+   PAGE
+========================================================= */
+
+export default function CareersPage() {
+  const [apiJobs, setApiJobs] = useState<CareerJob[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [search, setSearch] = useState("");
+  const [department, setDepartment] = useState("All");
+  const [employmentType, setEmploymentType] =
+    useState("All");
+
+  const [selectedJob, setSelectedJob] =
+    useState<CareerJob | null>(null);
+
+  /* =======================================================
+   LOAD JOBS
+======================================================= */
+
+useEffect(() => {
+  let mounted = true;
+
+  async function loadJobs() {
+    try {
+      const response = await fetch(
+        "/api/careers",
+        {
+          method: "GET",
+          cache: "no-store",
+        }
+      );
+
+      /*
+       * API error होने पर page को error नहीं करेंगे.
+       * DEFAULT_JOBS automatically use होंगे.
+       */
+      if (!response.ok) {
+        console.warn(
+          `Careers API returned ${response.status}. Using default jobs.`
+        );
+
+        if (mounted) {
+          setApiJobs([]);
+        }
+
+        return;
+      }
+
+      const data = await response.json();
+
+      if (mounted) {
+        setApiJobs(normalizeJobs(data));
+      }
+    } catch (error) {
+      /*
+       * Network/API unavailable होने पर
+       * default jobs दिखाए जाएंगे.
+       */
+      console.warn(
+        "Careers API unavailable. Using default jobs.",
+        error
+      );
+
+      if (mounted) {
+        setApiJobs([]);
+      }
+    } finally {
+      if (mounted) {
+        setLoading(false);
+      }
+    }
+  }
+
+  loadJobs();
+
+  return () => {
+    mounted = false;
+  };
+}, []);
+  /* =======================================================
+     COMBINE API + DEFAULT JOBS
+  ======================================================= */
+
+  const jobs = useMemo(() => {
+    if (apiJobs.length === 0) {
+      return DEFAULT_JOBS;
+    }
+
+    return apiJobs;
+  }, [apiJobs]);
+
+  /* =======================================================
+     FILTER OPTIONS
+  ======================================================= */
+
+  const departments = useMemo(() => {
+    const values = jobs
+      .map((job) => job.department || "")
+      .filter(Boolean);
+
+    return ["All", ...Array.from(new Set(values))];
+  }, [jobs]);
+
+  const employmentTypes = useMemo(() => {
+    const values = jobs
+      .map((job) => job.employmentType || "")
+      .filter(Boolean);
+
+    return ["All", ...Array.from(new Set(values))];
+  }, [jobs]);
+
+  /* =======================================================
+     FILTERED JOBS
+  ======================================================= */
+
+  const filteredJobs = useMemo(() => {
+    const query = search
+      .trim()
+      .toLowerCase();
+
+    return jobs.filter((job) => {
+      const title =
+        getTitle(job).toLowerCase();
+
+      const dept =
+        (job.department || "").toLowerCase();
+
+      const location =
+        (job.location || "").toLowerCase();
+
+      const matchesSearch =
+        !query ||
+        title.includes(query) ||
+        dept.includes(query) ||
+        location.includes(query);
+
+      const matchesDepartment =
+        department === "All" ||
+        job.department === department;
+
+      const matchesEmployment =
+        employmentType === "All" ||
+        job.employmentType === employmentType;
+
+      return (
+        matchesSearch &&
+        matchesDepartment &&
+        matchesEmployment
+      );
+    });
+  }, [
+    jobs,
+    search,
+    department,
+    employmentType,
+  ]);
+
+  const featuredJobs = useMemo(
+    () =>
+      jobs.filter(
+        (job) => job.featured === true
+      ),
+    [jobs]
+  );
+
+  /* =======================================================
+     RENDER
+  ======================================================= */
+
+  return (
+    <main className="min-h-screen bg-[#f6f9fb] text-slate-900">
+
+      {/* ===================================================
           HERO
-      ====================================================== */}
+      =================================================== */}
 
-      <section className="relative overflow-hidden bg-[#0B2535]">
+      <section className="relative overflow-hidden bg-[#062d3a]">
 
-        {/* Decorative background */}
-
-        <div className="absolute -left-32 -top-32 h-80 w-80 rounded-full bg-[#176B87]/30 blur-3xl" />
-
-        <div className="absolute -right-24 top-10 h-72 w-72 rounded-full bg-[#D3A640]/15 blur-3xl" />
-
-        <div className="absolute bottom-0 left-1/2 h-40 w-40 -translate-x-1/2 rounded-full bg-cyan-400/10 blur-3xl" />
-
-        <div className="relative mx-auto max-w-[1440px] px-5 py-12 sm:px-8 lg:py-20">
-
-          <div className="grid items-center gap-12 lg:grid-cols-[1.15fr_.85fr]">
-
-            {/* LEFT */}
-
-            <div>
-
-              <div
-                className="
-                  inline-flex
-                  items-center
-                  gap-2
-                  rounded-full
-                  border
-                  border-white/10
-                  bg-white/5
-                  px-3
-                  py-1.5
-                  text-[9px]
-                  font-black
-                  uppercase
-                  tracking-[0.22em]
-                  text-[#F2C94C]
-                  backdrop-blur
-                "
-              >
-                <BriefcaseBusiness size={12} />
-
-                Careers at AJFT
-              </div>
-
-              <h1
-                className="
-                  mt-5
-                  max-w-4xl
-                  text-4xl
-                  font-black
-                  leading-[1.08]
-                  tracking-tight
-                  text-white
-                  sm:text-5xl
-                  lg:text-6xl
-                "
-              >
-                Build your career.
-                <span className="block text-[#F2C94C]">
-                  Create meaningful impact.
-                </span>
-              </h1>
-
-              <p
-                className="
-                  mt-6
-                  max-w-2xl
-                  text-sm
-                  leading-7
-                  text-white/60
-                  sm:text-base
-                "
-              >
-                Explore employment opportunities with Anand Jivan
-                Foundation Trust and become part of work that supports
-                communities, education, development and social impact.
-              </p>
-
-              <div className="mt-8 flex flex-wrap gap-3">
-
-                <a
-                  href="#openings"
-                  className="
-                    inline-flex
-                    items-center
-                    gap-2
-                    rounded-xl
-                    bg-gradient-to-r
-                    from-[#E85D04]
-                    via-[#F48C06]
-                    to-[#FFB703]
-                    px-5
-                    py-3
-                    text-xs
-                    font-black
-                    text-white
-                    shadow-xl
-                    shadow-orange-900/20
-                    transition-all
-                    hover:-translate-y-0.5
-                    hover:shadow-2xl
-                  "
-                >
-                  Explore Openings
-                  <ArrowRight size={14} />
-                </a>
-
-                <Link
-                  href="/careers/status"
-                  className="
-                    inline-flex
-                    items-center
-                    gap-2
-                    rounded-xl
-                    border
-                    border-white/15
-                    bg-white/5
-                    px-5
-                    py-3
-                    text-xs
-                    font-bold
-                    text-white
-                    backdrop-blur
-                    transition
-                    hover:bg-white/10
-                  "
-                >
-                  <FileCheck2 size={14} />
-                  Application Status
-                </Link>
-
-              </div>
-
-              {/* QUICK STATS */}
-
-              <div className="mt-10 grid max-w-2xl grid-cols-2 gap-3 sm:grid-cols-3">
-
-                <HeroStat
-                  value="03"
-                  label="Current Openings"
-                />
-
-                <HeroStat
-                  value="Full Time"
-                  label="Employment Type"
-                />
-
-                <HeroStat
-                  value="Darbhanga"
-                  label="Primary Location"
-                />
-
-              </div>
-
-            </div>
-
-            {/* RIGHT CARD */}
-
-            <div className="relative">
-
-              <div
-                className="
-                  relative
-                  overflow-hidden
-                  rounded-[1.7rem]
-                  border
-                  border-white/10
-                  bg-white/[0.06]
-                  p-5
-                  shadow-2xl
-                  backdrop-blur-xl
-                  sm:p-6
-                "
-              >
-
-                <div className="flex items-center justify-between">
-
-                  <div>
-
-                    <p
-                      className="
-                        text-[8px]
-                        font-black
-                        uppercase
-                        tracking-[0.2em]
-                        text-[#F2C94C]
-                      "
-                    >
-                      Recruitment Portal
-                    </p>
-
-                    <h2 className="mt-2 text-lg font-black text-white">
-                      Join the AJFT Team
-                    </h2>
-
-                  </div>
-
-                  <div
-                    className="
-                      flex
-                      h-11
-                      w-11
-                      items-center
-                      justify-center
-                      rounded-xl
-                      bg-[#F2C94C]/10
-                      text-[#F2C94C]
-                    "
-                  >
-                    <Users size={20} />
-                  </div>
-
-                </div>
-
-                <div className="mt-6 space-y-3">
-
-                  <PortalPoint
-                    icon={<FileText size={15} />}
-                    title="Simple Application"
-                    text="Submit your application through the official portal."
-                  />
-
-                  <PortalPoint
-                    icon={<ShieldCheck size={15} />}
-                    title="Fair Selection"
-                    text="Applications are reviewed against vacancy requirements."
-                  />
-
-                  <PortalPoint
-                    icon={<CalendarDays size={15} />}
-                    title="Interview Process"
-                    text="Shortlisted applicants may be contacted for further stages."
-                  />
-
-                  <PortalPoint
-                    icon={<FileCheck2 size={15} />}
-                    title="Application Number"
-                    text="Keep your unique recruitment number for future reference."
-                  />
-
-                </div>
-
-                <div
-                  className="
-                    mt-6
-                    rounded-xl
-                    border
-                    border-[#F2C94C]/15
-                    bg-[#F2C94C]/5
-                    p-4
-                  "
-                >
-                  <p className="text-[9px] font-black uppercase tracking-wider text-[#F2C94C]">
-                    Important
-                  </p>
-
-                  <p className="mt-2 text-[10px] leading-5 text-white/55">
-                    Applicants should use only the official AJFT
-                    recruitment process for submitting applications.
-                  </p>
-                </div>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        </div>
-      </section>
-
-      {/* =====================================================
-          BREADCRUMB
-      ====================================================== */}
-
-      <div className="border-b border-[#DCE5EA] bg-white">
-
+        {/* background grid */}
         <div
-          className="
-            mx-auto
-            flex
-            max-w-[1440px]
-            flex-wrap
-            items-center
-            justify-between
-            gap-3
-            px-5
-            py-3
-            sm:px-8
-          "
-        >
+          className="absolute inset-0 opacity-[0.08]"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(255,255,255,.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.5) 1px, transparent 1px)",
+            backgroundSize: "42px 42px",
+          }}
+        />
 
-          <div className="flex items-center gap-2 text-[9px] font-bold text-[#82919C]">
+        {/* glow */}
+        <div className="absolute -right-40 -top-40 h-[500px] w-[500px] rounded-full bg-cyan-400/10 blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 h-[500px] w-[500px] rounded-full bg-amber-400/10 blur-3xl" />
 
-            <Link
-              href="/"
-              className="transition hover:text-[#176B87]"
-            >
-              Home
-            </Link>
+        <div className="relative mx-auto max-w-7xl px-5 py-20 sm:px-6 lg:px-8 lg:py-28">
 
-            <ChevronRight size={11} />
+          <div className="max-w-4xl">
 
-            <span className="text-[#176B87]">
-              Careers
-            </span>
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-amber-300 backdrop-blur">
+              <BriefcaseBusiness className="h-4 w-4" />
+              Careers at Anand Jivan
+            </div>
 
-          </div>
+            <h1 className="max-w-4xl text-4xl font-black leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-7xl">
+              Build a career
+              <span className="block text-amber-300">
+                that creates impact.
+              </span>
+            </h1>
 
-          <Link
-            href="/internship"
-            className="
-              inline-flex
-              items-center
-              gap-1.5
-              text-[9px]
-              font-bold
-              text-[#176B87]
-              transition
-              hover:text-[#102A43]
-            "
-          >
-            Internship Programme
-            <ArrowRight size={11} />
-          </Link>
+            <p className="mt-6 max-w-2xl text-base leading-8 text-slate-300 sm:text-lg">
+              Join Anand Jivan Foundation Trust and
+              work with a mission-driven team creating
+              meaningful change in education, healthcare,
+              community development, women empowerment
+              and social welfare.
+            </p>
 
-        </div>
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
 
-      </div>
-
-      {/* =====================================================
-          RECRUITMENT PROCESS
-      ====================================================== */}
-
-      <section className="bg-white">
-
-        <div className="mx-auto max-w-[1440px] px-5 py-12 sm:px-8 lg:py-16">
-
-          <SectionHeading
-            eyebrow="How Recruitment Works"
-            title="A simple and transparent process"
-            description="From application to selection, every stage follows a structured recruitment process."
-          />
-
-          <div className="mt-9 grid gap-4 md:grid-cols-4">
-
-            <ProcessCard
-              number="01"
-              icon={<Search size={19} />}
-              title="Find a Vacancy"
-              text="Explore the current openings and review the eligibility requirements."
-            />
-
-            <ProcessCard
-              number="02"
-              icon={<FileText size={19} />}
-              title="Submit Application"
-              text="Complete the official online application with accurate information."
-            />
-
-            <ProcessCard
-              number="03"
-              icon={<Users size={19} />}
-              title="Review & Shortlist"
-              text="Applications are assessed against the requirements of the role."
-            />
-
-            <ProcessCard
-              number="04"
-              icon={<CheckCircle2 size={19} />}
-              title="Selection"
-              text="Shortlisted candidates may be contacted for further recruitment stages."
-            />
-
-          </div>
-
-        </div>
-
-      </section>
-
-      {/* =====================================================
-          OPENINGS
-      ====================================================== */}
-
-      <section
-        id="openings"
-        className="border-y border-[#DCE5EA] bg-[#F5F8FA]"
-      >
-
-        <div className="mx-auto max-w-[1440px] px-5 py-12 sm:px-8 lg:py-16">
-
-          <div
-            className="
-              flex
-              flex-col
-              gap-5
-              sm:flex-row
-              sm:items-end
-              sm:justify-between
-            "
-          >
-
-            <div>
-
-              <p
-                className="
-                  text-[9px]
-                  font-black
-                  uppercase
-                  tracking-[0.22em]
-                  text-[#B07B10]
-                "
+              <a
+                href="#openings"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-400 px-6 py-3.5 text-sm font-extrabold text-slate-950 shadow-lg shadow-amber-500/20 transition hover:bg-amber-300"
               >
-                Opportunities
-              </p>
+                View Open Positions
+                <ArrowRight className="h-4 w-4" />
+              </a>
 
-              <h2 className="mt-2 text-2xl font-black tracking-tight text-[#102A43] sm:text-3xl">
-                Current Openings
-              </h2>
+              <Link
+                href="/contact"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/5 px-6 py-3.5 text-sm font-bold text-white transition hover:bg-white/10"
+              >
+                Contact HR
+              </Link>
 
-              <p className="mt-2 max-w-xl text-xs leading-6 text-[#82919C]">
-                Browse the currently available employment opportunities
-                with Anand Jivan Foundation Trust.
-              </p>
-
-            </div>
-
-            <div
-              className="
-                flex
-                w-fit
-                items-center
-                gap-2
-                rounded-full
-                border
-                border-[#D8E2E7]
-                bg-white
-                px-3
-                py-2
-                text-[9px]
-                font-bold
-                text-[#607585]
-                shadow-sm
-              "
-            >
-              <span className="h-1.5 w-1.5 rounded-full bg-[#2EBD85]" />
-
-              {openings.length} Active Vacancies
             </div>
 
           </div>
 
-          <div className="mt-8 space-y-4">
+          {/* HERO STATS */}
 
-            {openings.map((job) => (
-              <JobCard
-                key={job.id}
-                job={job}
-              />
+          <div className="mt-16 grid max-w-4xl grid-cols-2 gap-3 sm:grid-cols-4">
+
+            {[
+              {
+                value: jobs.length,
+                label: "Open Roles",
+              },
+              {
+                value: "22 Nov",
+                label: "Application Deadline",
+              },
+              {
+                value: "Bihar",
+                label: "Primary Location",
+              },
+              {
+                value: "Impact",
+                label: "Our Mission",
+              },
+            ].map((item) => (
+              <div
+                key={item.label}
+                className="rounded-2xl border border-white/10 bg-white/[0.06] p-4 backdrop-blur"
+              >
+                <div className="text-xl font-black text-white sm:text-2xl">
+                  {item.value}
+                </div>
+
+                <div className="mt-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  {item.label}
+                </div>
+              </div>
             ))}
 
           </div>
+        </div>
+      </section>
+
+      {/* ===================================================
+          FEATURED ROLES
+      =================================================== */}
+
+      {featuredJobs.length > 0 && (
+        <section className="border-b border-slate-200 bg-white">
+
+          <div className="mx-auto max-w-7xl px-5 py-12 sm:px-6 lg:px-8">
+
+            <div className="mb-7 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-600">
+                  Featured opportunities
+                </p>
+
+                <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+                  Roles we are hiring for
+                </h2>
+              </div>
+
+              <span className="inline-flex w-fit items-center gap-2 rounded-full bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700">
+                <CheckCircle2 className="h-4 w-4" />
+                Applications Open
+              </span>
+
+            </div>
+
+            <div className="grid gap-5 md:grid-cols-2">
+
+              {featuredJobs
+                .slice(0, 2)
+                .map((job) => (
+                  <JobCard
+                    key={getJobId(job)}
+                    job={job}
+                    featured
+                    onView={() =>
+                      setSelectedJob(job)
+                    }
+                  />
+                ))}
+
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ===================================================
+          JOB SEARCH
+      =================================================== */}
+
+      <section
+        id="openings"
+        className="mx-auto max-w-7xl px-5 py-14 sm:px-6 lg:px-8"
+      >
+
+        <div className="mb-8">
+
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-600">
+            Current openings
+          </p>
+
+          <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
+            Find your next opportunity
+          </h2>
+
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
+            Explore available positions and apply
+            before the closing date.
+          </p>
+
+        </div>
+
+        {/* FILTER BOX */}
+
+        <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+
+          <div className="grid gap-3 lg:grid-cols-[1.5fr_1fr_1fr_auto]">
+
+            {/* Search */}
+
+            <div className="relative">
+
+              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+
+              <input
+                value={search}
+                onChange={(e) =>
+                  setSearch(e.target.value)
+                }
+                placeholder="Search job title, department or location..."
+                className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm font-medium outline-none transition focus:border-amber-400 focus:bg-white focus:ring-4 focus:ring-amber-400/10"
+              />
+
+            </div>
+
+            {/* Department */}
+
+            <select
+              value={department}
+              onChange={(e) =>
+                setDepartment(e.target.value)
+              }
+              className="h-12 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-bold outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-400/10"
+            >
+              {departments.map((item) => (
+                <option key={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+
+            {/* Employment */}
+
+            <select
+              value={employmentType}
+              onChange={(e) =>
+                setEmploymentType(e.target.value)
+              }
+              className="h-12 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-bold outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-400/10"
+            >
+              {employmentTypes.map((item) => (
+                <option key={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+
+            {/* Reset */}
+
+            <button
+              type="button"
+              onClick={() => {
+                setSearch("");
+                setDepartment("All");
+                setEmploymentType("All");
+              }}
+              className="h-12 rounded-xl border border-slate-200 px-5 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
+            >
+              Reset
+            </button>
+
+          </div>
+
+        </div>
+
+        {/* RESULT COUNT */}
+
+        <div className="mt-7 flex items-center justify-between">
+
+          <p className="text-sm font-semibold text-slate-500">
+            {filteredJobs.length}{" "}
+            {filteredJobs.length === 1
+              ? "position"
+              : "positions"}{" "}
+            available
+          </p>
+
+          {loading && (
+            <span className="text-xs font-bold text-slate-400">
+              Updating...
+            </span>
+          )}
+
+        </div>
+
+        {/* =================================================
+            JOB LIST
+        ================================================= */}
+
+        <div className="mt-5 grid gap-5">
+
+          {filteredJobs.length > 0 ? (
+            filteredJobs.map((job) => (
+              <JobCard
+                key={getJobId(job)}
+                job={job}
+                onView={() =>
+                  setSelectedJob(job)
+                }
+              />
+            ))
+          ) : (
+            <div className="rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
+
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100">
+                <BriefcaseBusiness className="h-6 w-6 text-slate-400" />
+              </div>
+
+              <h3 className="mt-5 text-lg font-black">
+                No matching positions
+              </h3>
+
+              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
+                Try changing your search or filters
+                to find other available opportunities.
+              </p>
+
+            </div>
+          )}
 
         </div>
 
       </section>
 
-      {/* =====================================================
-          WORK WITH PURPOSE
-      ====================================================== */}
+      {/* ===================================================
+          WHY JOIN
+      =================================================== */}
 
-      <section className="bg-[#0B2535]">
+      <section className="border-y border-slate-200 bg-white">
 
-        <div className="mx-auto max-w-[1440px] px-5 py-12 sm:px-8 lg:py-16">
+        <div className="mx-auto max-w-7xl px-5 py-16 sm:px-6 lg:px-8">
 
-          <div className="grid gap-8 lg:grid-cols-[.8fr_1.2fr] lg:items-center">
+          <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
 
             <div>
 
-              <p
-                className="
-                  text-[9px]
-                  font-black
-                  uppercase
-                  tracking-[0.22em]
-                  text-[#F2C94C]
-                "
-              >
-                Life at AJFT
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-600">
+                Why join us
               </p>
 
-              <h2 className="mt-3 text-3xl font-black tracking-tight text-white">
+              <h2 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">
                 Work with purpose.
-                <span className="block text-[#F2C94C]">
+                <span className="block text-[#0b5264]">
                   Grow with impact.
                 </span>
               </h2>
 
-              <p className="mt-4 max-w-lg text-sm leading-7 text-white/55">
-                A career at AJFT is an opportunity to combine professional
-                growth with meaningful community service and social impact.
+              <p className="mt-5 text-sm leading-7 text-slate-600">
+                At Anand Jivan Foundation Trust,
+                every team member contributes to
+                building stronger communities and
+                creating opportunities for people who
+                need them most.
               </p>
-
-              <Link
-                href="/about"
-                className="
-                  mt-6
-                  inline-flex
-                  items-center
-                  gap-2
-                  rounded-xl
-                  border
-                  border-white/10
-                  bg-white/5
-                  px-4
-                  py-3
-                  text-[10px]
-                  font-black
-                  text-white
-                  transition
-                  hover:bg-white/10
-                "
-              >
-                Know About AJFT
-                <ArrowRight size={13} />
-              </Link>
 
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2">
 
-              <ImpactCard
-                icon={<Users size={19} />}
-                title="People First"
-                text="A professional environment focused on people and communities."
-              />
+              {[
+                {
+                  icon: Users,
+                  title: "Mission Driven Team",
+                  text: "Work alongside people committed to social impact.",
+                },
+                {
+                  icon: BriefcaseBusiness,
+                  title: "Meaningful Work",
+                  text: "Take ownership of programs that create measurable change.",
+                },
+                {
+                  icon: Clock3,
+                  title: "Professional Growth",
+                  text: "Develop leadership, field and program management skills.",
+                },
+                {
+                  icon: MapPin,
+                  title: "Community Impact",
+                  text: "Work directly with communities across project locations.",
+                },
+              ].map((item) => {
+                const Icon = item.icon;
 
-              <ImpactCard
-                icon={<GraduationCap size={19} />}
-                title="Learning"
-                text="Develop practical skills through meaningful programmes."
-              />
+                return (
+                  <div
+                    key={item.title}
+                    className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
+                  >
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0b5264] text-white">
+                      <Icon className="h-5 w-5" />
+                    </div>
 
-              <ImpactCard
-                icon={<BriefcaseBusiness size={19} />}
-                title="Purpose"
-                text="Build your career while contributing to social development."
-              />
+                    <h3 className="mt-4 font-black text-slate-900">
+                      {item.title}
+                    </h3>
+
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      {item.text}
+                    </p>
+                  </div>
+                );
+              })}
 
             </div>
 
           </div>
-
         </div>
-
       </section>
 
-      {/* =====================================================
-          APPLICATION STATUS CTA
-      ====================================================== */}
+      {/* ===================================================
+          APPLICATION CTA
+      =================================================== */}
 
-      <section className="bg-white">
+      <section className="bg-[#062d3a]">
 
-        <div className="mx-auto max-w-[1440px] px-5 py-12 sm:px-8 lg:py-16">
+        <div className="mx-auto max-w-7xl px-5 py-16 sm:px-6 lg:px-8">
+
+          <div className="flex flex-col justify-between gap-8 rounded-3xl border border-white/10 bg-white/[0.05] p-7 sm:p-10 lg:flex-row lg:items-center">
+
+            <div>
+
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-300">
+                Join Anand Jivan
+              </p>
+
+              <h2 className="mt-3 max-w-2xl text-3xl font-black text-white sm:text-4xl">
+                Ready to make a difference?
+              </h2>
+
+              <p className="mt-3 max-w-xl text-sm leading-7 text-slate-300">
+                Apply for an open position before
+                <strong className="text-white">
+                  {" "}22 November 2026
+                </strong>
+                .
+              </p>
+
+            </div>
+
+            <a
+              href="#openings"
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-amber-400 px-6 py-4 text-sm font-black text-slate-950 transition hover:bg-amber-300"
+            >
+              Explore Positions
+              <ArrowRight className="h-4 w-4" />
+            </a>
+
+          </div>
+
+        </div>
+      </section>
+
+      {/* ===================================================
+          JOB DETAILS MODAL
+      =================================================== */}
+
+      {selectedJob && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm"
+          onClick={() =>
+            setSelectedJob(null)
+          }
+        >
 
           <div
-            className="
-              overflow-hidden
-              rounded-[1.5rem]
-              border
-              border-[#DCE5EA]
-              bg-gradient-to-r
-              from-[#F7FAFB]
-              to-[#EEF6F8]
-              p-6
-              sm:p-8
-            "
+            className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white shadow-2xl"
+            onClick={(e) =>
+              e.stopPropagation()
+            }
           >
 
-            <div
-              className="
-                flex
-                flex-col
-                gap-6
-                lg:flex-row
-                lg:items-center
-                lg:justify-between
-              "
-            >
+            {/* Modal header */}
 
-              <div>
+            <div className="relative overflow-hidden bg-[#062d3a] p-6 sm:p-8">
 
-                <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  setSelectedJob(null)
+                }
+                className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
 
-                  <div
-                    className="
-                      flex
-                      h-9
-                      w-9
-                      items-center
-                      justify-center
-                      rounded-xl
-                      bg-[#102A43]
-                      text-white
-                    "
-                  >
-                    <FileCheck2 size={16} />
-                  </div>
+              <span className="inline-flex rounded-full bg-amber-400 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-slate-950">
+                Open Position
+              </span>
 
-                  <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#176B87]">
-                    Already Applied?
-                  </p>
+              <h2 className="mt-4 pr-10 text-2xl font-black text-white sm:text-3xl">
+                {getTitle(selectedJob)}
+              </h2>
 
-                </div>
+              <div className="mt-4 flex flex-wrap gap-2">
 
-                <h2 className="mt-4 text-xl font-black text-[#102A43] sm:text-2xl">
-                  Check your application status
-                </h2>
+                <span className="rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-slate-200">
+                  {selectedJob.department ||
+                    "Programs"}
+                </span>
 
-                <p className="mt-2 max-w-xl text-xs leading-6 text-[#82919C]">
-                  Use your recruitment application details to check the
-                  current status of your submitted application.
+                <span className="rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-slate-200">
+                  {selectedJob.location ||
+                    "Bihar"}
+                </span>
+
+                <span className="rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-slate-200">
+                  {selectedJob.employmentType ||
+                    "Full Time"}
+                </span>
+
+              </div>
+
+            </div>
+
+            <div className="p-6 sm:p-8">
+
+              {/* Meta */}
+
+              <div className="grid gap-3 sm:grid-cols-3">
+
+                <InfoBox
+                  icon={CalendarDays}
+                  label="Last Date"
+                  value={getDeadline(
+                    selectedJob
+                  )}
+                  highlight
+                />
+
+                <InfoBox
+                  icon={Clock3}
+                  label="Experience"
+                  value={
+                    selectedJob.experience ||
+                    "As per role"
+                  }
+                />
+
+                <InfoBox
+                  icon={MapPin}
+                  label="Location"
+                  value={
+                    selectedJob.location ||
+                    "Bihar"
+                  }
+                />
+
+              </div>
+
+              {/* Description */}
+
+              <div className="mt-8">
+
+                <h3 className="text-sm font-black uppercase tracking-wider text-slate-900">
+                  About the role
+                </h3>
+
+                <p className="mt-3 text-sm leading-7 text-slate-600">
+                  {selectedJob.description ||
+                    "This position will support Anand Jivan Foundation Trust programs and contribute to effective implementation of organizational activities."}
                 </p>
 
               </div>
 
-              <Link
-                href="/careers/status"
-                className="
-                  inline-flex
-                  shrink-0
-                  items-center
-                  justify-center
-                  gap-2
-                  rounded-xl
-                  bg-[#102A43]
-                  px-5
-                  py-3
-                  text-xs
-                  font-black
-                  text-white
-                  shadow-lg
-                  transition-all
-                  hover:-translate-y-0.5
-                  hover:bg-[#176B87]
-                "
-              >
-                Check Application Status
-                <ArrowRight size={14} />
-              </Link>
+              {/* Requirements */}
+
+              {selectedJob.requirements &&
+                selectedJob.requirements
+                  .length > 0 && (
+                  <div className="mt-7">
+
+                    <h3 className="text-sm font-black uppercase tracking-wider text-slate-900">
+                      Key requirements
+                    </h3>
+
+                    <div className="mt-3 space-y-3">
+
+                      {selectedJob.requirements.map(
+                        (requirement, index) => (
+                          <div
+                            key={index}
+                            className="flex gap-3 text-sm text-slate-600"
+                          >
+                            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                            <span>
+                              {requirement}
+                            </span>
+                          </div>
+                        )
+                      )}
+
+                    </div>
+
+                  </div>
+                )}
+
+              {/* Apply */}
+
+              <div className="mt-8 flex flex-col gap-3 border-t border-slate-200 pt-6 sm:flex-row">
+
+                <Link
+                  href={`/careers/apply?jobId=${encodeURIComponent(
+                    getJobId(
+                      selectedJob
+                    )
+                  )}&jobTitle=${encodeURIComponent(
+                    getTitle(
+                      selectedJob
+                    )
+                  )}`}
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#0b5264] px-5 py-3.5 text-sm font-black text-white transition hover:bg-[#083f4d]"
+                >
+                  Apply for this position
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSelectedJob(null)
+                  }
+                  className="rounded-xl border border-slate-200 px-5 py-3.5 text-sm font-bold text-slate-600 hover:bg-slate-50"
+                >
+                  Close
+                </button>
+
+              </div>
 
             </div>
-
           </div>
-
         </div>
-
-      </section>
-
-      {/* =====================================================
-          RECRUITMENT NOTICE
-      ====================================================== */}
-
-      <section className="border-t border-[#DCE5EA] bg-[#F5F8FA]">
-
-        <div className="mx-auto max-w-[1440px] px-5 py-8 sm:px-8">
-
-          <div className="flex items-start gap-3">
-
-            <ShieldCheck
-              size={18}
-              className="mt-0.5 shrink-0 text-[#176B87]"
-            />
-
-            <div>
-
-              <p className="text-[10px] font-black uppercase tracking-[0.15em] text-[#526575]">
-                Recruitment Notice
-              </p>
-
-              <p className="mt-1 text-[10px] leading-5 text-[#82919C]">
-                Candidates should carefully review the requirements of
-                each vacancy and provide accurate information during
-                the application process.
-              </p>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </section>
+      )}
 
     </main>
-  );
-}
-
-/* =========================================================
-   HERO STAT
-========================================================= */
-
-function HeroStat({
-  value,
-  label,
-}: {
-  value: string;
-  label: string;
-}) {
-  return (
-    <div
-      className="
-        rounded-xl
-        border
-        border-white/10
-        bg-white/5
-        px-4
-        py-3
-        backdrop-blur
-      "
-    >
-      <p className="text-sm font-black text-white">
-        {value}
-      </p>
-
-      <p className="mt-1 text-[8px] font-bold uppercase tracking-wider text-white/35">
-        {label}
-      </p>
-    </div>
-  );
-}
-
-/* =========================================================
-   PORTAL POINT
-========================================================= */
-
-function PortalPoint({
-  icon,
-  title,
-  text,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  text: string;
-}) {
-  return (
-    <div
-      className="
-        flex
-        gap-3
-        rounded-xl
-        border
-        border-white/10
-        bg-white/[0.04]
-        p-3
-      "
-    >
-
-      <div
-        className="
-          flex
-          h-8
-          w-8
-          shrink-0
-          items-center
-          justify-center
-          rounded-lg
-          bg-[#F2C94C]/10
-          text-[#F2C94C]
-        "
-      >
-        {icon}
-      </div>
-
-      <div>
-
-        <p className="text-[10px] font-black text-white">
-          {title}
-        </p>
-
-        <p className="mt-1 text-[9px] leading-4 text-white/40">
-          {text}
-        </p>
-
-      </div>
-
-    </div>
-  );
-}
-
-/* =========================================================
-   SECTION HEADING
-========================================================= */
-
-function SectionHeading({
-  eyebrow,
-  title,
-  description,
-}: {
-  eyebrow: string;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="max-w-2xl">
-
-      <p
-        className="
-          text-[9px]
-          font-black
-          uppercase
-          tracking-[0.22em]
-          text-[#B07B10]
-        "
-      >
-        {eyebrow}
-      </p>
-
-      <h2 className="mt-2 text-2xl font-black tracking-tight text-[#102A43] sm:text-3xl">
-        {title}
-      </h2>
-
-      <p className="mt-3 text-xs leading-6 text-[#82919C]">
-        {description}
-      </p>
-
-    </div>
-  );
-}
-
-/* =========================================================
-   PROCESS CARD
-========================================================= */
-
-function ProcessCard({
-  number,
-  icon,
-  title,
-  text,
-}: {
-  number: string;
-  icon: React.ReactNode;
-  title: string;
-  text: string;
-}) {
-  return (
-    <div
-      className="
-        group
-        relative
-        overflow-hidden
-        rounded-[1.25rem]
-        border
-        border-[#DCE5EA]
-        bg-[#F8FAFB]
-        p-5
-        transition-all
-        duration-300
-        hover:-translate-y-1
-        hover:bg-white
-        hover:shadow-[0_18px_40px_rgba(16,42,67,0.08)]
-      "
-    >
-
-      <div className="flex items-center justify-between">
-
-        <div
-          className="
-            flex
-            h-10
-            w-10
-            items-center
-            justify-center
-            rounded-xl
-            bg-[#102A43]
-            text-white
-            transition
-            group-hover:bg-[#176B87]
-          "
-        >
-          {icon}
-        </div>
-
-        <span
-          className="
-            font-mono
-            text-[11px]
-            font-black
-            text-[#C5D0D7]
-          "
-        >
-          {number}
-        </span>
-
-      </div>
-
-      <h3 className="mt-5 text-sm font-black text-[#243B53]">
-        {title}
-      </h3>
-
-      <p className="mt-2 text-[10px] leading-5 text-[#82919C]">
-        {text}
-      </p>
-
-    </div>
   );
 }
 
@@ -970,205 +1018,104 @@ function ProcessCard({
 
 function JobCard({
   job,
+  featured = false,
+  onView,
 }: {
-  job: (typeof openings)[number];
+  job: CareerJob;
+  featured?: boolean;
+  onView: () => void;
 }) {
+  const jobId = getJobId(job);
+
   return (
     <article
-      className="
-        group
-        overflow-hidden
-        rounded-[1.4rem]
-        border
-        border-[#DCE5EA]
-        bg-white
-        shadow-[0_8px_30px_rgba(16,42,67,0.05)]
-        transition-all
-        duration-300
-        hover:-translate-y-1
-        hover:border-[#C59A3A]
-        hover:shadow-[0_20px_45px_rgba(16,42,67,0.10)]
-      "
+      className={`group relative overflow-hidden rounded-3xl border bg-white p-6 transition duration-300 hover:-translate-y-1 hover:shadow-xl ${
+        featured
+          ? "border-amber-200 shadow-sm"
+          : "border-slate-200 shadow-sm"
+      }`}
     >
 
-      <div className="p-5 sm:p-6 lg:p-7">
+      {featured && (
+        <div className="absolute right-5 top-5 rounded-full bg-amber-100 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-amber-700">
+          Featured
+        </div>
+      )}
 
-        <div
-          className="
-            flex
-            flex-col
-            gap-6
-            lg:flex-row
-            lg:items-center
-            lg:justify-between
-          "
-        >
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
 
-          <div className="min-w-0">
+        <div className="min-w-0">
 
-            <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
 
-              <span
-                className="
-                  inline-flex
-                  items-center
-                  gap-1.5
-                  rounded-full
-                  bg-[#EEF6F8]
-                  px-3
-                  py-1.5
-                  text-[8px]
-                  font-black
-                  uppercase
-                  tracking-wider
-                  text-[#176B87]
-                "
-              >
-                <BriefcaseBusiness size={10} />
+            <span className="rounded-lg bg-[#e8f4f7] px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-[#0b5264]">
+              {job.department ||
+                "Programs"}
+            </span>
 
-                {job.type}
-              </span>
-
-              <span className="font-mono text-[9px] font-bold text-[#A0ACB5]">
-                {job.id}
-              </span>
-
-            </div>
-
-            <h3
-              className="
-                mt-4
-                text-xl
-                font-black
-                tracking-tight
-                text-[#102A43]
-                transition
-                group-hover:text-[#176B87]
-                sm:text-2xl
-              "
-            >
-              {job.title}
-            </h3>
-
-            <p className="mt-1 text-xs font-bold text-[#B07B10]">
-              {job.department}
-            </p>
-
-            <div
-              className="
-                mt-6
-                grid
-                gap-3
-                sm:grid-cols-2
-                xl:grid-cols-4
-              "
-            >
-
-              <JobMeta
-                icon={<MapPin size={13} />}
-                label="Location"
-                value={job.location}
-              />
-
-              <JobMeta
-                icon={<Building2 size={13} />}
-                label="Department"
-                value={job.department}
-              />
-
-              <JobMeta
-                icon={<GraduationCap size={13} />}
-                label="Qualification"
-                value={job.qualification}
-              />
-
-              <JobMeta
-                icon={<Clock3 size={13} />}
-                label="Experience"
-                value={job.experience}
-              />
-
-            </div>
+            <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-600">
+              {job.employmentType ||
+                "Full Time"}
+            </span>
 
           </div>
 
-          <div
-            className="
-              flex
-              shrink-0
-              flex-col
-              gap-2
-              sm:flex-row
-              lg:flex-col
-            "
-          >
+          <h3 className="mt-4 text-xl font-black tracking-tight text-slate-900 sm:text-2xl">
+            {getTitle(job)}
+          </h3>
 
-            <Link
-              href={`/careers/apply?jobId=${encodeURIComponent(
-                job.id
-              )}`}
-              className="
-                inline-flex
-                items-center
-                justify-center
-                gap-2
-                rounded-xl
-                bg-[#102A43]
-                px-5
-                py-3
-                text-[10px]
-                font-black
-                text-white
-                shadow-lg
-                transition-all
-                hover:-translate-y-0.5
-                hover:bg-[#176B87]
-              "
-            >
-              Apply Now
-              <ArrowRight size={13} />
-            </Link>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+            {job.description ||
+              "Join our mission-driven team and contribute to meaningful community development programs."}
+          </p>
 
-            <span
-              className="
-                text-center
-                text-[8px]
-                font-bold
-                text-[#9AA7B0]
-              "
-            >
-              Official Application
+          <div className="mt-4 flex flex-wrap gap-4 text-xs font-semibold text-slate-500">
+
+            <span className="inline-flex items-center gap-1.5">
+              <MapPin className="h-3.5 w-3.5" />
+              {job.location || "Bihar"}
+            </span>
+
+            <span className="inline-flex items-center gap-1.5">
+              <Clock3 className="h-3.5 w-3.5" />
+              {job.experience ||
+                "Experience as per role"}
+            </span>
+
+            <span className="inline-flex items-center gap-1.5 text-red-600">
+              <CalendarDays className="h-3.5 w-3.5" />
+              Last Date: {getDeadline(job)}
             </span>
 
           </div>
 
         </div>
 
-      </div>
+        <div className="flex shrink-0 flex-col gap-2 sm:flex-row lg:flex-col">
 
-      <div
-        className="
-          flex
-          items-center
-          gap-2
-          border-t
-          border-[#EDF2F4]
-          bg-[#FBFCFD]
-          px-5
-          py-3
-          text-[8px]
-          font-bold
-          text-[#8997A2]
-          sm:px-6
-          lg:px-7
-        "
-      >
-        <CheckCircle2
-          size={11}
-          className="text-[#2EBD85]"
-        />
+          <button
+            type="button"
+            onClick={onView}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0b5264] px-5 py-3 text-sm font-black text-white transition hover:bg-[#083f4d]"
+          >
+            View Details
+            <ChevronRight className="h-4 w-4" />
+          </button>
 
-        Applications are reviewed against the requirements of this vacancy.
+          <Link
+            href={`/careers/apply?jobId=${encodeURIComponent(
+              jobId
+            )}&jobTitle=${encodeURIComponent(
+              getTitle(job)
+            )}`}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-3 text-sm font-black text-slate-700 transition hover:border-amber-300 hover:bg-amber-50"
+          >
+            Apply Now
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+
+        </div>
+
       </div>
 
     </article>
@@ -1176,114 +1123,42 @@ function JobCard({
 }
 
 /* =========================================================
-   JOB META
+   INFO BOX
 ========================================================= */
 
-function JobMeta({
-  icon,
+function InfoBox({
+  icon: Icon,
   label,
   value,
+  highlight = false,
 }: {
-  icon: React.ReactNode;
+  icon: typeof CalendarDays;
   label: string;
   value: string;
+  highlight?: boolean;
 }) {
   return (
     <div
-      className="
-        rounded-xl
-        border
-        border-[#E5ECEF]
-        bg-[#F8FAFB]
-        p-3
-      "
+      className={`rounded-2xl border p-4 ${
+        highlight
+          ? "border-red-100 bg-red-50"
+          : "border-slate-200 bg-slate-50"
+      }`}
     >
-
-      <div className="flex items-center gap-2">
-
-        <span className="text-[#176B87]">
-          {icon}
-        </span>
-
-        <span
-          className="
-            text-[7px]
-            font-black
-            uppercase
-            tracking-[0.14em]
-            text-[#9AA7B0]
-          "
-        >
-          {label}
-        </span>
-
-      </div>
-
-      <p
-        className="
-          mt-2
-          text-[10px]
-          font-bold
-          leading-4
-          text-[#526575]
-        "
-      >
-        {value}
-      </p>
-
-    </div>
-  );
-}
-
-/* =========================================================
-   IMPACT CARD
-========================================================= */
-
-function ImpactCard({
-  icon,
-  title,
-  text,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  text: string;
-}) {
-  return (
-    <div
-      className="
-        rounded-[1.25rem]
-        border
-        border-white/10
-        bg-white/[0.05]
-        p-5
-        transition
-        hover:bg-white/[0.08]
-      "
-    >
-
       <div
-        className="
-          flex
-          h-10
-          w-10
-          items-center
-          justify-center
-          rounded-xl
-          bg-[#F2C94C]/10
-          text-[#F2C94C]
-        "
+        className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-wider ${
+          highlight
+            ? "text-red-600"
+            : "text-slate-500"
+        }`}
       >
-        {icon}
+        <Icon className="h-3.5 w-3.5" />
+        {label}
       </div>
 
-      <h3 className="mt-4 text-sm font-black text-white">
-        {title}
-      </h3>
-
-      <p className="mt-2 text-[10px] leading-5 text-white/40">
-        {text}
-      </p>
-
+      <div className="mt-2 text-sm font-black text-slate-900">
+        {value}
+      </div>
     </div>
   );
 }

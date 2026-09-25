@@ -1,112 +1,41 @@
-const path = require("path");
-const dotenv = require("dotenv");
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 
-dotenv.config({
-  path: path.resolve(process.cwd(), ".env.local"),
-});
+const MONGODB_URI = process.env.MONGODB_URI;
 
-if (!process.env.MONGODB_URI) {
-  throw new Error("MONGODB_URI is missing in .env.local");
-}
+async function resetAdmin() {
+  try {
+    if (!MONGODB_URI) {
+      throw new Error("MONGODB_URI is missing");
+    }
 
-const EMAIL = "admin@ajftrust.org";
-const PASSWORD = "ArikaSoft@#$2026";
+    await mongoose.connect(MONGODB_URI);
 
-async function main() {
-  console.log("Connecting to MongoDB...");
+    const db = mongoose.connection.db;
 
-  await mongoose.connect(process.env.MONGODB_URI);
+    const password = "Ajft@2026";
+    const passwordHash = await bcrypt.hash(password, 12);
 
-  console.log("MongoDB connected.");
-  console.log("Database:", mongoose.connection.db.databaseName);
-  console.log("Collection: admins");
-
-  const admins = mongoose.connection.db.collection("admins");
-
-  const passwordHash = await bcrypt.hash(PASSWORD, 12);
-
-  const existingAdmin = await admins.findOne({
-    email: EMAIL,
-  });
-
-  if (existingAdmin) {
-    await admins.updateOne(
-      { _id: existingAdmin._id },
+    const result = await db.collection("admins").updateOne(
+      { email: "admin@ajftrust.org" },
       {
         $set: {
           passwordHash,
-          role: "admin",
           active: true,
+          role: "admin",
           updatedAt: new Date(),
         },
       }
     );
 
-    console.log("");
-    console.log("==============================");
-    console.log("ADMIN PASSWORD RESET SUCCESS");
-    console.log("==============================");
-    console.log("Email:", EMAIL);
-    console.log("Role: admin");
-    console.log("Active: true");
-    console.log("==============================");
-  } else {
-    const result = await admins.insertOne({
-      name: "AJFT Administrator",
-      email: EMAIL,
-      passwordHash,
-      role: "admin",
-      active: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
+    console.log("Matched:", result.matchedCount);
+    console.log("Updated:", result.modifiedCount);
 
-    console.log("");
-    console.log("==============================");
-    console.log("ADMIN CREATED SUCCESSFULLY");
-    console.log("==============================");
-    console.log("Inserted ID:", result.insertedId.toString());
-    console.log("Email:", EMAIL);
-    console.log("Role: admin");
-    console.log("Active: true");
-    console.log("==============================");
+    await mongoose.disconnect();
+  } catch (error) {
+    console.error(error);
+    process.exit(1);
   }
-
-  const verify = await admins.findOne(
-    { email: EMAIL },
-    {
-      projection: {
-        email: 1,
-        role: 1,
-        active: 1,
-        passwordHash: 1,
-      },
-    }
-  );
-
-  console.log("");
-  console.log("DATABASE VERIFICATION:");
-  console.log({
-    email: verify?.email,
-    role: verify?.role,
-    active: verify?.active,
-    hasPasswordHash: !!verify?.passwordHash,
-  });
-
-  await mongoose.disconnect();
-  console.log("MongoDB disconnected.");
 }
 
-main().catch(async (error) => {
-  console.error("");
-  console.error("ADMIN SETUP FAILED");
-  console.error(error);
-
-  try {
-    await mongoose.disconnect();
-  } catch {}
-
-  process.exit(1);
-});
+resetAdmin();
