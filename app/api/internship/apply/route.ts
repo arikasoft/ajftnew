@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import InternshipApplication from "@/models/InternshipApplication";
 import { generateApplicationId } from "@/lib/application-id";
 import { generateInternshipApplicationPDF } from "@/lib/internship-pdf";
-import { sendInternshipApplicationEmail } from "@/lib/mail";
+import { sendInternshipApplicationEmail } from "@/lib/email";
 
 export async function POST(request: Request) {
   try {

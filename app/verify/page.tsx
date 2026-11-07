@@ -329,17 +329,14 @@ export default function VerifyPage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#062A36] px-4">
-        <div className="w-full max-w-md rounded-2xl bg-white p-8 text-center shadow-2xl">
-          <Loader2 className="mx-auto h-10 w-10 animate-spin text-[#087443]" />
-
-          <h1 className="mt-4 text-xl font-bold text-[#073B4C]">
-            Verifying Donation
-          </h1>
-
-          <p className="mt-2 text-sm text-slate-500">
-            Checking official donation records...
-          </p>
+      <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-[#250D36] via-[#581744] to-[#8A3A35] px-4 py-8">
+        <DiwaliDecor />
+        <div className="relative z-10 w-full max-w-md rounded-3xl border border-amber-300/50 bg-[#FFF9E9] p-8 text-center shadow-[0_20px_70px_rgba(0,0,0,.35)]">
+          <div className="mb-4 text-3xl">🪔 ✨ 🪔</div>
+          <Loader2 className="mx-auto h-10 w-10 animate-spin text-amber-600" />
+          <h1 className="mt-4 text-xl font-bold text-[#5A1748]">Verifying Donation</h1>
+          <p className="mt-2 text-sm text-slate-600">Checking official donation records...</p>
+          <p className="mt-5 text-xs font-semibold text-amber-700">ANAND JIVAN FOUNDATION TRUST</p>
         </div>
       </main>
     );
@@ -351,17 +348,18 @@ export default function VerifyPage() {
 
   if (donation) {
     return (
-      <main className="min-h-screen bg-[#F3F6F7] px-4 py-8">
-        <div className="mx-auto max-w-5xl">
+      <main className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#FFF8E7] via-[#FFFDF6] to-[#FCE8D5] px-4 py-8">
+        <DiwaliDecor />
+        <div className="relative z-10 mx-auto max-w-5xl">
 
           {/* HEADER */}
 
-          <div className="overflow-hidden rounded-2xl bg-white shadow-xl">
+          <div className="overflow-hidden rounded-2xl border border-amber-200 bg-white shadow-xl">
 
-            <div className="bg-[#062A36] p-5">
+            <div className="bg-gradient-to-r from-[#35103F] via-[#641B4B] to-[#8A3A35] p-5">
               <div className="flex items-center gap-4">
 
-                <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-[#D4AF37] bg-white p-1">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-amber-300 bg-white p-1">
                   <img
                     src="/images/ajft-logo.png"
                     alt="Anand Jivan Foundation Trust"
@@ -374,7 +372,7 @@ export default function VerifyPage() {
                     ANAND JIVAN FOUNDATION TRUST
                   </h1>
 
-                  <p className="mt-1 text-xs font-semibold text-[#D4AF37]">
+                  <p className="mt-1 text-xs font-semibold text-amber-200">
                     OFFICIAL DONATION VERIFICATION
                   </p>
 
@@ -391,7 +389,7 @@ export default function VerifyPage() {
 
             {/* VERIFIED BAR */}
 
-            <div className="flex flex-col gap-3 bg-[#EEF8F3] p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 bg-amber-50 p-5 sm:flex-row sm:items-center sm:justify-between">
 
               <div className="flex items-center gap-3">
 
@@ -409,7 +407,7 @@ export default function VerifyPage() {
 
               </div>
 
-              <span className="w-fit rounded-full bg-emerald-600 px-4 py-2 text-xs font-bold text-white">
+              <span className="w-fit rounded-full bg-gradient-to-r from-emerald-600 to-green-700 px-4 py-2 text-xs font-bold text-white">
                 VERIFIED
               </span>
 
@@ -480,13 +478,13 @@ export default function VerifyPage() {
 
             <Card title="Donation Information">
 
-              <div className="mb-4 rounded-xl bg-[#EEF8F3] p-4">
+              <div className="mb-4 rounded-xl bg-amber-50 p-4">
 
                 <p className="text-xs font-bold text-slate-500">
                   DONATION AMOUNT
                 </p>
 
-                <p className="mt-1 text-3xl font-black text-[#00695C]">
+                <p className="mt-1 text-3xl font-black text-[#8A4B08]">
                   {formatMoney(
                     donation.amount,
                     donation.currency
@@ -524,23 +522,23 @@ export default function VerifyPage() {
 
               <div className="grid gap-3 md:grid-cols-2">
 
-                <div className="rounded-xl bg-slate-50 p-4">
+                <div className="rounded-xl bg-[#FFF9ED] p-4">
                   <p className="text-[10px] font-bold text-slate-400">
                     RAZORPAY PAYMENT ID
                   </p>
 
-                  <p className="mt-2 break-all font-mono text-xs font-bold text-[#073B4C]">
+                  <p className="mt-2 break-all font-mono text-xs font-bold text-[#541843]">
                     {donation.paymentId ||
                       "—"}
                   </p>
                 </div>
 
-                <div className="rounded-xl bg-slate-50 p-4">
+                <div className="rounded-xl bg-[#FFF9ED] p-4">
                   <p className="text-[10px] font-bold text-slate-400">
                     RAZORPAY ORDER ID
                   </p>
 
-                  <p className="mt-2 break-all font-mono text-xs font-bold text-[#073B4C]">
+                  <p className="mt-2 break-all font-mono text-xs font-bold text-[#541843]">
                     {donation.razorpayOrderId ||
                       donation.orderId ||
                       "—"}
@@ -561,7 +559,7 @@ export default function VerifyPage() {
               onClick={
                 downloadReceipt
               }
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#087443] text-sm font-bold text-white shadow-md transition hover:bg-[#075C36]"
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#8A3A35] via-[#A34A27] to-[#B7791F] text-sm font-bold text-white shadow-md transition hover:brightness-110"
             >
               <Download className="h-5 w-5" />
               Download Official Receipt
@@ -570,7 +568,7 @@ export default function VerifyPage() {
           </div>
 
           <footer className="py-6 text-center">
-            <p className="text-sm font-bold text-[#073B4C]">
+            <p className="text-sm font-bold text-[#541843]">
               ANAND JIVAN FOUNDATION TRUST
             </p>
 
@@ -589,15 +587,15 @@ export default function VerifyPage() {
   // =========================================================
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#062A36] px-4 py-10">
-
-      <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-[#250D36] via-[#581744] to-[#8A3A35] px-4 py-6 sm:px-6">
+      <DiwaliDecor />
+      <div className="relative z-10 my-auto w-full max-w-lg overflow-hidden rounded-3xl border border-amber-300/60 bg-[#FFFDF6] shadow-[0_25px_80px_rgba(0,0,0,.4)]">
 
         {/* HEADER */}
 
-        <div className="bg-[#062A36] px-6 py-7 text-center">
+        <div className="relative bg-gradient-to-r from-[#35103F] via-[#641B4B] to-[#8A3A35] px-6 py-5 text-center">
 
-          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border-2 border-[#D4AF37] bg-white p-2">
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border-2 border-amber-300 bg-white p-2">
             <img
               src="/images/ajft-logo.png"
               alt="AJFT"
@@ -609,7 +607,7 @@ export default function VerifyPage() {
             ANAND JIVAN FOUNDATION TRUST
           </h1>
 
-          <p className="mt-1 text-xs font-semibold text-[#D4AF37]">
+          <p className="mt-1 text-xs font-semibold text-amber-200">
             DONATION RECEIPT VERIFICATION
           </p>
 
@@ -617,7 +615,7 @@ export default function VerifyPage() {
 
         {/* FORM */}
 
-        <div className="p-6">
+        <div className="p-5 sm:p-6">
 
           {error && (
             <div className="mb-4 flex gap-3 rounded-xl border border-red-200 bg-red-50 p-4">
@@ -631,14 +629,14 @@ export default function VerifyPage() {
             </div>
           )}
 
-          <div className="mb-5 rounded-xl bg-[#EEF5F8] p-4">
+          <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4">
 
             <div className="flex gap-3">
 
-              <ShieldCheck className="h-6 w-6 shrink-0 text-[#087443]" />
+              <ShieldCheck className="h-6 w-6 shrink-0 text-amber-700" />
 
               <div>
-                <p className="text-sm font-bold text-[#073B4C]">
+                <p className="text-sm font-bold text-[#541843]">
                   Verify Donation Receipt
                 </p>
 
@@ -658,6 +656,9 @@ export default function VerifyPage() {
           </label>
 
           <input
+            autoFocus
+            aria-label="Receipt Number or Donation ID"
+            autoComplete="off"
             value={identifier}
             onChange={(e) =>
               setIdentifier(
@@ -672,7 +673,7 @@ export default function VerifyPage() {
               }
             }}
             placeholder="AJFT-2026-XXXXXXXX"
-            className="mt-2 h-12 w-full rounded-xl border border-slate-300 px-4 text-sm font-semibold text-[#073B4C] outline-none transition focus:border-[#087443] focus:ring-2 focus:ring-[#087443]/10"
+            className="mt-2 h-12 w-full rounded-xl border border-amber-300 bg-white px-4 text-sm font-semibold text-[#541843] outline-none transition placeholder:text-slate-400 focus:border-amber-600 focus:ring-2 focus:ring-amber-300/40"
           />
 
           <button
@@ -683,7 +684,7 @@ export default function VerifyPage() {
             disabled={
               !identifier.trim()
             }
-            className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#087443] text-sm font-bold text-white transition hover:bg-[#075C36] disabled:cursor-not-allowed disabled:opacity-50"
+            className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-300 via-orange-300 to-amber-400 text-sm font-black text-[#541843] shadow-sm transition hover:brightness-105 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Search className="h-5 w-5" />
             Verify Receipt
@@ -693,7 +694,7 @@ export default function VerifyPage() {
 
             <Link
               href="/"
-              className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 text-sm font-bold text-[#073B4C]"
+              className="flex h-11 items-center justify-center gap-2 rounded-xl border border-amber-300 bg-white text-sm font-bold text-[#541843] transition hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/50"
             >
               <Home className="h-4 w-4" />
               Home
@@ -701,17 +702,34 @@ export default function VerifyPage() {
 
             <Link
               href="/donate"
-              className="flex h-11 items-center justify-center text-sm font-bold text-[#073B4C]"
+              className="flex h-11 items-center justify-center rounded-xl border border-amber-200 text-sm font-bold text-[#541843] transition hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/50"
             >
               Donate
             </Link>
 
           </div>
 
+          <p className="mt-4 text-center text-[10px] font-semibold text-amber-700">🪔 Happy Diwali • Spreading Light • Serving Humanity 🪔</p>
+
         </div>
 
       </div>
     </main>
+  );
+}
+
+function DiwaliDecor() {
+  return (
+    <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+      <div className="absolute -left-20 top-8 h-64 w-64 rounded-full bg-orange-400/20 blur-[90px]" />
+      <div className="absolute -right-20 bottom-8 h-72 w-72 rounded-full bg-amber-300/20 blur-[100px]" />
+      <div className="absolute left-[5%] top-[8%] text-4xl drop-shadow-[0_0_16px_rgba(251,191,36,.8)]">🪔</div>
+      <div className="absolute right-[5%] top-[8%] text-4xl drop-shadow-[0_0_16px_rgba(251,191,36,.8)]">🪔</div>
+      <div className="absolute bottom-[8%] left-[8%] text-3xl">🌸</div>
+      <div className="absolute bottom-[8%] right-[8%] text-3xl">🌺</div>
+      <div className="absolute left-[24%] top-[18%] text-xl">✨</div>
+      <div className="absolute right-[24%] bottom-[20%] text-xl">✨</div>
+    </div>
   );
 }
 
@@ -732,7 +750,7 @@ function Info({
         {title}
       </p>
 
-      <p className="mt-2 truncate text-sm font-bold text-[#073B4C]">
+      <p className="mt-2 truncate text-sm font-bold text-[#541843]">
         {value || "—"}
       </p>
     </div>
@@ -755,7 +773,7 @@ function Card({
 
       <div className="border-b bg-slate-50 px-5 py-3">
 
-        <h2 className="text-sm font-bold text-[#073B4C]">
+        <h2 className="text-sm font-bold text-[#541843]">
           {title}
         </h2>
 

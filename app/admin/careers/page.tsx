@@ -6,6 +6,33 @@ import {
   useMemo,
   useState,
 } from "react";
+import {
+  Search,
+  RefreshCw,
+  Eye,
+  FileText,
+  Download,
+  Mail,
+  Phone,
+  MapPin,
+  CalendarDays,
+  BriefcaseBusiness,
+  GraduationCap,
+  UserRound,
+  X,
+  CheckCircle2,
+  Clock3,
+  ShieldCheck,
+  Users,
+  ChevronDown,
+  Filter,
+  Building2,
+  ClipboardCheck,
+  UserCheck,
+  FileCheck2,
+  Award,
+  Send,
+} from "lucide-react";
 
 type Application = {
   _id?: string;
@@ -52,7 +79,6 @@ type Application = {
 
   status?: string;
   stage?: string;
-
   adminRemarks?: string;
 
   approvedAt?: string | null;
@@ -70,93 +96,85 @@ type Application = {
 const STAGES = [
   {
     number: 1,
-    title: "Application Submitted",
+    label: "Application Submitted",
     short: "Submitted",
-    description:
-      "Application successfully received.",
+    icon: ClipboardCheck,
   },
   {
     number: 2,
-    title: "Under Review",
+    label: "Under Review",
     short: "Review",
-    description:
-      "Application is under recruitment review.",
+    icon: Eye,
   },
   {
     number: 3,
-    title: "Shortlisted",
+    label: "Shortlisted",
     short: "Shortlisted",
-    description:
-      "Candidate has been shortlisted.",
+    icon: UserCheck,
   },
   {
     number: 4,
-    title: "Interview",
+    label: "Interview",
     short: "Interview",
-    description:
-      "Interview or assessment stage.",
+    icon: CalendarDays,
   },
   {
     number: 5,
-    title: "Selected",
+    label: "Selected",
     short: "Selected",
-    description:
-      "Candidate selected for the position.",
+    icon: Award,
   },
   {
     number: 6,
-    title: "Document Verification",
+    label: "Document Verification",
     short: "Verification",
-    description:
-      "Candidate documents are being verified.",
+    icon: FileCheck2,
   },
   {
     number: 7,
-    title: "Appointment",
+    label: "Appointment",
     short: "Appointment",
-    description:
-      "Appointment and joining formalities.",
+    icon: ShieldCheck,
   },
-];
+] as const;
 
-function getStageNumber(application: Application) {
-  const stage = String(
-    application.stage || ""
-  ).toLowerCase();
+function getStageNumber(stage?: string) {
+  if (!stage) return 1;
 
-  const status = String(
-    application.status || ""
-  ).toLowerCase();
+  const normalized = stage.toLowerCase();
 
   if (
-    stage.includes("appointment") ||
-    status.includes("appointment")
-  )
+    normalized.includes("appointment") ||
+    normalized.includes("joined")
+  ) {
     return 7;
+  }
 
   if (
-    stage.includes("verification") ||
-    stage.includes("document")
-  )
+    normalized.includes("verification") ||
+    normalized.includes("document")
+  ) {
     return 6;
+  }
 
-  if (
-    stage.includes("selected") ||
-    status.includes("selected")
-  )
+  if (normalized.includes("selected")) {
     return 5;
+  }
 
-  if (stage.includes("interview"))
+  if (normalized.includes("interview")) {
     return 4;
+  }
 
-  if (stage.includes("shortlisted"))
+  if (normalized.includes("shortlisted")) {
     return 3;
+  }
 
   if (
-    stage.includes("review") ||
-    status.includes("review")
-  )
+    normalized.includes("review") ||
+    normalized.includes("under review")
+  ) {
     return 2;
+  }
 
   return 1;
 }
@@ -166,8 +184,9 @@ function formatDate(value?: string | null) {
 
   const date = new Date(value);
 
-  if (Number.isNaN(date.getTime()))
-    return "—";
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
 
   return date.toLocaleDateString("en-IN", {
     day: "2-digit",
@@ -176,37 +195,102 @@ function formatDate(value?: string | null) {
   });
 }
 
+function formatDateTime(value?: string | null) {
+  if (!value) return "—";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 function safe(value?: string | null) {
-  return value?.trim() || "—";
+  return value?.trim() ? value : "—";
+}
+
+function getDocumentUrl(value?: string) {
+  if (!value) return "";
+
+  if (
+    value.startsWith("http://") ||
+    value.startsWith("https://") ||
+    value.startsWith("/")
+  ) {
+    return value;
+  }
+
+  return `/${value.replace(/^\/+/, "")}`;
+}
+
+function getStageColor(stageNumber: number) {
+  if (stageNumber === 7) {
+    return "border-green-600 bg-green-50 text-green-700";
+  }
+
+  if (stageNumber === 6) {
+    return "border-indigo-600 bg-indigo-50 text-indigo-700";
+  }
+
+  if (stageNumber === 5) {
+    return "border-emerald-600 bg-emerald-50 text-emerald-700";
+  }
+
+  if (stageNumber === 4) {
+    return "border-purple-600 bg-purple-50 text-purple-700";
+  }
+
+  if (stageNumber === 3) {
+    return "border-orange-500 bg-orange-50 text-orange-700";
+  }
+
+  if (stageNumber === 2) {
+    return "border-blue-600 bg-blue-50 text-blue-700";
+  }
+
+  return "border-slate-500 bg-slate-50 text-slate-700";
+}
+
+function getStageLabel(stageNumber: number) {
+  return (
+    STAGES.find(
+      (item) => item.number === stageNumber
+    )?.label || "Application Submitted"
+  );
 }
 
 export default function AdminCareersPage() {
   const [applications, setApplications] =
     useState<Application[]>([]);
 
-  const [loading, setLoading] =
-    useState(true);
+  const [loading, setLoading] = useState(true);
 
-  const [selected, setSelected] =
-    useState<Application | null>(null);
+  const [error, setError] = useState("");
 
-  const [updating, setUpdating] =
-    useState(false);
+  const [search, setSearch] = useState("");
 
-  const [error, setError] =
-    useState("");
-
-  const [success, setSuccess] =
-    useState("");
-
-  const [search, setSearch] =
-    useState("");
-
-  const [filterStage, setFilterStage] =
+  const [stageFilter, setStageFilter] =
     useState("all");
 
-  const [remarks, setRemarks] =
+  const [selectedApplication, setSelectedApplication] =
+    useState<Application | null>(null);
+
+  const [updatingId, setUpdatingId] =
+    useState<string | null>(null);
+
+  const [successMessage, setSuccessMessage] =
     useState("");
+
+  const [showFilters, setShowFilters] =
+    useState(false);
 
   const loadApplications = useCallback(
     async () => {
@@ -223,8 +307,7 @@ export default function AdminCareersPage() {
           }
         );
 
-        const result =
-          await response.json();
+        const result = await response.json();
 
         if (
           !response.ok ||
@@ -237,9 +320,7 @@ export default function AdminCareersPage() {
         }
 
         setApplications(
-          Array.isArray(
-            result.applications
-          )
+          Array.isArray(result.applications)
             ? result.applications
             : []
         );
@@ -260,73 +341,102 @@ export default function AdminCareersPage() {
     loadApplications();
   }, [loadApplications]);
 
-  const filteredApplications =
-    useMemo(() => {
-      const query =
-        search.trim().toLowerCase();
+  const filteredApplications = useMemo(() => {
+    const query = search
+      .trim()
+      .toLowerCase();
 
-      return applications.filter(
-        (item) => {
-          const matchesSearch =
-            !query ||
-            [
-              item.applicationId,
-              item.fullName,
-              item.email,
-              item.phone,
-              item.jobTitle,
-            ]
-              .filter(Boolean)
-              .join(" ")
-              .toLowerCase()
-              .includes(query);
-
-          const stageNo =
-            getStageNumber(item);
-
-          const matchesStage =
-            filterStage === "all" ||
-            String(stageNo) ===
-              filterStage;
-
-          return (
-            matchesSearch &&
-            matchesStage
-          );
-        }
+    return applications.filter((application) => {
+      const stageNumber = getStageNumber(
+        application.stage
       );
-    },
-    [
-      applications,
-      search,
-      filterStage,
-    ]);
+
+      const matchesStage =
+        stageFilter === "all" ||
+        String(stageNumber) === stageFilter;
+
+      if (!matchesStage) return false;
+
+      if (!query) return true;
+
+      return [
+        application.applicationId,
+        application.fullName,
+        application.email,
+        application.phone,
+        application.jobTitle,
+        application.department,
+        application.location,
+        application.city,
+        application.district,
+      ]
+        .filter(Boolean)
+        .some((value) =>
+          String(value)
+            .toLowerCase()
+            .includes(query)
+        );
+    });
+  }, [
+    applications,
+    search,
+    stageFilter,
+  ]);
+
+  const statistics = useMemo(() => {
+    const counts = {
+      total: applications.length,
+      submitted: 0,
+      review: 0,
+      shortlisted: 0,
+      interview: 0,
+      selected: 0,
+      verification: 0,
+      appointment: 0,
+    };
+
+    for (const application of applications) {
+      const stage = getStageNumber(
+        application.stage
+      );
+
+      if (stage === 1) counts.submitted++;
+      if (stage === 2) counts.review++;
+      if (stage === 3) counts.shortlisted++;
+      if (stage === 4) counts.interview++;
+      if (stage === 5) counts.selected++;
+      if (stage === 6) counts.verification++;
+      if (stage === 7) counts.appointment++;
+    }
+
+    return counts;
+  }, [applications]);
 
   async function updateStage(
     application: Application,
     stageNumber: number
   ) {
-    if (updating) return;
+    if (!application.applicationId) return;
 
     const stage =
       STAGES.find(
-        (item) =>
-          item.number === stageNumber
+        (item) => item.number === stageNumber
       );
 
     if (!stage) return;
 
-    const confirmed =
-      window.confirm(
-        `Change ${application.fullName || "candidate"} to Stage ${stageNumber} - ${stage.title}?`
-      );
+    const confirmed = window.confirm(
+      `Change ${application.fullName || "candidate"} to Stage ${stageNumber}: ${stage.label}?\n\nThe candidate will receive an email notification if email service is configured.`
+    );
 
     if (!confirmed) return;
 
     try {
-      setUpdating(true);
+      setUpdatingId(
+        application.applicationId
+      );
       setError("");
-      setSuccess("");
+      setSuccessMessage("");
 
       const response = await fetch(
         `/api/admin/careers/${encodeURIComponent(
@@ -340,25 +450,20 @@ export default function AdminCareersPage() {
           },
           credentials: "include",
           body: JSON.stringify({
-            action: "update_stage",
-            stage: stage.title,
+            action: "update-stage",
+            stage: stage.label,
             stageNumber,
-            status: stage.short,
-            adminRemarks:
-              remarks.trim(),
+            status: stage.label,
           }),
         }
       );
 
-      const text =
-        await response.text();
+      const text = await response.text();
 
       let result: any = {};
 
       try {
-        result = text
-          ? JSON.parse(text)
-          : {};
+        result = text ? JSON.parse(text) : {};
       } catch {
         throw new Error(
           "Server returned an invalid response."
@@ -375,46 +480,48 @@ export default function AdminCareersPage() {
         );
       }
 
-      setSuccess(
-        `Stage ${stageNumber} updated successfully.`
-      );
-
-      setApplications((previous) =>
-        previous.map((item) =>
+      setApplications((current) =>
+        current.map((item) =>
           item.applicationId ===
           application.applicationId
             ? {
                 ...item,
-                stage:
-                  stage.title,
+                stage: stage.label,
                 status:
-                  stage.short,
-                adminRemarks:
-                  remarks.trim(),
+                  result.application?.status ||
+                  stage.label,
+                approvedAt:
+                  result.application
+                    ?.approvedAt ??
+                  item.approvedAt,
                 updatedAt:
+                  result.application
+                    ?.updatedAt ??
                   new Date().toISOString(),
               }
             : item
         )
       );
 
-      setSelected((previous) =>
-        previous
+      setSelectedApplication((current) =>
+        current?.applicationId ===
+        application.applicationId
           ? {
-              ...previous,
-              stage:
-                stage.title,
+              ...current,
+              stage: stage.label,
               status:
-                stage.short,
-              adminRemarks:
-                remarks.trim(),
+                result.application?.status ||
+                stage.label,
               updatedAt:
+                result.application?.updatedAt ??
                 new Date().toISOString(),
             }
-          : null
+          : current
       );
 
-      setRemarks("");
+      setSuccessMessage(
+        `Stage ${stageNumber} — ${stage.label} updated successfully.`
+      );
     } catch (err) {
       setError(
         err instanceof Error
@@ -422,162 +529,299 @@ export default function AdminCareersPage() {
           : "Unable to update recruitment stage."
       );
     } finally {
-      setUpdating(false);
+      setUpdatingId(null);
     }
   }
-
-  const stats = useMemo(() => {
-    const result = {
-      total: applications.length,
-      submitted: 0,
-      review: 0,
-      shortlisted: 0,
-      interview: 0,
-      selected: 0,
-      verification: 0,
-      appointment: 0,
-    };
-
-    applications.forEach(
-      (application) => {
-        const no =
-          getStageNumber(application);
-
-        if (no === 1) result.submitted++;
-        if (no === 2) result.review++;
-        if (no === 3)
-          result.shortlisted++;
-        if (no === 4)
-          result.interview++;
-        if (no === 5)
-          result.selected++;
-        if (no === 6)
-          result.verification++;
-        if (no === 7)
-          result.appointment++;
-      }
-    );
-
-    return result;
-  }, [applications]);
 
   return (
     <main className="min-h-screen bg-slate-100 text-slate-800">
       {/* =====================================================
-          GOVERNMENT HEADER
-      ===================================================== */}
+          OFFICIAL TOP BAR
+      ====================================================== */}
+      <div className="border-b border-slate-300 bg-[#071d49] text-white">
+        <div className="mx-auto flex max-w-[1800px] items-center justify-between px-4 py-2 text-xs sm:px-6 lg:px-8">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold tracking-wide">
+              ANAND JIVAN FOUNDATION TRUST
+            </span>
+            <span className="hidden text-slate-300 sm:inline">
+              |
+            </span>
+            <span className="hidden sm:inline">
+              Recruitment Administration
+            </span>
+          </div>
 
-      <header className="border-b-4 border-amber-400 bg-[#12355b] text-white shadow-lg">
-        <div className="mx-auto max-w-[1600px] px-5 py-4">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="hidden items-center gap-4 md:flex">
+            <span>Official Recruitment Portal</span>
+            <span>•</span>
+            <span>Admin Panel</span>
+          </div>
+        </div>
+      </div>
+
+      {/* =====================================================
+          HEADER
+      ====================================================== */}
+      <header className="border-b-4 border-orange-500 bg-white shadow-sm">
+        <div className="mx-auto flex max-w-[1800px] items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-[#071d49] text-white shadow-md">
+              <Building2 size={30} />
+            </div>
+
             <div>
-              <div className="mb-1 text-[11px] font-bold uppercase tracking-[0.25em] text-amber-300">
-                Official Recruitment Administration
-              </div>
-
-              <h1 className="text-2xl font-black md:text-3xl">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-600">
                 Anand Jivan Foundation Trust
+              </p>
+
+              <h1 className="text-xl font-extrabold text-[#071d49] sm:text-2xl">
+                Recruitment Administration
               </h1>
 
-              <p className="mt-1 text-sm text-blue-100">
-                Recruitment & Career Management Portal
+              <p className="text-xs text-slate-500 sm:text-sm">
+                Candidate Application Management System
+              </p>
+            </div>
+          </div>
+
+          <div className="hidden items-center gap-3 lg:flex">
+            <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-right">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-green-700">
+                System Status
+              </p>
+              <p className="flex items-center justify-end gap-1 text-sm font-bold text-green-800">
+                <span className="h-2 w-2 rounded-full bg-green-500" />
+                Operational
               </p>
             </div>
 
-            <div className="rounded-lg border border-white/20 bg-white/10 px-5 py-3 text-right">
-              <div className="text-[10px] font-bold uppercase tracking-widest text-blue-200">
-                Administrative Panel
-              </div>
-
-              <div className="mt-1 text-sm font-bold">
-                Recruitment Cell
-              </div>
-            </div>
+            <button
+              type="button"
+              onClick={loadApplications}
+              disabled={loading}
+              className="inline-flex items-center gap-2 rounded-lg bg-[#071d49] px-4 py-3 text-sm font-bold text-white shadow transition hover:bg-[#0b2b67] disabled:opacity-60"
+            >
+              <RefreshCw
+                size={17}
+                className={
+                  loading
+                    ? "animate-spin"
+                    : ""
+                }
+              />
+              Refresh
+            </button>
           </div>
         </div>
       </header>
 
-      <div className="mx-auto max-w-[1600px] px-4 py-5 md:px-6">
-        {/* ===================================================
-            ALERTS
-        =================================================== */}
-
-        {error && (
-          <div className="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
-            {error}
-          </div>
-        )}
-
-        {success && (
-          <div className="mb-4 rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
-            ✓ {success}
-          </div>
-        )}
+      {/* =====================================================
+          MAIN
+      ====================================================== */}
+      <div className="mx-auto max-w-[1800px] px-4 py-5 sm:px-6 lg:px-8">
+        {/* Breadcrumb */}
+        <div className="mb-5 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+          <span>Administration</span>
+          <span>/</span>
+          <span>Human Resources</span>
+          <span>/</span>
+          <span className="font-bold text-[#071d49]">
+            Career Applications
+          </span>
+        </div>
 
         {/* ===================================================
             STATISTICS
-        =================================================== */}
-
-        <section className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8">
-          <Stat
-            title="Total"
-            value={stats.total}
-            color="navy"
+        ==================================================== */}
+        <section className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8">
+          <StatCard
+            label="Total"
+            value={statistics.total}
+            icon={Users}
+            active
           />
 
-          <Stat
-            title="Submitted"
-            value={stats.submitted}
-            color="blue"
+          <StatCard
+            label="Submitted"
+            value={statistics.submitted}
+            icon={ClipboardCheck}
           />
 
-          <Stat
-            title="Review"
-            value={stats.review}
-            color="amber"
+          <StatCard
+            label="Review"
+            value={statistics.review}
+            icon={Eye}
           />
 
-          <Stat
-            title="Shortlisted"
-            value={stats.shortlisted}
-            color="violet"
+          <StatCard
+            label="Shortlisted"
+            value={statistics.shortlisted}
+            icon={UserCheck}
           />
 
-          <Stat
-            title="Interview"
-            value={stats.interview}
-            color="cyan"
+          <StatCard
+            label="Interview"
+            value={statistics.interview}
+            icon={CalendarDays}
           />
 
-          <Stat
-            title="Selected"
-            value={stats.selected}
-            color="emerald"
+          <StatCard
+            label="Selected"
+            value={statistics.selected}
+            icon={Award}
           />
 
-          <Stat
-            title="Verification"
-            value={stats.verification}
-            color="orange"
+          <StatCard
+            label="Verification"
+            value={statistics.verification}
+            icon={FileCheck2}
           />
 
-          <Stat
-            title="Appointment"
-            value={stats.appointment}
-            color="green"
+          <StatCard
+            label="Appointment"
+            value={statistics.appointment}
+            icon={ShieldCheck}
           />
         </section>
 
         {/* ===================================================
-            TOOLBAR
-        =================================================== */}
+            ALERTS
+        ==================================================== */}
+        {successMessage && (
+          <div className="mb-5 flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-800">
+            <CheckCircle2 size={20} />
+            {successMessage}
+          </div>
+        )}
 
-        <section className="mt-5 rounded-xl border border-slate-300 bg-white p-4 shadow-sm">
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
-            <div className="flex-1">
-              <label className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                Search Candidate
-              </label>
+        {error && (
+          <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+            {error}
+          </div>
+        )}
+
+        {/* ===================================================
+            STAGE FILTER BAR
+        ==================================================== */}
+        <section className="mb-5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-200 bg-[#f8fafc] px-4 py-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-base font-extrabold text-[#071d49]">
+                  Recruitment Stage Control
+                </h2>
+                <p className="text-xs text-slate-500">
+                  Select a stage to filter candidate applications.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setShowFilters(
+                    (value) => !value
+                  )
+                }
+                className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 lg:hidden"
+              >
+                <Filter size={15} />
+                Filters
+              </button>
+            </div>
+          </div>
+
+          <div
+            className={`grid grid-cols-2 gap-2 p-3 sm:grid-cols-4 lg:grid-cols-8 ${
+              showFilters
+                ? "block"
+                : "hidden lg:grid"
+            }`}
+          >
+            <button
+              type="button"
+              onClick={() =>
+                setStageFilter("all")
+              }
+              className={`rounded-xl border px-3 py-3 text-left transition ${
+                stageFilter === "all"
+                  ? "border-[#071d49] bg-[#071d49] text-white shadow"
+                  : "border-slate-200 bg-white hover:border-slate-400"
+              }`}
+            >
+              <span className="block text-[10px] font-bold uppercase">
+                All
+              </span>
+              <span className="mt-1 block text-xl font-black">
+                {statistics.total}
+              </span>
+            </button>
+
+            {STAGES.map((stage) => {
+              const Icon = stage.icon;
+
+              const count = [
+                statistics.submitted,
+                statistics.review,
+                statistics.shortlisted,
+                statistics.interview,
+                statistics.selected,
+                statistics.verification,
+                statistics.appointment,
+              ][stage.number - 1];
+
+              const active =
+                stageFilter ===
+                String(stage.number);
+
+              return (
+                <button
+                  key={stage.number}
+                  type="button"
+                  onClick={() =>
+                    setStageFilter(
+                      String(stage.number)
+                    )
+                  }
+                  className={`group rounded-xl border px-3 py-3 text-left transition ${
+                    active
+                      ? getStageColor(
+                          stage.number
+                        ) +
+                        " shadow-md"
+                      : "border-slate-200 bg-white hover:border-slate-400"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/80 text-xs font-black">
+                      {stage.number}
+                    </span>
+                    <Icon size={16} />
+                  </div>
+
+                  <span className="mt-2 block truncate text-[10px] font-bold uppercase">
+                    {stage.short}
+                  </span>
+
+                  <span className="block text-lg font-black">
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* ===================================================
+            SEARCH
+        ==================================================== */}
+        <section className="mb-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="relative w-full lg:max-w-2xl">
+              <Search
+                size={18}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+              />
 
               <input
                 value={search}
@@ -586,848 +830,1150 @@ export default function AdminCareersPage() {
                     event.target.value
                   )
                 }
-                placeholder="Application ID / Name / Email / Mobile / Job Title"
-                className="h-11 w-full rounded-lg border border-slate-300 bg-slate-50 px-4 text-sm outline-none transition focus:border-[#12355b] focus:bg-white focus:ring-2 focus:ring-blue-100"
+                placeholder="Search Application ID, candidate, mobile, email, job..."
+                className="h-12 w-full rounded-xl border border-slate-300 bg-slate-50 pl-11 pr-4 text-sm font-medium outline-none transition focus:border-[#071d49] focus:bg-white focus:ring-2 focus:ring-blue-100"
               />
             </div>
 
-            <div className="w-full xl:w-64">
-              <label className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                Recruitment Stage
-              </label>
+            <div className="flex items-center justify-between gap-3 text-xs text-slate-500">
+              <span>
+                Showing{" "}
+                <strong className="text-[#071d49]">
+                  {filteredApplications.length}
+                </strong>{" "}
+                of{" "}
+                <strong className="text-[#071d49]">
+                  {applications.length}
+                </strong>{" "}
+                applications
+              </span>
 
-              <select
-                value={filterStage}
-                onChange={(event) =>
-                  setFilterStage(
-                    event.target.value
-                  )
-                }
-                className="h-11 w-full rounded-lg border border-slate-300 bg-slate-50 px-4 text-sm font-semibold outline-none focus:border-[#12355b]"
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch("");
+                  setStageFilter("all");
+                }}
+                className="font-bold text-blue-700 hover:underline"
               >
-                <option value="all">
-                  All Stages
-                </option>
-
-                {STAGES.map((stage) => (
-                  <option
-                    key={stage.number}
-                    value={stage.number}
-                  >
-                    Stage {stage.number} -{" "}
-                    {stage.title}
-                  </option>
-                ))}
-              </select>
+                Clear
+              </button>
             </div>
-
-            <button
-              onClick={loadApplications}
-              className="mt-auto h-11 rounded-lg bg-[#12355b] px-5 text-sm font-bold text-white shadow transition hover:bg-[#0d2946]"
-            >
-              ↻ Refresh
-            </button>
           </div>
         </section>
 
         {/* ===================================================
-            MAIN CONTENT
-        =================================================== */}
-
-        <section className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_500px]">
-          {/* APPLICATION TABLE */}
-
-          <div className="overflow-hidden rounded-xl border border-slate-300 bg-white shadow-sm">
-            <div className="border-b border-slate-200 bg-slate-50 px-5 py-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-lg font-black text-[#12355b]">
-                    Candidate Applications
-                  </h2>
-
-                  <p className="text-xs text-slate-500">
-                    Official recruitment records
-                  </p>
-                </div>
-
-                <span className="rounded-full bg-[#12355b] px-3 py-1 text-xs font-bold text-white">
-                  {filteredApplications.length}
-                </span>
-              </div>
+            APPLICATION TABLE
+        ==================================================== */}
+        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="flex flex-col gap-2 border-b border-slate-200 bg-[#071d49] px-4 py-4 text-white sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-base font-extrabold">
+                Candidate Applications
+              </h2>
+              <p className="text-xs text-blue-100">
+                Official recruitment application records
+              </p>
             </div>
 
-            {loading ? (
-              <div className="p-10 text-center text-sm font-semibold text-slate-500">
-                Loading applications...
-              </div>
-            ) : filteredApplications.length ===
-              0 ? (
-              <div className="p-10 text-center">
-                <div className="text-4xl">
-                  📋
-                </div>
+            <div className="rounded-lg bg-white/10 px-3 py-2 text-xs font-bold">
+              {filteredApplications.length} Records
+            </div>
+          </div>
 
-                <p className="mt-3 text-sm font-bold text-slate-600">
-                  No applications found
-                </p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[1050px] text-left">
-                  <thead className="bg-[#12355b] text-[11px] uppercase tracking-wider text-white">
-                    <tr>
-                      <th className="px-4 py-3">
-                        Candidate
-                      </th>
+          {loading ? (
+            <LoadingTable />
+          ) : filteredApplications.length === 0 ? (
+            <EmptyState />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-[1250px] w-full border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50 text-left">
+                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-wider text-slate-600">
+                      Candidate
+                    </th>
 
-                      <th className="px-4 py-3">
-                        Contact
-                      </th>
+                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-wider text-slate-600">
+                      Contact
+                    </th>
 
-                      <th className="px-4 py-3">
-                        Position
-                      </th>
+                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-wider text-slate-600">
+                      Position
+                    </th>
 
-                      <th className="px-4 py-3">
-                        Applied
-                      </th>
+                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-wider text-slate-600">
+                      Applied
+                    </th>
 
-                      <th className="px-4 py-3">
-                        Stage
-                      </th>
+                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-wider text-slate-600">
+                      Current Stage
+                    </th>
 
-                      <th className="px-4 py-3">
-                        Action
-                      </th>
-                    </tr>
-                  </thead>
+                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-wider text-slate-600">
+                      Documents
+                    </th>
 
-                  <tbody className="divide-y divide-slate-200">
-                    {filteredApplications.map(
-                      (application) => {
-                        const stageNo =
-                          getStageNumber(
-                            application
-                          );
+                    <th className="px-4 py-3 text-right text-[10px] font-black uppercase tracking-wider text-slate-600">
+                      Action
+                    </th>
+                  </tr>
+                </thead>
 
-                        return (
-                          <tr
-                            key={
-                              application.applicationId
-                            }
-                            className={`transition hover:bg-blue-50 ${
-                              selected
-                                ?.applicationId ===
-                              application.applicationId
-                                ? "bg-blue-50"
-                                : ""
-                            }`}
-                          >
-                            <td className="px-4 py-4">
-                              <div className="font-bold text-slate-800">
-                                {safe(
-                                  application.fullName
-                                )}
+                <tbody>
+                  {filteredApplications.map(
+                    (application) => {
+                      const stageNumber =
+                        getStageNumber(
+                          application.stage
+                        );
+
+                      return (
+                        <tr
+                          key={
+                            application.applicationId
+                          }
+                          className="border-b border-slate-100 transition hover:bg-blue-50/40"
+                        >
+                          {/* Candidate */}
+                          <td className="px-4 py-4 align-top">
+                            <div className="flex min-w-[240px] items-start gap-3">
+                              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#071d49] text-sm font-black text-white">
+                                {(
+                                  application.fullName ||
+                                  "C"
+                                )
+                                  .split(" ")
+                                  .map(
+                                    (word) =>
+                                      word[0]
+                                  )
+                                  .slice(0, 2)
+                                  .join("")
+                                  .toUpperCase()}
                               </div>
 
-                              <div className="mt-1 text-[11px] font-bold text-[#12355b]">
-                                {
-                                  application.applicationId
-                                }
-                              </div>
-                            </td>
+                              <div>
+                                <p className="font-extrabold text-[#071d49]">
+                                  {safe(
+                                    application.fullName
+                                  )}
+                                </p>
 
-                            <td className="px-4 py-4">
-                              <div className="text-xs font-semibold">
+                                <p className="mt-1 text-[11px] font-bold text-orange-600">
+                                  {safe(
+                                    application.applicationId
+                                  )}
+                                </p>
+
+                                <p className="mt-1 text-xs text-slate-500">
+                                  {safe(
+                                    application.category
+                                  )}
+                                </p>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Contact */}
+                          <td className="px-4 py-4 align-top">
+                            <div className="space-y-1.5 text-xs">
+                              <p className="flex items-center gap-2 font-bold text-slate-700">
+                                <Phone
+                                  size={13}
+                                  className="text-green-600"
+                                />
                                 {safe(
                                   application.phone
                                 )}
-                              </div>
+                              </p>
 
-                              <div className="mt-1 text-[11px] text-slate-500">
-                                {safe(
-                                  application.email
-                                )}
-                              </div>
-                            </td>
+                              <p className="flex max-w-[210px] items-center gap-2 truncate text-slate-600">
+                                <Mail
+                                  size={13}
+                                  className="text-blue-600"
+                                />
+                                <span className="truncate">
+                                  {safe(
+                                    application.email
+                                  )}
+                                </span>
+                              </p>
 
-                            <td className="px-4 py-4">
-                              <div className="max-w-[220px] text-xs font-bold">
+                              {application.city && (
+                                <p className="flex items-center gap-2 text-slate-500">
+                                  <MapPin
+                                    size={13}
+                                    className="text-red-500"
+                                  />
+                                  {application.city}
+                                </p>
+                              )}
+                            </div>
+                          </td>
+
+                          {/* Job */}
+                          <td className="px-4 py-4 align-top">
+                            <div className="min-w-[210px]">
+                              <p className="font-bold text-slate-800">
                                 {safe(
                                   application.jobTitle
                                 )}
-                              </div>
+                              </p>
 
-                              <div className="mt-1 text-[11px] text-slate-500">
+                              <p className="mt-1 text-xs text-slate-500">
                                 {safe(
                                   application.department
                                 )}
+                              </p>
+
+                              <span className="mt-2 inline-flex rounded-md bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-600">
+                                {safe(
+                                  application.employmentType
+                                )}
+                              </span>
+                            </div>
+                          </td>
+
+                          {/* Applied */}
+                          <td className="px-4 py-4 align-top">
+                            <div className="min-w-[120px]">
+                              <p className="flex items-center gap-2 text-xs font-bold text-slate-700">
+                                <CalendarDays
+                                  size={14}
+                                  className="text-[#071d49]"
+                                />
+                                {formatDate(
+                                  application.createdAt
+                                )}
+                              </p>
+
+                              <p className="mt-1 text-[10px] text-slate-400">
+                                Last updated:{" "}
+                                {formatDate(
+                                  application.updatedAt
+                                )}
+                              </p>
+                            </div>
+                          </td>
+
+                          {/* Stage */}
+                          <td className="px-4 py-4 align-top">
+                            <div className="min-w-[180px]">
+                              <span
+                                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-black ${getStageColor(
+                                  stageNumber
+                                )}`}
+                              >
+                                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px]">
+                                  {stageNumber}
+                                </span>
+                                {getStageLabel(
+                                  stageNumber
+                                )}
+                              </span>
+
+                              <div className="mt-2 flex items-center gap-1">
+                                {STAGES.map(
+                                  (stage) => (
+                                    <button
+                                      key={
+                                        stage.number
+                                      }
+                                      type="button"
+                                      title={
+                                        stage.label
+                                      }
+                                      disabled={
+                                        updatingId ===
+                                        application.applicationId
+                                      }
+                                      onClick={() =>
+                                        updateStage(
+                                          application,
+                                          stage.number
+                                        )
+                                      }
+                                      className={`h-7 w-7 rounded-md text-[10px] font-black transition ${
+                                        stage.number ===
+                                        stageNumber
+                                          ? "bg-[#071d49] text-white shadow"
+                                          : stage.number <
+                                            stageNumber
+                                          ? "bg-green-100 text-green-700 hover:bg-green-200"
+                                          : "bg-slate-100 text-slate-500 hover:bg-orange-100 hover:text-orange-700"
+                                      }`}
+                                    >
+                                      {stage.number}
+                                    </button>
+                                  )
+                                )}
                               </div>
-                            </td>
+                            </div>
+                          </td>
 
-                            <td className="px-4 py-4 text-xs font-semibold">
-                              {formatDate(
-                                application.createdAt
-                              )}
-                            </td>
-
-                            <td className="px-4 py-4">
-                              <StageBadge
-                                number={
-                                  stageNo
+                          {/* Documents */}
+                          <td className="px-4 py-4 align-top">
+                            <div className="flex min-w-[170px] flex-wrap gap-2">
+                              <DocumentButton
+                                label="Resume"
+                                value={
+                                  application.resume
                                 }
                               />
-                            </td>
 
-                            <td className="px-4 py-4">
-                              <button
-                                onClick={() => {
-                                  setSelected(
-                                    application
-                                  );
+                              <DocumentButton
+                                label="Photo"
+                                value={
+                                  application.photo
+                                }
+                              />
 
-                                  setRemarks(
-                                    application.adminRemarks ||
-                                      ""
-                                  );
-                                }}
-                                className="rounded-lg bg-[#12355b] px-3 py-2 text-xs font-bold text-white hover:bg-[#0d2946]"
-                              >
-                                View / Manage
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      }
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+                              <DocumentButton
+                                label="Cover"
+                                value={
+                                  application.coverLetter
+                                }
+                              />
+                            </div>
+                          </td>
 
-          {/* =================================================
-              CANDIDATE DETAIL
-          ================================================= */}
-
-          <aside className="rounded-xl border border-slate-300 bg-white shadow-sm">
-            {!selected ? (
-              <div className="flex min-h-[500px] items-center justify-center p-8 text-center">
-                <div>
-                  <div className="text-5xl">
-                    👤
-                  </div>
-
-                  <h3 className="mt-4 text-lg font-black text-[#12355b]">
-                    Candidate Details
-                  </h3>
-
-                  <p className="mt-2 text-sm text-slate-500">
-                    Select an application to view
-                    complete candidate information.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div>
-                <div className="border-b-4 border-amber-400 bg-[#12355b] px-5 py-5 text-white">
-                  <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-300">
-                    Candidate Application
-                  </div>
-
-                  <h2 className="mt-1 text-xl font-black">
-                    {safe(
-                      selected.fullName
-                    )}
-                  </h2>
-
-                  <p className="mt-1 text-xs text-blue-100">
-                    {
-                      selected.applicationId
-                    }
-                  </p>
-                </div>
-
-                <div className="max-h-[calc(100vh-180px)] overflow-y-auto p-5">
-                  {/* BASIC */}
-
-                  <DetailSection title="Personal Information">
-                    <Detail
-                      label="Full Name"
-                      value={
-                        selected.fullName
-                      }
-                    />
-
-                    <Detail
-                      label="Father Name"
-                      value={
-                        selected.fatherName
-                      }
-                    />
-
-                    <Detail
-                      label="Mobile Number"
-                      value={
-                        selected.phone
-                      }
-                    />
-
-                    <Detail
-                      label="Alternate Mobile"
-                      value={
-                        selected.alternatePhone
-                      }
-                    />
-
-                    <Detail
-                      label="Email"
-                      value={
-                        selected.email
-                      }
-                    />
-
-                    <Detail
-                      label="Date of Birth"
-                      value={
-                        selected.dateOfBirth
-                      }
-                    />
-
-                    <Detail
-                      label="Gender"
-                      value={
-                        selected.gender
-                      }
-                    />
-
-                    <Detail
-                      label="Category"
-                      value={
-                        selected.category
-                      }
-                    />
-                  </DetailSection>
-
-                  {/* JOB */}
-
-                  <DetailSection title="Post / Recruitment Details">
-                    <Detail
-                      label="Job Title"
-                      value={
-                        selected.jobTitle
-                      }
-                    />
-
-                    <Detail
-                      label="Department"
-                      value={
-                        selected.department
-                      }
-                    />
-
-                    <Detail
-                      label="Location"
-                      value={
-                        selected.location
-                      }
-                    />
-
-                    <Detail
-                      label="Employment Type"
-                      value={
-                        selected.employmentType
-                      }
-                    />
-
-                    <Detail
-                      label="Applied Date"
-                      value={formatDate(
-                        selected.createdAt
-                      )}
-                    />
-                  </DetailSection>
-
-                  {/* ADDRESS */}
-
-                  <DetailSection title="Address">
-                    <Detail
-                      label="Address"
-                      value={
-                        selected.address
-                      }
-                      full
-                    />
-
-                    <Detail
-                      label="City"
-                      value={
-                        selected.city
-                      }
-                    />
-
-                    <Detail
-                      label="District"
-                      value={
-                        selected.district
-                      }
-                    />
-
-                    <Detail
-                      label="State"
-                      value={
-                        selected.state
-                      }
-                    />
-
-                    <Detail
-                      label="Pincode"
-                      value={
-                        selected.pincode
-                      }
-                    />
-                  </DetailSection>
-
-                  {/* EDUCATION */}
-
-                  <DetailSection title="Education">
-                    <Detail
-                      label="Qualification"
-                      value={
-                        selected.highestQualification
-                      }
-                    />
-
-                    <Detail
-                      label="University"
-                      value={
-                        selected.university
-                      }
-                    />
-
-                    <Detail
-                      label="Passing Year"
-                      value={
-                        selected.passingYear
-                      }
-                    />
-
-                    <Detail
-                      label="Percentage"
-                      value={
-                        selected.percentage
-                      }
-                    />
-                  </DetailSection>
-
-                  {/* EXPERIENCE */}
-
-                  <DetailSection title="Experience">
-                    <Detail
-                      label="Experience"
-                      value={
-                        selected.experience
-                      }
-                    />
-
-                    <Detail
-                      label="Current Organization"
-                      value={
-                        selected.currentOrganization
-                      }
-                    />
-
-                    <Detail
-                      label="Designation"
-                      value={
-                        selected.currentDesignation
-                      }
-                    />
-
-                    <Detail
-                      label="Total Experience"
-                      value={
-                        selected.totalExperience
-                      }
-                    />
-
-                    <Detail
-                      label="Expected Salary"
-                      value={
-                        selected.expectedSalary
-                      }
-                    />
-                  </DetailSection>
-
-                  {/* DOCUMENTS */}
-
-                  <DetailSection title="Candidate Documents">
-                    <DocumentButton
-                      label="Resume"
-                      url={
-                        selected.resume
-                      }
-                    />
-
-                    <DocumentButton
-                      label="Candidate Photo"
-                      url={
-                        selected.photo
-                      }
-                    />
-
-                    <DocumentButton
-                      label="Cover Letter"
-                      url={
-                        selected.coverLetter
-                      }
-                    />
-                  </DetailSection>
-
-                  {/* CURRENT STATUS */}
-
-                  <DetailSection title="Current Recruitment Status">
-                    <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-blue-600">
-                        Current Stage
-                      </div>
-
-                      <div className="mt-1 flex items-center gap-2">
-                        <StageBadge
-                          number={getStageNumber(
-                            selected
-                          )}
-                        />
-
-                        <span className="text-sm font-black text-[#12355b]">
-                          {safe(
-                            selected.stage
-                          )}
-                        </span>
-                      </div>
-                    </div>
-
-                    <label className="mb-2 block text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                      Admin Remarks
-                    </label>
-
-                    <textarea
-                      value={remarks}
-                      onChange={(event) =>
-                        setRemarks(
-                          event.target.value
-                        )
-                      }
-                      rows={3}
-                      placeholder="Enter recruitment remarks..."
-                      className="w-full rounded-lg border border-slate-300 bg-slate-50 p-3 text-sm outline-none focus:border-[#12355b] focus:bg-white"
-                    />
-                  </DetailSection>
-
-                  {/* =================================================
-                      STAGE 1-7
-                  ================================================= */}
-
-                  <DetailSection title="Recruitment Stage — 1 to 7">
-                    <div className="space-y-2">
-                      {STAGES.map(
-                        (stage) => {
-                          const current =
-                            getStageNumber(
-                              selected
-                            );
-
-                          const active =
-                            current ===
-                            stage.number;
-
-                          const completed =
-                            current >
-                            stage.number;
-
-                          return (
+                          {/* Action */}
+                          <td className="px-4 py-4 text-right align-top">
                             <button
-                              key={
-                                stage.number
-                              }
-                              disabled={
-                                updating
-                              }
+                              type="button"
                               onClick={() =>
-                                updateStage(
-                                  selected,
-                                  stage.number
+                                setSelectedApplication(
+                                  application
                                 )
                               }
-                              className={`group flex w-full items-center gap-3 rounded-lg border p-3 text-left transition ${
-                                active
-                                  ? "border-[#12355b] bg-[#12355b] text-white shadow-md"
-                                  : completed
-                                  ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                                  : "border-slate-200 bg-white hover:border-[#12355b] hover:bg-blue-50"
-                              }`}
+                              className="inline-flex items-center gap-2 rounded-lg bg-[#071d49] px-3 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-blue-900"
                             >
-                              <span
-                                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-black ${
-                                  active
-                                    ? "bg-amber-400 text-[#12355b]"
-                                    : completed
-                                    ? "bg-emerald-600 text-white"
-                                    : "bg-slate-200 text-slate-600 group-hover:bg-[#12355b] group-hover:text-white"
-                                }`}
-                              >
-                                {completed
-                                  ? "✓"
-                                  : stage.number}
-                              </span>
-
-                              <span className="min-w-0 flex-1">
-                                <span
-                                  className={`block text-xs font-black ${
-                                    active
-                                      ? "text-white"
-                                      : ""
-                                  }`}
-                                >
-                                  {
-                                    stage.title
-                                  }
-                                </span>
-
-                                <span
-                                  className={`mt-0.5 block text-[10px] ${
-                                    active
-                                      ? "text-blue-100"
-                                      : "text-slate-500"
-                                  }`}
-                                >
-                                  {
-                                    stage.description
-                                  }
-                                </span>
-                              </span>
-
-                              {active && (
-                                <span className="rounded-full bg-amber-400 px-2 py-1 text-[9px] font-black text-[#12355b]">
-                                  CURRENT
-                                </span>
-                              )}
+                              <Eye size={15} />
+                              View
                             </button>
-                          );
-                        }
-                      )}
-                    </div>
-
-                    {updating && (
-                      <div className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-center text-xs font-bold text-amber-700">
-                        Updating recruitment
-                        stage...
-                      </div>
-                    )}
-
-                    <p className="mt-3 text-[10px] leading-4 text-slate-500">
-                      Stage change will be saved to
-                      the candidate recruitment
-                      record. Your action endpoint
-                      can also send the corresponding
-                      recruitment notification email.
-                    </p>
-                  </DetailSection>
-
-                  {/* AUDIT */}
-
-                  <DetailSection title="Record Information">
-                    <Detail
-                      label="Created"
-                      value={formatDate(
-                        selected.createdAt
-                      )}
-                    />
-
-                    <Detail
-                      label="Last Updated"
-                      value={formatDate(
-                        selected.updatedAt
-                      )}
-                    />
-
-                    <Detail
-                      label="Declaration"
-                      value={
-                        selected.declarationAccepted
-                          ? "Accepted"
-                          : "Not Accepted"
-                      }
-                    />
-                  </DetailSection>
-                </div>
-              </div>
-            )}
-          </aside>
+                          </td>
+                        </tr>
+                      );
+                    }
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
       </div>
+
+      {/* =====================================================
+          CANDIDATE DETAIL MODAL
+      ====================================================== */}
+      {selectedApplication && (
+        <CandidateModal
+          application={
+            selectedApplication
+          }
+          updatingId={updatingId}
+          onClose={() =>
+            setSelectedApplication(null)
+          }
+          onStageChange={updateStage}
+        />
+      )}
     </main>
   );
 }
 
 /* ============================================================
-   COMPONENTS
+   STAT CARD
 ============================================================ */
 
-function Stat({
-  title,
-  value,
-  color,
-}: {
-  title: string;
-  value: number;
-  color: string;
-}) {
-  const colors: Record<
-    string,
-    string
-  > = {
-    navy: "border-[#12355b] bg-white text-[#12355b]",
-    blue: "border-blue-400 bg-blue-50 text-blue-700",
-    amber:
-      "border-amber-400 bg-amber-50 text-amber-700",
-    violet:
-      "border-violet-400 bg-violet-50 text-violet-700",
-    cyan:
-      "border-cyan-400 bg-cyan-50 text-cyan-700",
-    emerald:
-      "border-emerald-400 bg-emerald-50 text-emerald-700",
-    orange:
-      "border-orange-400 bg-orange-50 text-orange-700",
-    green:
-      "border-green-500 bg-green-50 text-green-700",
-  };
-
-  return (
-    <div
-      className={`rounded-xl border-l-4 p-4 shadow-sm ${colors[color]}`}
-    >
-      <div className="text-[10px] font-black uppercase tracking-wider opacity-70">
-        {title}
-      </div>
-
-      <div className="mt-1 text-2xl font-black">
-        {value}
-      </div>
-    </div>
-  );
-}
-
-function StageBadge({
-  number,
-}: {
-  number: number;
-}) {
-  const stage =
-    STAGES.find(
-      (item) => item.number === number
-    ) || STAGES[0];
-
-  const styles: Record<
-    number,
-    string
-  > = {
-    1: "bg-blue-100 text-blue-700 border-blue-200",
-    2: "bg-amber-100 text-amber-700 border-amber-200",
-    3: "bg-violet-100 text-violet-700 border-violet-200",
-    4: "bg-cyan-100 text-cyan-700 border-cyan-200",
-    5: "bg-emerald-100 text-emerald-700 border-emerald-200",
-    6: "bg-orange-100 text-orange-700 border-orange-200",
-    7: "bg-green-100 text-green-700 border-green-200",
-  };
-
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-black ${styles[number]}`}
-    >
-      <span>{number}</span>
-      <span>{stage.short}</span>
-    </span>
-  );
-}
-
-function DetailSection({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="mb-5">
-      <h3 className="mb-3 border-l-4 border-amber-400 pl-2 text-xs font-black uppercase tracking-wider text-[#12355b]">
-        {title}
-      </h3>
-
-      <div className="grid grid-cols-2 gap-2">
-        {children}
-      </div>
-    </section>
-  );
-}
-
-function Detail({
+function StatCard({
   label,
   value,
-  full = false,
+  icon: Icon,
+  active = false,
 }: {
   label: string;
-  value?: string | null;
-  full?: boolean;
+  value: number;
+  icon: React.ElementType;
+  active?: boolean;
 }) {
   return (
     <div
-      className={`rounded-lg border border-slate-200 bg-slate-50 p-2.5 ${
-        full
-          ? "col-span-2"
-          : ""
+      className={`rounded-xl border p-3 shadow-sm ${
+        active
+          ? "border-[#071d49] bg-[#071d49] text-white"
+          : "border-slate-200 bg-white"
       }`}
     >
-      <div className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
-        {label}
+      <div className="flex items-center justify-between">
+        <span
+          className={`text-[9px] font-black uppercase tracking-wider ${
+            active
+              ? "text-blue-100"
+              : "text-slate-500"
+          }`}
+        >
+          {label}
+        </span>
+
+        <Icon
+          size={16}
+          className={
+            active
+              ? "text-orange-300"
+              : "text-[#071d49]"
+          }
+        />
       </div>
 
-      <div className="mt-1 break-words text-xs font-bold text-slate-700">
-        {safe(value)}
-      </div>
+      <p className="mt-1 text-xl font-black">
+        {value}
+      </p>
     </div>
   );
 }
+
+/* ============================================================
+   DOCUMENT BUTTON
+============================================================ */
 
 function DocumentButton({
   label,
-  url,
+  value,
 }: {
   label: string;
-  url?: string;
+  value?: string;
 }) {
-  if (!url) {
+  if (!value) {
     return (
-      <div className="col-span-2 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-3 text-xs font-semibold text-slate-400">
-        {label}: Document not uploaded
-      </div>
+      <span className="inline-flex cursor-not-allowed items-center gap-1 rounded-md bg-slate-100 px-2 py-1.5 text-[10px] font-bold text-slate-400">
+        <FileText size={12} />
+        {label}: N/A
+      </span>
     );
   }
+
+  const url = getDocumentUrl(value);
 
   return (
     <a
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 px-3 py-3 text-xs font-black text-[#12355b] transition hover:border-[#12355b] hover:bg-blue-100"
+      className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2 py-1.5 text-[10px] font-bold text-blue-700 transition hover:bg-blue-100"
     >
-      <span>
-        📄 {label}
-      </span>
-
-      <span className="rounded bg-[#12355b] px-2 py-1 text-[9px] text-white">
-        VIEW
-      </span>
+      <Download size={12} />
+      {label}
     </a>
+  );
+}
+
+/* ============================================================
+   LOADING
+============================================================ */
+
+function LoadingTable() {
+  return (
+    <div className="space-y-3 p-5">
+      {[1, 2, 3, 4].map((item) => (
+        <div
+          key={item}
+          className="h-20 animate-pulse rounded-xl bg-slate-100"
+        />
+      ))}
+    </div>
+  );
+}
+
+/* ============================================================
+   EMPTY
+============================================================ */
+
+function EmptyState() {
+  return (
+    <div className="flex min-h-[320px] flex-col items-center justify-center px-5 text-center">
+      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+        <Users size={30} />
+      </div>
+
+      <h3 className="mt-4 text-lg font-extrabold text-[#071d49]">
+        No applications found
+      </h3>
+
+      <p className="mt-1 max-w-md text-sm text-slate-500">
+        No candidate applications match the current search or recruitment stage filter.
+      </p>
+    </div>
+  );
+}
+
+/* ============================================================
+   CANDIDATE MODAL
+============================================================ */
+
+function CandidateModal({
+  application,
+  updatingId,
+  onClose,
+  onStageChange,
+}: {
+  application: Application;
+  updatingId: string | null;
+  onClose: () => void;
+  onStageChange: (
+    application: Application,
+    stage: number
+  ) => Promise<void>;
+}) {
+  const stageNumber = getStageNumber(
+    application.stage
+  );
+
+  return (
+    <div className="fixed inset-0 z-[100] overflow-y-auto bg-[#071d49]/70 p-3 backdrop-blur-sm sm:p-6">
+      <div className="mx-auto max-w-7xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+        {/* Modal header */}
+        <div className="border-b-4 border-orange-500 bg-[#071d49] px-4 py-4 text-white sm:px-6">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/10">
+                <UserRound size={25} />
+              </div>
+
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-orange-300">
+                  Candidate Application
+                </p>
+
+                <h2 className="text-xl font-black">
+                  {safe(
+                    application.fullName
+                  )}
+                </h2>
+
+                <p className="text-xs text-blue-100">
+                  {safe(
+                    application.applicationId
+                  )}
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg bg-white/10 p-2 transition hover:bg-white/20"
+            >
+              <X size={20} />
+            </button>
+          </div>
+        </div>
+
+        <div className="max-h-[calc(100vh-150px)] overflow-y-auto p-4 sm:p-6">
+          {/* Stage selector */}
+          <section className="mb-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h3 className="font-black text-[#071d49]">
+                  Recruitment Stage
+                </h3>
+
+                <p className="text-xs text-slate-500">
+                  Select Stage 1–7 to update this candidate.
+                </p>
+              </div>
+
+              <span
+                className={`w-fit rounded-full border px-3 py-1.5 text-xs font-black ${getStageColor(
+                  stageNumber
+                )}`}
+              >
+                Stage {stageNumber}:{" "}
+                {getStageLabel(
+                  stageNumber
+                )}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
+              {STAGES.map((stage) => {
+                const Icon = stage.icon;
+
+                const active =
+                  stage.number ===
+                  stageNumber;
+
+                const busy =
+                  updatingId ===
+                  application.applicationId;
+
+                return (
+                  <button
+                    key={stage.number}
+                    type="button"
+                    disabled={busy}
+                    onClick={() =>
+                      onStageChange(
+                        application,
+                        stage.number
+                      )
+                    }
+                    className={`rounded-xl border p-3 text-left transition ${
+                      active
+                        ? getStageColor(
+                            stage.number
+                          ) +
+                          " shadow-md"
+                        : "border-slate-200 bg-white hover:border-[#071d49]"
+                    } disabled:opacity-50`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-xs font-black">
+                        {stage.number}
+                      </span>
+
+                      <Icon size={15} />
+                    </div>
+
+                    <p className="mt-2 text-[10px] font-black uppercase">
+                      {stage.short}
+                    </p>
+
+                    <p className="mt-1 text-[10px] leading-4 opacity-75">
+                      {stage.label}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* Personal */}
+          <DetailSection
+            title="Personal Information"
+            icon={UserRound}
+          >
+            <Detail
+              label="Full Name"
+              value={application.fullName}
+            />
+
+            <Detail
+              label="Father's Name"
+              value={application.fatherName}
+            />
+
+            <Detail
+              label="Email"
+              value={application.email}
+            />
+
+            <Detail
+              label="Mobile Number"
+              value={application.phone}
+            />
+
+            <Detail
+              label="Alternate Mobile"
+              value={
+                application.alternatePhone
+              }
+            />
+
+            <Detail
+              label="Date of Birth"
+              value={
+                application.dateOfBirth
+              }
+            />
+
+            <Detail
+              label="Gender"
+              value={application.gender}
+            />
+
+            <Detail
+              label="Category"
+              value={
+                application.category
+              }
+            />
+          </DetailSection>
+
+          {/* Job */}
+          <DetailSection
+            title="Job Information"
+            icon={BriefcaseBusiness}
+          >
+            <Detail
+              label="Application ID"
+              value={
+                application.applicationId
+              }
+            />
+
+            <Detail
+              label="Job ID"
+              value={application.jobId}
+            />
+
+            <Detail
+              label="Job Title"
+              value={
+                application.jobTitle
+              }
+            />
+
+            <Detail
+              label="Department"
+              value={
+                application.department
+              }
+            />
+
+            <Detail
+              label="Location"
+              value={
+                application.location
+              }
+            />
+
+            <Detail
+              label="Employment Type"
+              value={
+                application.employmentType
+              }
+            />
+
+            <Detail
+              label="Applied Date"
+              value={formatDate(
+                application.createdAt
+              )}
+            />
+
+            <Detail
+              label="Last Updated"
+              value={formatDateTime(
+                application.updatedAt
+              )}
+            />
+          </DetailSection>
+
+          {/* Address */}
+          <DetailSection
+            title="Address Information"
+            icon={MapPin}
+          >
+            <Detail
+              label="Address"
+              value={application.address}
+              wide
+            />
+
+            <Detail
+              label="City"
+              value={application.city}
+            />
+
+            <Detail
+              label="District"
+              value={
+                application.district
+              }
+            />
+
+            <Detail
+              label="State"
+              value={application.state}
+            />
+
+            <Detail
+              label="PIN Code"
+              value={application.pincode}
+            />
+          </DetailSection>
+
+          {/* Education */}
+          <DetailSection
+            title="Education"
+            icon={GraduationCap}
+          >
+            <Detail
+              label="Highest Qualification"
+              value={
+                application.highestQualification
+              }
+            />
+
+            <Detail
+              label="University / Board"
+              value={
+                application.university
+              }
+            />
+
+            <Detail
+              label="Passing Year"
+              value={
+                application.passingYear
+              }
+            />
+
+            <Detail
+              label="Percentage / CGPA"
+              value={
+                application.percentage
+              }
+            />
+          </DetailSection>
+
+          {/* Experience */}
+          <DetailSection
+            title="Professional Experience"
+            icon={BriefcaseBusiness}
+          >
+            <Detail
+              label="Experience"
+              value={
+                application.experience
+              }
+            />
+
+            <Detail
+              label="Current Organization"
+              value={
+                application.currentOrganization
+              }
+            />
+
+            <Detail
+              label="Current Designation"
+              value={
+                application.currentDesignation
+              }
+            />
+
+            <Detail
+              label="Total Experience"
+              value={
+                application.totalExperience
+              }
+            />
+
+            <Detail
+              label="Expected Salary"
+              value={
+                application.expectedSalary
+              }
+            />
+          </DetailSection>
+
+          {/* Documents */}
+          <section className="mb-6 overflow-hidden rounded-2xl border border-slate-200">
+            <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
+              <div className="flex items-center gap-2">
+                <FileText
+                  size={18}
+                  className="text-[#071d49]"
+                />
+
+                <h3 className="font-black text-[#071d49]">
+                  Candidate Documents
+                </h3>
+              </div>
+            </div>
+
+            <div className="grid gap-3 p-4 sm:grid-cols-3">
+              <LargeDocument
+                label="Resume / CV"
+                value={
+                  application.resume
+                }
+              />
+
+              <LargeDocument
+                label="Candidate Photograph"
+                value={
+                  application.photo
+                }
+              />
+
+              <LargeDocument
+                label="Cover Letter"
+                value={
+                  application.coverLetter
+                }
+              />
+            </div>
+          </section>
+
+          {/* Admin */}
+          <DetailSection
+            title="Recruitment Administration"
+            icon={ShieldCheck}
+          >
+            <Detail
+              label="Current Status"
+              value={application.status}
+            />
+
+            <Detail
+              label="Current Stage"
+              value={application.stage}
+            />
+
+            <Detail
+              label="Admin Remarks"
+              value={
+                application.adminRemarks
+              }
+              wide
+            />
+
+            <Detail
+              label="Interview Date"
+              value={formatDateTime(
+                application.interviewDate
+              )}
+            />
+
+            <Detail
+              label="Interview Mode"
+              value={
+                application.interviewMode
+              }
+            />
+
+            <Detail
+              label="Interview Remarks"
+              value={
+                application.interviewRemarks
+              }
+              wide
+            />
+
+            <Detail
+              label="Selected At"
+              value={formatDateTime(
+                application.selectedAt
+              )}
+            />
+
+            <Detail
+              label="Joined At"
+              value={formatDateTime(
+                application.joinedAt
+              )}
+            />
+          </DetailSection>
+
+          {/* Declaration */}
+          <div className="rounded-xl border border-green-200 bg-green-50 p-4">
+            <div className="flex items-center gap-2">
+              <CheckCircle2
+                size={18}
+                className="text-green-700"
+              />
+
+              <p className="text-sm font-bold text-green-800">
+                Declaration Accepted:{" "}
+                {application.declarationAccepted
+                  ? "Yes"
+                  : "No"}
+              </p>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="mt-6 flex flex-col-reverse gap-3 border-t border-slate-200 pt-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-xs text-slate-500">
+              <p>
+                Application ID:{" "}
+                <strong>
+                  {application.applicationId}
+                </strong>
+              </p>
+
+              <p className="mt-1">
+                Last updated:{" "}
+                {formatDateTime(
+                  application.updatedAt
+                )}
+              </p>
+            </div>
+
+            <div className="flex gap-2">
+              {application.email && (
+                <a
+                  href={`mailto:${application.email}`}
+                  className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2.5 text-xs font-bold text-blue-700"
+                >
+                  <Send size={15} />
+                  Email Candidate
+                </a>
+              )}
+
+              {application.phone && (
+                <a
+                  href={`tel:${application.phone}`}
+                  className="inline-flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-2.5 text-xs font-bold text-green-700"
+                >
+                  <Phone size={15} />
+                  Call
+                </a>
+              )}
+
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-lg bg-[#071d49] px-5 py-2.5 text-xs font-bold text-white"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   DETAIL SECTION
+============================================================ */
+
+function DetailSection({
+  title,
+  icon: Icon,
+  children,
+}: {
+  title: string;
+  icon: React.ElementType;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="mb-6 overflow-hidden rounded-2xl border border-slate-200">
+      <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
+        <div className="flex items-center gap-2">
+          <Icon
+            size={18}
+            className="text-[#071d49]"
+          />
+
+          <h3 className="font-black text-[#071d49]">
+            {title}
+          </h3>
+        </div>
+      </div>
+
+      <div className="grid gap-x-6 gap-y-4 p-4 sm:grid-cols-2 lg:grid-cols-4">
+        {children}
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   DETAIL
+============================================================ */
+
+function Detail({
+  label,
+  value,
+  wide = false,
+}: {
+  label: string;
+  value?: string | null;
+  wide?: boolean;
+}) {
+  return (
+    <div
+      className={
+        wide
+          ? "sm:col-span-2 lg:col-span-4"
+          : ""
+      }
+    >
+      <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+        {label}
+      </p>
+
+      <p className="mt-1 break-words text-sm font-semibold text-slate-800">
+        {safe(value)}
+      </p>
+    </div>
+  );
+}
+
+/* ============================================================
+   LARGE DOCUMENT
+============================================================ */
+
+function LargeDocument({
+  label,
+  value,
+}: {
+  label: string;
+  value?: string;
+}) {
+  if (!value) {
+    return (
+      <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
+        <FileText
+          size={22}
+          className="text-slate-400"
+        />
+
+        <p className="mt-2 text-sm font-bold text-slate-500">
+          {label}
+        </p>
+
+        <p className="mt-1 text-xs text-slate-400">
+          Document not uploaded
+        </p>
+      </div>
+    );
+  }
+
+  const url = getDocumentUrl(value);
+
+  return (
+    <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+      <FileText
+        size={22}
+        className="text-blue-700"
+      />
+
+      <p className="mt-2 text-sm font-bold text-blue-900">
+        {label}
+      </p>
+
+      <p className="mt-1 truncate text-xs text-blue-700">
+        Document available
+      </p>
+
+      <div className="mt-3 flex gap-2">
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 rounded-lg bg-[#071d49] px-3 py-2 text-xs font-bold text-white"
+        >
+          <Eye size={13} />
+          View
+        </a>
+
+        <a
+          href={url}
+          download
+          className="inline-flex items-center gap-1 rounded-lg border border-blue-300 bg-white px-3 py-2 text-xs font-bold text-blue-700"
+        >
+          <Download size={13} />
+          Download
+        </a>
+      </div>
+    </div>
   );
 }

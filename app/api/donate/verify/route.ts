@@ -3,6 +3,10 @@ import crypto from "crypto";
 
 import connectDB from "@/lib/mongodb";
 import Donation from "@/models/Donation";
+import {
+  sendDonationReceiptEmail,
+  sendAdminDonationNotification,
+} from "@/lib/email";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -283,6 +287,304 @@ async function syncDonationToLedger(donation: any) {
 
 /*
 |--------------------------------------------------------------------------
+| DONATION EMAIL NOTIFICATIONS
+|--------------------------------------------------------------------------
+*/
+
+type EmailNotificationField =
+  | "donorEmailNotification"
+  | "adminEmailNotification";
+
+async function claimEmailNotification(
+  donationId: string,
+  field: EmailNotificationField
+): Promise<boolean> {
+  const now = new Date();
+  const staleTime = new Date(
+    now.getTime() - 10 * 60 * 1000
+  );
+
+  const statusPath = `${field}.status`;
+  const attemptsPath = `${field}.attempts`;
+  const lastAttemptPath = `${field}.lastAttemptAt`;
+  const lastErrorPath = `${field}.lastError`;
+
+  const claimed = await Donation.findOneAndUpdate(
+    {
+      _id: donationId,
+      paymentStatus: "SUCCESS",
+      $or: [
+        {
+          [statusPath]: {
+            $in: ["PENDING", "FAILED"],
+          },
+        },
+        {
+          [statusPath]: {
+            $exists: false,
+          },
+        },
+        {
+          [statusPath]: "SENDING",
+          [lastAttemptPath]: {
+            $lt: staleTime,
+          },
+        },
+      ],
+    },
+    {
+      $set: {
+        [statusPath]: "SENDING",
+        [lastAttemptPath]: now,
+        [lastErrorPath]: "",
+      },
+      $inc: {
+        [attemptsPath]: 1,
+      },
+    },
+    {
+      new: true,
+    }
+  );
+
+  return Boolean(claimed);
+}
+
+async function updateEmailStatus(
+  donationId: string,
+  field: EmailNotificationField,
+  status: "SENT" | "FAILED",
+  messageId = "",
+  errorMessage = ""
+): Promise<void> {
+  const statusPath = `${field}.status`;
+  const sentAtPath = `${field}.sentAt`;
+  const messageIdPath = `${field}.messageId`;
+  const lastErrorPath = `${field}.lastError`;
+
+  const update: Record<string, unknown> = {
+    [statusPath]: status,
+    [messageIdPath]: messageId,
+    [lastErrorPath]: errorMessage.slice(0, 500),
+  };
+
+  if (status === "SENT") {
+    update[sentAtPath] = new Date();
+  }
+
+  await Donation.updateOne(
+    { _id: donationId },
+    { $set: update }
+  );
+}
+
+async function sendDonationNotifications(
+  donation: any,
+  requestUrl: string
+): Promise<void> {
+  const donationId = String(donation._id);
+  const receiptNo = clean(donation.receiptNo);
+
+  const verifyUrl = new URL(
+    `/verify?receiptNo=${encodeURIComponent(receiptNo)}`,
+    requestUrl
+  ).toString();
+
+  // ----------------------------------------------------------
+  // DONOR EMAIL WITH PDF RECEIPT ATTACHMENT
+  // ----------------------------------------------------------
+
+  try {
+    const claimed = await claimEmailNotification(
+      donationId,
+      "donorEmailNotification"
+    );
+
+    if (claimed) {
+      try {
+        const receiptUrl = new URL(
+          `/api/donate/receipt?donationId=${encodeURIComponent(donationId)}`,
+          requestUrl
+        );
+
+        console.log(
+          "AJFT RECEIPT PDF REQUEST:",
+          receiptUrl.toString()
+        );
+
+        const receiptResponse = await fetch(receiptUrl, {
+          method: "GET",
+          cache: "no-store",
+          headers: {
+            Accept: "application/pdf",
+          },
+        });
+
+        if (!receiptResponse.ok) {
+          const responseText = await receiptResponse.text().catch(() => "");
+          throw new Error(
+            `Receipt PDF generation failed: HTTP ${receiptResponse.status}. ${responseText.slice(0, 250)}`
+          );
+        }
+
+        const contentType =
+          receiptResponse.headers.get("content-type") || "";
+
+        if (!contentType.toLowerCase().includes("application/pdf")) {
+          throw new Error(
+            "Receipt API did not return a PDF document."
+          );
+        }
+
+        const receiptPdfBuffer = Buffer.from(
+          await receiptResponse.arrayBuffer()
+        );
+
+        const info = await sendDonationReceiptEmail({
+          donorName: clean(donation.donorName),
+          donorEmail: clean(donation.email),
+          donationReference: clean(donation.donationReference),
+          receiptNo,
+          amount: Number(donation.amount || 0),
+          currency: clean(donation.currency) || "INR",
+          paymentId: clean(donation.paymentId),
+          donationType: clean(donation.donationType),
+          requires80G: Boolean(donation.requires80G),
+          receiptPdfBuffer,
+          verifyUrl,
+        });
+
+        await updateEmailStatus(
+          donationId,
+          "donorEmailNotification",
+          "SENT",
+          clean(info.messageId)
+        );
+
+        console.log(
+          "AJFT DONOR EMAIL SENT:",
+          donationId,
+          clean(info.messageId)
+        );
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Donor email delivery failed.";
+
+        try {
+          await updateEmailStatus(
+            donationId,
+            "donorEmailNotification",
+            "FAILED",
+            "",
+            message
+          );
+        } catch (statusError) {
+          console.error(
+            "DONOR EMAIL STATUS UPDATE ERROR:",
+            statusError
+          );
+        }
+
+        console.error("AJFT DONOR EMAIL ERROR:", message);
+      }
+    }
+  } catch (error) {
+    console.error(
+      "AJFT DONOR EMAIL CLAIM ERROR:",
+      error
+    );
+  }
+
+  // ----------------------------------------------------------
+  // ADMIN DONATION NOTIFICATION
+  // ----------------------------------------------------------
+
+  try {
+    const claimed = await claimEmailNotification(
+      donationId,
+      "adminEmailNotification"
+    );
+
+    if (claimed) {
+      try {
+        const info = await sendAdminDonationNotification({
+          donorName: clean(donation.donorName),
+          donorEmail: clean(donation.email),
+          mobile: clean(donation.mobile),
+          donationReference: clean(donation.donationReference),
+          receiptNo,
+          amount: Number(donation.amount || 0),
+          currency: clean(donation.currency) || "INR",
+          paymentId: clean(donation.paymentId),
+          donationType: clean(donation.donationType),
+          requires80G: Boolean(donation.requires80G),
+        });
+
+        await updateEmailStatus(
+          donationId,
+          "adminEmailNotification",
+          "SENT",
+          clean(info.messageId)
+        );
+
+        console.log(
+          "AJFT ADMIN EMAIL SENT:",
+          donationId,
+          clean(info.messageId)
+        );
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Admin email delivery failed.";
+
+        try {
+          await updateEmailStatus(
+            donationId,
+            "adminEmailNotification",
+            "FAILED",
+            "",
+            message
+          );
+        } catch (statusError) {
+          console.error(
+            "ADMIN EMAIL STATUS UPDATE ERROR:",
+            statusError
+          );
+        }
+
+        console.error("AJFT ADMIN EMAIL ERROR:", message);
+      }
+    }
+  } catch (error) {
+    console.error(
+      "AJFT ADMIN EMAIL CLAIM ERROR:",
+      error
+    );
+  }
+}
+
+function getEmailNotificationSummary(donation: any) {
+  return {
+    donor: {
+      status: clean(donation?.donorEmailNotification?.status) || "PENDING",
+      attempts: Number(donation?.donorEmailNotification?.attempts || 0),
+      sentAt: donation?.donorEmailNotification?.sentAt || null,
+      lastError: clean(donation?.donorEmailNotification?.lastError),
+    },
+    admin: {
+      status: clean(donation?.adminEmailNotification?.status) || "PENDING",
+      attempts: Number(donation?.adminEmailNotification?.attempts || 0),
+      sentAt: donation?.adminEmailNotification?.sentAt || null,
+      lastError: clean(donation?.adminEmailNotification?.lastError),
+    },
+  };
+}
+
+/*
+|--------------------------------------------------------------------------
 | POST
 |--------------------------------------------------------------------------
 | Razorpay payment verification
@@ -474,6 +776,69 @@ export async function POST(
         "Donation already verified."
       );
 
+      // Re-check the saved order and payment IDs before allowing
+      // an already-verified request to trigger email retries.
+      const savedVerifiedOrderId =
+        clean(donation.razorpayOrderId) ||
+        clean(donation.orderId);
+
+      if (
+        savedVerifiedOrderId !== razorpayOrderId ||
+        clean(donation.paymentId) !== razorpayPaymentId
+      ) {
+        return jsonResponse(
+          {
+            success: false,
+            message: "Verified payment details do not match.",
+          },
+          400
+        );
+      }
+
+      const retrySignaturePayload =
+        `${razorpayOrderId}|${razorpayPaymentId}`;
+
+      const retryExpectedSignature = crypto
+        .createHmac("sha256", razorpaySecret)
+        .update(retrySignaturePayload)
+        .digest("hex");
+
+      const retryExpectedBuffer = Buffer.from(
+        retryExpectedSignature,
+        "utf8"
+      );
+
+      const retryReceivedBuffer = Buffer.from(
+        razorpaySignature,
+        "utf8"
+      );
+
+      const retrySignatureValid =
+        retryExpectedBuffer.length === retryReceivedBuffer.length &&
+        crypto.timingSafeEqual(
+          retryExpectedBuffer,
+          retryReceivedBuffer
+        );
+
+      if (!retrySignatureValid) {
+        return jsonResponse(
+          {
+            success: false,
+            message: "Payment signature verification failed.",
+          },
+          400
+        );
+      }
+
+      // Retry only pending/failed notifications. SENT emails are skipped.
+      await sendDonationNotifications(
+        donation,
+        request.url
+      );
+
+      const refreshedDonationAfterEmail =
+        await Donation.findById(donation._id).lean();
+
       /*
       | Still attempt Ledger sync.
       | The Ledger API itself has duplicate protection.
@@ -493,6 +858,10 @@ export async function POST(
         alreadyVerified: true,
 
         ledgerSync,
+
+        emailNotifications: getEmailNotificationSummary(
+          refreshedDonationAfterEmail || donation
+        ),
 
         donation: {
           _id:
@@ -792,6 +1161,16 @@ export async function POST(
       );
     }
 
+    // Email failures are recorded but never reverse payment SUCCESS
+    // or change the Ledger synchronization result.
+    await sendDonationNotifications(
+      verifiedDonation,
+      request.url
+    );
+
+    const donationAfterEmail =
+      await Donation.findById(verifiedDonation._id).lean();
+
     /*
     |--------------------------------------------------------------------------
     | FINAL RESPONSE
@@ -814,6 +1193,10 @@ export async function POST(
         Boolean(
           ledgerSync?.success
         ),
+
+      emailNotifications: getEmailNotificationSummary(
+        donationAfterEmail || verifiedDonation
+      ),
 
       donation: {
 

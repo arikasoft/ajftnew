@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -9,339 +10,362 @@ import {
   Home,
   ReceiptText,
   ShieldCheck,
+  Sparkles,
+  Loader2,
+  Copy,
+  Check,
 } from "lucide-react";
 
 export default function DonationSuccessPage() {
   const [reference, setReference] = useState("");
   const [receiptNo, setReceiptNo] = useState("");
   const [paymentId, setPaymentId] = useState("");
+  const [donationId, setDonationId] = useState("");
+  const [downloading, setDownloading] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    const params = new URLSearchParams(
-      window.location.search
-    );
+    const p = new URLSearchParams(window.location.search);
 
-    setReference(
-      params.get("reference") ||
-        params.get("donationReference") ||
-        "AJFT-1789960824586-MJ737M"
-    );
-
-    setReceiptNo(
-      params.get("receiptNo") ||
-        params.get("receiptNumber") ||
-        ""
-    );
-
-    setPaymentId(
-      params.get("paymentId") ||
-        params.get("payment_id") ||
-        ""
-    );
+    setReference(p.get("reference") || p.get("donationReference") || "");
+    setReceiptNo(p.get("receiptNo") || p.get("receiptNumber") || "");
+    setPaymentId(p.get("paymentId") || p.get("payment_id") || "");
+    setDonationId(p.get("donationId") || "");
   }, []);
 
-  function downloadReceipt() {
-    const content = `
-ANAND JIVAN FOUNDATION TRUST
-DONATION RECEIPT
-==============================
+  async function copyReceipt() {
+    if (!receiptNo) return;
 
-Donation Reference:
-${reference}
+    try {
+      await navigator.clipboard.writeText(receiptNo);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      alert("Receipt Number copy नहीं हो पाया।");
+    }
+  }
 
-Receipt Number:
-${receiptNo || "Not available"}
+  async function downloadReceipt() {
+    if (!donationId) {
+      alert("Donation ID नहीं मिला।");
+      return;
+    }
 
-Payment ID:
-${paymentId || "Not available"}
+    try {
+      setDownloading(true);
 
-Payment Status:
-SUCCESS
+      const res = await fetch(
+        `/api/donate/receipt?donationId=${encodeURIComponent(donationId)}`,
+        { headers: { Accept: "application/pdf" } }
+      );
 
-Thank you for supporting
-Anand Jivan Foundation Trust.
+      if (!res.ok) throw new Error("Receipt download नहीं हो पाया।");
 
-==============================
-`;
-
-    const blob = new Blob(
-      [content],
-      {
-        type: "text/plain;charset=utf-8",
+      const type = res.headers.get("content-type") || "";
+      if (!type.includes("application/pdf")) {
+        throw new Error("Valid PDF receipt नहीं मिली।");
       }
-    );
 
-    const url =
-      URL.createObjectURL(blob);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
 
-    const link =
-      document.createElement("a");
+      a.href = url;
+      a.download = `AJFT-Donation-${receiptNo || reference || donationId}.pdf`;
 
-    link.href = url;
-
-    link.download =
-      `AJFT-Donation-${reference}.txt`;
-
-    document.body.appendChild(link);
-
-    link.click();
-
-    link.remove();
-
-    URL.revokeObjectURL(url);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Download failed");
+    } finally {
+      setDownloading(false);
+    }
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#043C3A] via-[#087F73] to-[#075985]">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#20082F] px-4 py-8 sm:px-8">
 
-      {/* =====================================================
-          BACKGROUND
-      ===================================================== */}
-
-      <div className="pointer-events-none absolute inset-0">
-
-        <div className="absolute left-10 top-20 h-60 w-60 rounded-full bg-emerald-300/20 blur-[100px]" />
-
-        <div className="absolute right-10 top-10 h-72 w-72 rounded-full bg-amber-300/20 blur-[110px]" />
-
-        <div className="absolute bottom-20 left-1/2 h-60 w-60 -translate-x-1/2 rounded-full bg-cyan-300/20 blur-[100px]" />
-
-      </div>
-
-      {/* =====================================================
-          FLOWERS
-      ===================================================== */}
+      {/* DIWALI LANDSCAPE BACKGROUND */}
 
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -left-20 top-10 h-96 w-96 rounded-full bg-orange-500/25 blur-[120px]" />
+        <div className="absolute -right-20 top-10 h-96 w-96 rounded-full bg-amber-400/20 blur-[120px]" />
+        <div className="absolute bottom-0 left-1/2 h-80 w-[700px] -translate-x-1/2 rounded-full bg-fuchsia-500/15 blur-[120px]" />
 
-        <div className="absolute left-[8%] top-[12%] animate-bounce text-3xl">
-          🌸
-        </div>
-
-        <div className="absolute right-[12%] top-[18%] animate-pulse text-3xl">
-          🌼
-        </div>
-
-        <div className="absolute left-[18%] top-[55%] animate-pulse text-2xl">
-          🌺
-        </div>
-
-        <div className="absolute right-[20%] top-[65%] animate-bounce text-2xl">
-          🌷
-        </div>
-
-        <div className="absolute left-[30%] top-[8%] animate-pulse text-xl">
-          ✨
-        </div>
-
-        <div className="absolute right-[32%] top-[10%] animate-pulse text-xl">
-          ✨
-        </div>
-
+        {Array.from({ length: 70 }).map((_, i) => (
+          <span
+            key={i}
+            className="absolute animate-pulse rounded-full bg-yellow-200 shadow-[0_0_10px_2px_rgba(253,224,71,.7)]"
+            style={{
+              left: `${(i * 37) % 100}%`,
+              top: `${(i * 19) % 100}%`,
+              width: i % 4 === 0 ? "4px" : "2px",
+              height: i % 4 === 0 ? "4px" : "2px",
+              animationDelay: `${(i % 8) * 0.25}s`,
+            }}
+          />
+        ))}
       </div>
 
-      {/* =====================================================
-          MAIN
-      ===================================================== */}
+      {/* DIWALI DECORATIONS */}
 
-      <div className="relative flex min-h-screen items-center justify-center px-4 py-10">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute left-[3%] top-[7%] animate-pulse text-5xl drop-shadow-[0_0_20px_rgba(251,191,36,.9)] sm:text-6xl">
+          🪔
+        </div>
 
-        {/* ===================================================
-            CARD 515 x 515
-        =================================================== */}
+        <div className="absolute right-[3%] top-[7%] animate-pulse text-5xl drop-shadow-[0_0_20px_rgba(251,191,36,.9)] sm:text-6xl">
+          🪔
+        </div>
 
-        <div className="relative flex min-h-[515px] w-full max-w-[515px] flex-col rounded-[30px] border border-white/20 bg-white/10 p-6 shadow-2xl backdrop-blur-2xl">
+        <div className="absolute left-[12%] bottom-[10%] text-4xl">
+          🪷
+        </div>
 
-          {/* SUCCESS ICON */}
+        <div className="absolute right-[12%] bottom-[10%] text-4xl">
+          🪷
+        </div>
 
-          <div className="flex justify-center">
+        <div className="absolute left-[25%] top-[12%] animate-pulse text-2xl">
+          ✨
+        </div>
 
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-400/20 shadow-[0_0_50px_rgba(52,211,153,.25)]">
+        <div className="absolute right-[25%] top-[12%] animate-pulse text-2xl">
+          ✨
+        </div>
 
-              <CheckCircle2
-                className="h-12 w-12 text-emerald-300"
-                strokeWidth={1.8}
-              />
+        <div className="absolute left-[5%] top-1/2 text-2xl">🌟</div>
+        <div className="absolute right-[5%] top-1/2 text-2xl">🌟</div>
+      </div>
 
-            </div>
+      {/* LANDSCAPE CONTENT */}
 
-          </div>
+      <div className="relative z-10 w-full max-w-[1050px]">
 
-          {/* TITLE */}
+        {/* FESTIVAL TOP HEADER */}
 
-          <div className="mt-5 text-center">
+        <div className="mb-5 flex items-center justify-center gap-4">
+          <span className="text-3xl sm:text-4xl">🪔</span>
 
-            <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-emerald-200">
-
-              <ShieldCheck className="h-3.5 w-3.5" />
-
-              Payment Successful
-
-            </div>
-
-            <h1 className="mt-3 text-3xl font-black text-white">
-              Thank You! 💚
-            </h1>
-
-            <p className="mt-2 text-sm leading-6 text-white/65">
-              Your donation has been successfully
-              received by Anand Jivan Foundation Trust.
+          <div className="text-center">
+            <h2 className="text-xl font-black uppercase tracking-[0.3em] text-yellow-200 sm:text-2xl">
+              Happy Diwali
+            </h2>
+            <p className="mt-1 text-[9px] font-bold tracking-[0.4em] text-orange-200/70">
+              THE FESTIVAL OF LIGHTS • CELEBRATION OF HOPE
             </p>
-
           </div>
 
-          {/* DETAILS */}
+          <span className="text-3xl sm:text-4xl">🪔</span>
+        </div>
 
-          <div className="mt-6 space-y-3">
+        {/* MAIN LANDSCAPE CARD */}
 
-            {/* REFERENCE */}
+        <div className="relative overflow-hidden rounded-[30px] border border-yellow-300/40 bg-gradient-to-br from-[#52154E]/95 via-[#481443]/95 to-[#281039]/95 p-5 shadow-[0_0_70px_rgba(245,158,11,.18)] backdrop-blur-xl sm:p-8">
 
-            <div className="rounded-2xl border border-amber-300/15 bg-black/10 p-4">
+          {/* GOLD BORDER */}
 
-              <div className="flex items-center justify-between gap-3">
+          <div className="absolute left-0 top-0 h-1 w-full bg-gradient-to-r from-transparent via-yellow-300 to-transparent" />
 
-                <div className="min-w-0">
+          {/* CARD DECORATIONS */}
 
-                  <p className="text-[9px] font-bold uppercase tracking-widest text-white/45">
-                    Donation Reference
-                  </p>
+          <div className="pointer-events-none absolute right-5 top-4 text-2xl opacity-50">
+            🌸
+          </div>
 
-                  <p className="mt-1 break-all text-sm font-black text-amber-300">
-                    {reference}
-                  </p>
+          <div className="pointer-events-none absolute bottom-3 left-5 text-2xl opacity-50">
+            🌺
+          </div>
 
+          {/* TWO COLUMN LAYOUT */}
+
+          <div className="grid items-center gap-7 md:grid-cols-[0.9fr_1.1fr] md:gap-10">
+
+            {/* LEFT SIDE */}
+
+            <div className="text-center md:border-r md:border-yellow-200/20 md:pr-8">
+
+              <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full border-2 border-yellow-300/50 bg-gradient-to-br from-yellow-300/25 to-orange-500/15 shadow-[0_0_45px_rgba(251,191,36,.3)]">
+                <CheckCircle2 className="h-16 w-16 text-yellow-200" />
+              </div>
+
+              <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-emerald-300/30 bg-emerald-400/10 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-emerald-200">
+                <ShieldCheck className="h-4 w-4" />
+                Payment Successful
+              </div>
+
+              <h1 className="mt-4 text-4xl font-black text-white sm:text-5xl">
+                Thank You!
+                <span className="ml-2 text-yellow-300">💛</span>
+              </h1>
+
+              <p className="mt-3 text-sm font-semibold text-yellow-200">
+                आपकी उदारता ही हमारी रोशनी है।
+              </p>
+
+              <p className="mx-auto mt-3 max-w-sm text-xs leading-6 text-white/70">
+                Your donation has been successfully received by
+                Anand Jivan Foundation Trust.
+              </p>
+
+              <div className="mt-6 rounded-2xl border border-yellow-300/25 bg-gradient-to-r from-orange-400/15 via-yellow-300/10 to-orange-400/15 p-3">
+                <p className="text-2xl">🪔 🌸 ✨ 🌸 🪔</p>
+                <p className="mt-2 text-[10px] font-bold text-yellow-100">
+                  Spreading Light • Sharing Happiness
+                </p>
+              </div>
+            </div>
+
+            {/* RIGHT SIDE */}
+
+            <div>
+
+              <div className="mb-4 text-center md:text-left">
+                <p className="text-xs font-black uppercase tracking-[0.25em] text-yellow-200">
+                  Donation Confirmation
+                </p>
+                <p className="mt-1 text-[11px] text-white/50">
+                  Your contribution details
+                </p>
+              </div>
+
+              {/* REFERENCE */}
+
+              <div className="rounded-2xl border border-yellow-300/25 bg-black/20 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-white/45">
+                      Donation Reference
+                    </p>
+                    <p className="mt-2 break-all text-sm font-black text-yellow-300">
+                      {reference || "Not available"}
+                    </p>
+                  </div>
+                  <Heart className="h-6 w-6 shrink-0 text-rose-300" />
                 </div>
+              </div>
 
-                <Heart className="h-5 w-5 shrink-0 text-rose-300" />
+              {/* RECEIPT NUMBER WITH COPY */}
 
+              <div className="mt-3 rounded-2xl border border-emerald-300/30 bg-emerald-400/10 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-white/50">
+                      Receipt Number
+                    </p>
+
+                    <p className="mt-2 break-all text-sm font-black text-emerald-300">
+                      {receiptNo || "Processing..."}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={copyReceipt}
+                    disabled={!receiptNo}
+                    className="flex shrink-0 items-center gap-2 rounded-lg border border-emerald-300/30 bg-emerald-300/10 px-3 py-2 text-[10px] font-bold text-emerald-200 transition hover:bg-emerald-300/20 disabled:opacity-40"
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="h-4 w-4" />
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-4 w-4" />
+                        Copy
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* PAYMENT ID */}
+
+              {paymentId && (
+                <div className="mt-3 rounded-2xl border border-white/10 bg-black/15 p-4">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-white/40">
+                    Payment ID
+                  </p>
+                  <p className="mt-2 break-all text-xs font-semibold text-white/65">
+                    {paymentId}
+                  </p>
+                </div>
+              )}
+
+              {/* ACTION BUTTONS */}
+
+              <div className="mt-5 grid grid-cols-3 gap-2">
+
+                <Link
+                  href="/"
+                  className="flex h-12 items-center justify-center gap-1 rounded-xl border border-yellow-200/30 bg-white/10 text-xs font-bold text-white transition hover:bg-white/20"
+                >
+                  <Home className="h-4 w-4" />
+                  Home
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={downloadReceipt}
+                  disabled={downloading || !donationId}
+                  className="flex h-12 items-center justify-center gap-1 rounded-xl bg-gradient-to-r from-yellow-300 to-amber-400 text-xs font-black text-[#45105C] transition hover:brightness-110 disabled:opacity-50"
+                >
+                  {downloading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4" />
+                  )}
+                  {downloading ? "Wait..." : "Receipt"}
+                </button>
+
+                <Link
+                  href="/donate"
+                  className="flex h-12 items-center justify-center gap-1 rounded-xl bg-gradient-to-r from-rose-400 to-orange-400 text-xs font-bold text-white transition hover:brightness-110"
+                >
+                  <Heart className="h-4 w-4" />
+                  Donate
+                </Link>
+
+              </div>
+
+              <div className="mt-4 text-center">
+                <a
+                  href="https://ajftrust.org/verify"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[10px] font-bold text-yellow-200 underline decoration-yellow-200/40 underline-offset-4 hover:text-white"
+                >
+                  Verify Donation Receipt
+                </a>
               </div>
 
             </div>
-
-            {/* RECEIPT */}
-
-            <div className="rounded-2xl border border-emerald-300/15 bg-black/10 p-4">
-
-              <div className="flex items-center justify-between gap-3">
-
-                <div className="min-w-0">
-
-                  <p className="text-[9px] font-bold uppercase tracking-widest text-white/45">
-                    Receipt Number
-                  </p>
-
-                  <p className="mt-1 break-all text-sm font-black text-emerald-300">
-                    {receiptNo || "Processing..."}
-                  </p>
-
-                </div>
-
-                <ReceiptText className="h-5 w-5 shrink-0 text-emerald-300" />
-
-              </div>
-
-            </div>
-
-            {/* PAYMENT */}
-
-            {paymentId && (
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-
-                <p className="text-[9px] uppercase tracking-widest text-white/40">
-                  Payment ID
-                </p>
-
-                <p className="mt-1 break-all text-[10px] font-semibold text-white/60">
-                  {paymentId}
-                </p>
-
-              </div>
-            )}
-
           </div>
 
-          {/* BUTTONS */}
+          {/* BOTTOM FOOTER */}
 
-          <div className="mt-auto grid grid-cols-3 gap-2 pt-6">
-
-            <Link
-              href="/"
-              className="flex h-11 items-center justify-center gap-1 rounded-xl border border-white/20 bg-white/10 text-xs font-black text-white transition hover:bg-white/20"
-            >
-              <Home className="h-4 w-4" />
-              Home
-            </Link>
-
-            <button
-              type="button"
-              onClick={downloadReceipt}
-              className="flex h-11 items-center justify-center gap-1 rounded-xl bg-gradient-to-r from-emerald-300 to-teal-300 text-xs font-black text-[#043C3A] shadow-lg transition hover:-translate-y-0.5"
-            >
-              <Download className="h-4 w-4" />
-              Download
-            </button>
-
-            <Link
-              href="/donate"
-              className="flex h-11 items-center justify-center gap-1 rounded-xl bg-gradient-to-r from-amber-400 to-orange-400 text-xs font-black text-[#043C3A] shadow-lg transition hover:-translate-y-0.5"
-            >
-              <Heart className="h-4 w-4" />
-              Donate
-            </Link>
-
+          <div className="mt-7 border-t border-yellow-200/20 pt-4 text-center">
+            <p className="text-xs font-black text-yellow-200">
+              Anand Jivan Foundation Trust
+            </p>
+            <p className="mt-1 text-[9px] tracking-widest text-white/45">
+              SERVING HUMANITY • SPREADING HAPPINESS
+            </p>
           </div>
+        </div>
 
-          <p className="mt-4 text-center text-[10px] text-white/40">
-            🌸 Thank you for making a difference 🌸
-          </p>
+        {/* OUTSIDE DIWALI FOOTER */}
 
+        <div className="mt-4 flex items-center justify-center gap-3 text-xs text-yellow-200/80">
+          <span>✨</span>
+          <span>May this Diwali bring light, peace and prosperity to every home.</span>
+          <span>✨</span>
         </div>
 
       </div>
-
-      {/* =====================================================
-          WAVE
-      ===================================================== */}
-
-      <div className="absolute bottom-0 left-0 right-0 pointer-events-none">
-
-        <svg
-          viewBox="0 0 1440 180"
-          className="h-24 w-full"
-          preserveAspectRatio="none"
-        >
-
-          <path
-            fill="#14B8A6"
-            opacity="0.65"
-            d="
-              M0 90
-              C180 150 350 30 540 75
-              C730 120 850 155 1050 75
-              C1220 15 1340 55 1440 95
-              L1440 180
-              L0 180
-              Z
-            "
-          />
-
-          <path
-            fill="#F0FDFA"
-            d="
-              M0 130
-              C200 170 390 100 590 115
-              C800 130 930 170 1120 115
-              C1260 75 1360 100 1440 130
-              L1440 180
-              L0 180
-              Z
-            "
-          />
-
-        </svg>
-
-      </div>
-
     </main>
   );
 }
