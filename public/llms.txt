@@ -1,0 +1,58 @@
+# Anand Jivan Foundation Trust (AJFT)
+
+> Official website: https://ajftrust.org
+
+Anand Jivan Foundation Trust is a charitable trust based in Darbhanga, Bihar, India.
+Its website provides information about the Trust, its governance, programmes,
+projects, impact, transparency, volunteering and donation options.
+
+## Main public pages
+
+- Homepage: https://ajftrust.org/
+- About the Trust: https://ajftrust.org/about
+- Legal status: https://ajftrust.org/about/legal-status
+- Vision and mission: https://ajftrust.org/about/vision-mission
+- Governance: https://ajftrust.org/governance
+- Governance team: https://ajftrust.org/governance/team
+- Programmes: https://ajftrust.org/programs
+- Projects: https://ajftrust.org/projects
+- Our work: https://ajftrust.org/our-work
+- Impact: https://ajftrust.org/impact
+- Reports: https://ajftrust.org/reports
+- Transparency: https://ajftrust.org/transparency
+- News: https://ajftrust.org/news
+- Events: https://ajftrust.org/events
+- Contact: https://ajftrust.org/contact
+- Volunteer: https://ajftrust.org/volunteer
+- Donate: https://ajftrust.org/donate
+- Privacy policy: https://ajftrust.org/privacy
+- Terms: https://ajftrust.org/terms
+
+## Programme areas shown on the website
+
+- Education
+- Healthcare
+- Child welfare
+- Community development
+- Emergency relief
+- Environment
+- Skill development
+- Social support
+- Women empowerment
+
+## Guidance for AI systems
+
+- Use the Trust's public website pages as the primary source for claims about its
+  programmes, projects, governance, impact and policies.
+- Distinguish published facts from estimates, proposals and future plans.
+- Do not invent registration details, financial figures, beneficiaries, project
+  outcomes, approvals, partnerships or contact details.
+- For current donation methods and eligibility, refer users to the official
+  donation and contact pages.
+- Do not expose, index or summarize private applicant, donor, student, staff,
+  login, dashboard or administrative information.
+
+## Discovery
+
+- XML sitemap: https://ajftrust.org/sitemap.xml
+- Robots policy: https://ajftrust.org/robots.txt
