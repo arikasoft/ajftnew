@@ -1,3 +1,4 @@
+
 import type { MetadataRoute } from "next";
 
 const SITE_URL = "https://ajftrust.org";
