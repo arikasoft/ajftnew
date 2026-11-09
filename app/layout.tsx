@@ -22,6 +22,10 @@ export const metadata: Metadata = {
 
   applicationName: "Anand Jivan Foundation Trust",
 
+  alternates: {
+    canonical: "/",
+  },
+
   openGraph: {
     type: "website",
     locale: "en_IN",
@@ -38,6 +42,15 @@ export const metadata: Metadata = {
     description:
       "Empowering Lives. Building a Better Tomorrow.",
   },
+
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+    },
+  },
 };
 
 const organizationSchema = {
@@ -52,8 +65,19 @@ const organizationSchema = {
   description:
     "Anand Jivan Foundation Trust is a charitable trust based in Darbhanga, Bihar, India, working in education, healthcare, child welfare, community development and social welfare.",
 
+  logo: {
+    "@type": "ImageObject",
+    url: `${SITE_URL}/logo.png`,
+  },
+
   email: "info@ajftrust.org",
   telephone: "+91-9155751363",
+
+  sameAs: [
+    "https://www.facebook.com/ajftrust",
+    "https://www.instagram.com/ajftrusts",
+    "https://x.com/ajftrust",
+  ],
 
   address: {
     "@type": "PostalAddress",
@@ -63,7 +87,7 @@ const organizationSchema = {
   },
 
   areaServed: {
-    "@type": "AdministrativeArea",
+    "@type": "Country",
     name: "India",
   },
 
