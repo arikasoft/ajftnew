@@ -12,16 +12,29 @@ const SITE_URL = "https://ajftrust.org";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
 
-  title: "Anand Jivan Foundation Trust",
+  title: {
+    default: "Anand Jivan Foundation Trust | AJFT",
+    template: "%s | Anand Jivan Foundation Trust",
+  },
 
   description:
-    "Anand Jivan Foundation Trust — Empowering Lives. Building a Better Tomorrow.",
+    "Anand Jivan Foundation Trust (AJFT), a charitable trust based in Darbhanga, Bihar, India. Explore our education, healthcare, child welfare, community development and social welfare programmes.",
+
+  applicationName: "Anand Jivan Foundation Trust",
 
   openGraph: {
     type: "website",
+    locale: "en_IN",
     url: SITE_URL,
     siteName: "Anand Jivan Foundation Trust",
-    title: "Anand Jivan Foundation Trust",
+    title: "Anand Jivan Foundation Trust | AJFT",
+    description:
+      "Empowering Lives. Building a Better Tomorrow.",
+  },
+
+  twitter: {
+    card: "summary",
+    title: "Anand Jivan Foundation Trust | AJFT",
     description:
       "Empowering Lives. Building a Better Tomorrow.",
   },
@@ -31,13 +44,36 @@ const organizationSchema = {
   "@context": "https://schema.org",
   "@type": "Organization",
   "@id": `${SITE_URL}/#organization`,
+
   name: "Anand Jivan Foundation Trust",
+  alternateName: "AJFT",
   url: SITE_URL,
+
   description:
-    "Anand Jivan Foundation Trust — Empowering Lives. Building a Better Tomorrow.",
+    "Anand Jivan Foundation Trust is a charitable trust based in Darbhanga, Bihar, India, working in education, healthcare, child welfare, community development and social welfare.",
+
+  email: "info@ajftrust.org",
+  telephone: "+91-9155751363",
+
+  address: {
+    "@type": "PostalAddress",
+    addressLocality: "Darbhanga",
+    addressRegion: "Bihar",
+    addressCountry: "IN",
+  },
+
   areaServed: {
     "@type": "AdministrativeArea",
-    name: "Darbhanga, Bihar, India",
+    name: "India",
+  },
+
+  contactPoint: {
+    "@type": "ContactPoint",
+    telephone: "+91-9155751363",
+    email: "info@ajftrust.org",
+    contactType: "customer support",
+    areaServed: "IN",
+    availableLanguage: ["English", "Hindi"],
   },
 };
 
@@ -45,12 +81,16 @@ const websiteSchema = {
   "@context": "https://schema.org",
   "@type": "WebSite",
   "@id": `${SITE_URL}/#website`,
+
   name: "Anand Jivan Foundation Trust",
+  alternateName: "AJFT",
   url: SITE_URL,
+
   publisher: {
     "@id": `${SITE_URL}/#organization`,
   },
-  inLanguage: "en-IN",
+
+  inLanguage: ["en-IN", "hi-IN"],
 };
 
 export default function RootLayout({
@@ -61,8 +101,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Organization structured data */}
+        {/* Organization Structured Data */}
         <script
+          id="organization-schema"
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(organizationSchema).replace(
@@ -72,8 +113,9 @@ export default function RootLayout({
           }}
         />
 
-        {/* Website structured data */}
+        {/* Website Structured Data */}
         <script
+          id="website-schema"
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(websiteSchema).replace(
