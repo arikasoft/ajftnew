@@ -1,3 +1,4 @@
+
 import type { Metadata } from "next";
 import Script from "next/script";
 import "./globals.css";
@@ -6,10 +7,50 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import AnalyticsTracker from "@/components/analytics/AnalyticsTracker";
 
+const SITE_URL = "https://ajftrust.org";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
+
   title: "Anand Jivan Foundation Trust",
+
   description:
     "Anand Jivan Foundation Trust — Empowering Lives. Building a Better Tomorrow.",
+
+  openGraph: {
+    type: "website",
+    url: SITE_URL,
+    siteName: "Anand Jivan Foundation Trust",
+    title: "Anand Jivan Foundation Trust",
+    description:
+      "Empowering Lives. Building a Better Tomorrow.",
+  },
+};
+
+const organizationSchema = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "@id": `${SITE_URL}/#organization`,
+  name: "Anand Jivan Foundation Trust",
+  url: SITE_URL,
+  description:
+    "Anand Jivan Foundation Trust — Empowering Lives. Building a Better Tomorrow.",
+  areaServed: {
+    "@type": "AdministrativeArea",
+    name: "Darbhanga, Bihar, India",
+  },
+};
+
+const websiteSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "@id": `${SITE_URL}/#website`,
+  name: "Anand Jivan Foundation Trust",
+  url: SITE_URL,
+  publisher: {
+    "@id": `${SITE_URL}/#organization`,
+  },
+  inLanguage: "en-IN",
 };
 
 export default function RootLayout({
@@ -20,6 +61,28 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Organization structured data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(organizationSchema).replace(
+              /</g,
+              "\\u003c"
+            ),
+          }}
+        />
+
+        {/* Website structured data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(websiteSchema).replace(
+              /</g,
+              "\\u003c"
+            ),
+          }}
+        />
+
         {/* Consent Mode - Load before analytics */}
         <Script
           id="consent-mode-default"
