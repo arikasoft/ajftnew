@@ -11,6 +11,8 @@ const LOGIN_URL = "/news-admin/login";
 
 const CONTENT_SIGNAL = "search=yes, ai-train=no";
 
+const SITE_URL = "https://ajftrust.org";
+
 const HOMEPAGE_MARKDOWN = `# Anand Jivan Foundation Trust (AJFT)
 
 > Official website of Anand Jivan Foundation Trust, a charitable trust based in Darbhanga, Bihar, India.
@@ -47,10 +49,50 @@ Do not invent Trust details, financial figures, beneficiaries or project outcome
 Do not expose private applicant, donor, student or administrative information.
 `;
 
+const ROBOTS_TXT = `User-agent: *
+Allow: /
+
+Disallow: /admin/
+Disallow: /api/
+Disallow: /student/dashboard/
+Disallow: /student/login/
+Disallow: /student/exam/
+Disallow: /news-admin/
+Disallow: /webmail.aspx/
+Disallow: /environment/dashboard/
+Disallow: /environment/login/
+Disallow: /programs/environment/dashboard/
+Disallow: /programs/environment/login/
+Disallow: /donate/success/
+Disallow: /internship/status/
+Disallow: /internship/success/
+Disallow: /careers/status/
+Disallow: /apply/track/
+Disallow: /divyang/status/
+Disallow: /divyang/track/
+
+Content-Signal: ${CONTENT_SIGNAL}
+
+Sitemap: ${SITE_URL}/sitemap.xml
+Host: ${SITE_URL}
+`;
+
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Serve Markdown representation to agents requesting it
+  // Robots.txt with Content-Signal
+  if (pathname === "/robots.txt") {
+    return new NextResponse(ROBOTS_TXT, {
+      status: 200,
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Content-Signal": CONTENT_SIGNAL,
+        "Cache-Control": "public, max-age=3600",
+      },
+    });
+  }
+
+  // Markdown representation for AI agents
   if (
     pathname === "/" &&
     request.headers
@@ -69,23 +111,16 @@ export function proxy(request: NextRequest) {
   }
 
   const session = request.cookies.get(SESSION_COOKIE)?.value;
-
   const isAuthenticated = session === "authenticated";
 
-  /* =====================================
-     PROTECTED NEWS ADMIN ROUTES
-  ===================================== */
-
+  // Protected News Admin routes
   const isProtectedRoute =
     pathname === "/news-admin/dashboard" ||
     pathname.startsWith("/news-admin/dashboard/") ||
     pathname === "/news-admin/news" ||
     pathname.startsWith("/news-admin/news/");
 
-  /* =====================================
-     REDIRECT UNAUTHENTICATED USERS
-  ===================================== */
-
+  // Redirect unauthenticated users
   if (isProtectedRoute && !isAuthenticated) {
     const loginUrl = new URL(LOGIN_URL, request.url);
 
@@ -94,10 +129,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  /* =====================================
-     ALREADY LOGGED-IN USER
-  ===================================== */
-
+  // Redirect already logged-in users
   if (pathname === LOGIN_URL && isAuthenticated) {
     return NextResponse.redirect(
       new URL(DASHBOARD_URL, request.url)
@@ -106,19 +138,20 @@ export function proxy(request: NextRequest) {
 
   const response = NextResponse.next();
 
-  response.headers.set(
-    "Content-Signal",
-    CONTENT_SIGNAL
-  );
+  // Add AI content signal to public pages only
+  if (!pathname.startsWith("/news-admin")) {
+    response.headers.set(
+      "Content-Signal",
+      CONTENT_SIGNAL
+    );
+  }
 
   return response;
 }
 
 export const config = {
   matcher: [
-    "/",
-    "/news-admin/dashboard/:path*",
-    "/news-admin/news/:path*",
-    "/news-admin/login",
+    "/robots.txt",
+    "/((?!api/|_next/|favicon.ico|.*\\..*).*)",
   ],
 };
