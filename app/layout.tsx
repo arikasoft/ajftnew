@@ -6,6 +6,7 @@ import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import AnalyticsTracker from "@/components/analytics/AnalyticsTracker";
+import AJFTWebMCP from "@/components/webmcp/AJFTWebMCP";
 
 const SITE_URL = "https://ajftrust.org";
 
@@ -32,15 +33,13 @@ export const metadata: Metadata = {
     url: SITE_URL,
     siteName: "Anand Jivan Foundation Trust",
     title: "Anand Jivan Foundation Trust | AJFT",
-    description:
-      "Empowering Lives. Building a Better Tomorrow.",
+    description: "Empowering Lives. Building a Better Tomorrow.",
   },
 
   twitter: {
     card: "summary",
     title: "Anand Jivan Foundation Trust | AJFT",
-    description:
-      "Empowering Lives. Building a Better Tomorrow.",
+    description: "Empowering Lives. Building a Better Tomorrow.",
   },
 
   robots: {
@@ -231,6 +230,9 @@ export default function RootLayout({
         <Header />
 
         <AnalyticsTracker />
+
+        {/* WebMCP - Public AJFT Agent Tools */}
+        <AJFTWebMCP />
 
         {children}
 
